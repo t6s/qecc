@@ -59,6 +59,8 @@ Qed.
 
 Section lens_comp.
 
+(* Composition of lenses *)
+
 Variables (n m p : nat) (l1 : lens n m) (l2 : lens m p).
 
 Definition lens_comp : lens n p.
@@ -111,6 +113,8 @@ Lemma focus_comp (f : p.-tuple T -> p.-tuple T) :
   focus l1 (focus l2 f) =1 focus lens_comp f.
 Proof. move=> t; by rewrite /focus inject_comp extract_comp. Qed.
 
+(* Commutativity of focussed operations *)
+
 Variables (l3 : lens n p).
 Variable (f : m.-tuple T -> m.-tuple T) (g : p.-tuple T -> p.-tuple T).
 Hypothesis Hdisj : [disjoint val l1 & val l3].
@@ -118,8 +122,7 @@ Hypothesis Hdisj : [disjoint val l1 & val l3].
 Lemma extract_inject (t : n.-tuple T) t' :
   extract l1 (inject l3 t t') = extract l1 t.
 Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_mktuple.
+apply eq_from_tnth => i; rewrite !tnth_mktuple.
 rewrite nth_default // leqNgt size_tuple -[X in _ < X](size_tuple l3).
 by rewrite index_mem (disjointFr Hdisj) // mem_tnth.
 Qed.
@@ -127,8 +130,7 @@ Qed.
 Lemma extract_inject' (t : n.-tuple T) t' :
   extract l3 (inject l1 t t') = extract l3 t.
 Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_mktuple.
+apply eq_from_tnth => i; rewrite !tnth_mktuple.
 rewrite nth_default // leqNgt size_tuple -[X in _ < X](size_tuple l1).
 by rewrite index_mem (disjointFl Hdisj) // mem_tnth.
 Qed.
@@ -152,3 +154,20 @@ by rewrite !focus_out.
 Qed.
 
 End lens_comp.
+
+(* Computable Ordinal constants *)
+Definition succO {n} := lift (@ord0 n).
+Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
+  match m as x return 'I_(x+n) with
+  | 0 => p
+  | m.+1 => cast_ord (esym (addSnnS m n)) (addnO m (succO p))
+  end.
+Definition INO {n} m := addnO m (@ord0 n).
+Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
+
+Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
+
+Notation "[ 'lens' x1 ; .. ; xn ]" :=
+  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
+
+Definition lens3_23 : lens 3 2 := [lens 1; 2].
