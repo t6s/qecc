@@ -171,3 +171,35 @@ Notation "[ 'lens' x1 ; .. ; xn ]" :=
   (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
 
 Definition lens3_23 : lens 3 2 := [lens 1; 2].
+
+Section state.
+Variable (I : finType) (dI : I).
+
+Definition nvect n T := {ffun n.-tuple I -> T}.
+
+Section merge_lens.
+
+Variables (n m : nat) (l : lens n m).
+
+Definition merge_indices (v : m.-tuple I) (w : (n-m).-tuple I) :=
+  [tuple nth (nth dI w (i - count (gtn i) (map val l))) v (index i l) | i < n].
+
+Definition select_other i :=
+  i + \max_(j < size l | count (geq (i+j)) (map val l) == j.+1) j.+1.
+
+Definition extract_others (v : n.-tuple I) : (n-m).-tuple I :=
+  [tuple nth dI v (select_other i) | i < n - m].
+
+Lemma merge_extract (v : n.-tuple I) :
+  merge_indices (extract l v) (extract_others v) = v.
+Proof.
+apply eq_from_tnth => i.
+rewrite tnth_mktuple.
+case/boolP: (i \in val l).
+Abort.
+End merge_lens.
+
+Definition curry T n m (l :lens n m) (st : nvect n T)
+  : nvect m (nvect (n-m) T) :=
+  [ffun v : m.-tuple I =>
+   [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
