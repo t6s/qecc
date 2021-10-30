@@ -181,11 +181,15 @@ Section merge_lens.
 
 Variables (n m : nat) (l : lens n m).
 
+Definition others := [seq i <- enum 'I_n | i \notin val l].
+
+Definition rank_others i := i - size [seq j <- l | (j : 'I_n) < i].
+
 Definition merge_indices (v : m.-tuple I) (w : (n-m).-tuple I) :=
-  [tuple nth (nth dI w (i - count (gtn i) (map val l))) v (index i l) | i < n].
+  [tuple nth (nth dI w (rank_others i)) v (index i l) | i < n].
 
 Definition select_other i :=
-  i + \max_(j < size l | count (geq (i+j)) (map val l) == j.+1) j.+1.
+  i + \max_(j < size l | rank_others (i + j) < i) j.+1.
 
 Definition extract_others (v : n.-tuple I) : (n-m).-tuple I :=
   [tuple nth dI v (select_other i) | i < n - m].
@@ -195,7 +199,61 @@ Lemma merge_extract (v : n.-tuple I) :
 Proof.
 apply eq_from_tnth => i.
 rewrite tnth_mktuple.
-case/boolP: (i \in val l).
+case/boolP: (i \in val l) => Hi.
+  move: (Hi); rewrite -index_mem size_tuple => Hi'.
+  rewrite (_ : index i l = Ordinal Hi') // -tnth_nth.
+  by rewrite tnth_mktuple (tnth_nth i) nth_index.
+rewrite /rank_others nth_default; last first.
+  by rewrite size_tuple leqNgt -[X in _ < X](size_tuple (val l)) index_mem.
+have Hc : i - size [seq j <- l | (j : 'I_n) < i] < n - m.
+  admit.
+rewrite (_ : i - _ = Ordinal Hc) //.
+rewrite -tnth_nth tnth_mktuple (tnth_nth dI).
+congr nth.
+rewrite /select_other /=.
+have Hci (k : 'I_n) : size [seq j <- l | (j : 'I_n) < k] <= k.
+  apply (@leq_trans (size (map (widen_ord (ltnW (ltn_ord k))) (enum 'I_k)))).
+    have : uniq [seq j <- l | (j : 'I_n) < k].
+      apply filter_uniq. exact: lens_uniq.
+    move/uniq_leq_size; apply => j.
+    rewrite mem_filter => /andP[Hjk _].
+    apply/mapP.
+    exists (Ordinal Hjk).
+      by rewrite mem_enum.
+    exact/val_inj.
+  by rewrite size_map size_enum_ord.
+set maxj := \max_(j < size l | _) _.
+have <- : maxj = size [seq j <- l | (j : 'I_n) < i].
+  subst maxj.
+  apply/eqP.
+  rewrite eqn_leq.
+  apply/andP; split.
+    apply/bigmax_leqP => /= j.
+    rewrite ltn_subRL /rank_others.
+    rewrite addnBA; last first.
+      set k := i - _ + j.
+      have Hk : k < n.
+        subst k.
+        case: j => j Hj /=.
+        rewrite size_tuple in Hj.
+        rewrite ltn_subRL addnC in Hc.
+        by rewrite (leq_trans _ Hc) // ltnS leq_add // ltnW.
+      by rewrite (_ : k = Ordinal Hk) // Hci.
+    rewrite addnA addnBA; last exact: Hci.
+    rewrite addKn.
+    set k := i - _ + j.
+    have Hk : k < n.
+      subst k.
+      case: j => j Hj /=.
+      rewrite addnC -ltn_subRL (leq_trans Hc) // leq_sub // ltnW //.
+      by rewrite size_tuple in Hj.
+    rewrite (_ : k = Ordinal Hk) //.
+    rewrite ltn_subLR; last first.
+      by rewrite (leq_trans (Hci (Ordinal Hk))) // leq_add // leq_subr.
+    rewrite addnC ltn_add2r => /leq_trans; apply.
+    rewrite (leq_trans (Hci _)) //= /k.
+    rewrite addnBAC; last by apply Hci.
+    rewrite leq_subLR leq_add //.
 Abort.
 End merge_lens.
 
@@ -203,3 +261,9 @@ Definition curry T n m (l :lens n m) (st : nvect n T)
   : nvect m (nvect (n-m) T) :=
   [ffun v : m.-tuple I =>
    [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
+
+Definition lmodType_C := Type.
+Definition transformation m : forall T : lmodType_C, nvect m T -> nvect m T.
+(*Definition transformation m : forall T : normedLmodType C,
+ {unitary nvect m T -> nvect m T}.*)
+
