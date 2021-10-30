@@ -4,6 +4,25 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Section tnth.
+Lemma nth_tnth T (n i : nat) x0 (v : n.-tuple T) (H : i < n) :
+  nth x0 v i = tnth v (Ordinal H).
+Proof. by rewrite (tnth_nth x0). Qed.
+
+Lemma tnth_inj (A : eqType) n (t : n.-tuple A) :
+  reflect (injective (tnth t)) (uniq t).
+Proof.
+apply: (iffP idP).
+- move=> /uniqP Hu i j.
+  rewrite (tnth_nth (tnth t i)) (tnth_nth (tnth t i) t j).
+  move/(Hu (tnth t i) i j)/val_inj => -> //; by rewrite inE size_tuple.
+- case: t => -[|a t] // Hlen Hinj.
+  apply/(uniqP a) => i j.
+  rewrite !inE !size_tuple => Hi Hj.
+  by rewrite !nth_tnth => /Hinj [].
+Qed.
+End tnth.
+
 Section lens.
 Variables (T : Type) (n m : nat).
 
@@ -36,26 +55,11 @@ Proof.
 apply eq_from_tnth => i.
 rewrite !tnth_mktuple.
 case/boolP: (index i l < m) => Hi.
-  rewrite (_ : index _ _ = Ordinal Hi) // -tnth_nth tnth_mktuple.
-  by rewrite (tnth_nth i) nth_index // -index_mem size_tuple.
+  rewrite nth_tnth tnth_mktuple (tnth_nth i) /=.
+  by rewrite nth_index // -index_mem size_tuple.
 by rewrite nth_default // leqNgt size_tuple.
 Qed.
 End lens.
-
-Lemma tnth_inj (A : eqType) n (t : n.-tuple A) :
-  reflect (injective (tnth t)) (uniq t).
-Proof.
-apply: (iffP idP).
-- move=> /uniqP Hu i j.
-  rewrite (tnth_nth (tnth t i)) (tnth_nth (tnth t i) t j).
-  move/(Hu (tnth t i) i j)/val_inj => -> //; by rewrite inE size_tuple.
-- case: t => -[|a t] // Hlen.
-  move=> Hinj.
-  apply/(uniqP a) => i j.
-  rewrite !inE !size_tuple => Hi Hj.
-  move: (Hinj (Ordinal Hi) (Ordinal Hj)).
-  by rewrite !(tnth_nth a) /= => /[apply] -[].
-Qed.
 
 Section lens_comp.
 
@@ -78,7 +82,7 @@ set k := Ordinal H.
 move: (H).
 rewrite -[X in _ < X](size_tuple l1') index_mem map_comp => /nth_index.
 move/(_ i) <-.
-rewrite (_ : index i l1' = k) // -tnth_nth /= index_map.
+rewrite nth_tnth index_map.
   by rewrite map_tnth_enum.
 by apply/tnth_inj.
 Qed.
@@ -93,8 +97,7 @@ rewrite !tnth_mktuple.
 case/boolP: (i \in val l1) => Hl1.
   move: (Hl1).
   rewrite -index_mem size_tuple => Hl1'.
-  rewrite (index_lens_comp Hl1').
-  rewrite [X in nth _ _ X](_ : index i _ = Ordinal Hl1') // -tnth_nth.
+  rewrite (index_lens_comp Hl1') nth_tnth.
   by rewrite !tnth_mktuple (tnth_nth i) nth_index.
 rewrite nth_default; last first.
   rewrite -index_mem -leqNgt size_tuple in Hl1.
@@ -165,12 +168,14 @@ Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
 Definition INO {n} m := addnO m (@ord0 n).
 Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
 
-Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
-
 Notation "[ 'lens' x1 ; .. ; xn ]" :=
   (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
 
-Definition lens3_23 : lens 3 2 := [lens 1; 2].
+Section ordinal_examples.
+Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
+
+Let lens3_23 : lens 3 2 := [lens 1; 2].
+End ordinal_examples.
 
 Section state.
 Variable (I : finType) (dI : I).
@@ -194,8 +199,7 @@ Lemma size_others : size others == n - m.
 Proof.
 move: (cardsC [set i in val l]).
 move/(f_equal (subn^~  #|[set i in val l]|)).
-rewrite addKn /setC /=.
-rewrite -cards_filter.
+rewrite addKn /setC -cards_filter.
 rewrite (_ : filter _ _ = others); last by apply eq_filter => i; rewrite !inE.
 move->.
 rewrite cardT size_enum_ord cardsE.
@@ -218,17 +222,13 @@ apply eq_from_tnth => i.
 rewrite tnth_mktuple.
 case/boolP: (i \in val l) => Hi.
   move: (Hi); rewrite -index_mem size_tuple => Hi'.
-  rewrite (_ : index i l = Ordinal Hi') // -tnth_nth.
-  by rewrite tnth_mktuple (tnth_nth i) nth_index.
+  by rewrite nth_tnth tnth_mktuple (tnth_nth i) nth_index.
 rewrite nth_default; last first.
-  by rewrite size_tuple leqNgt -[X in _ < X](size_tuple (val l)) index_mem.
+  by rewrite -index_mem !size_tuple -leqNgt in Hi *.
 have Hc : i \in val lothers.
   by rewrite mem_filter Hi /= mem_enum.
-move: (Hc).
-rewrite -index_mem size_tuple => Hc'.
-rewrite (_ : index _ _ = Ordinal Hc') //.
-rewrite -tnth_nth tnth_mktuple.
-by rewrite (tnth_nth i) /= nth_index.
+move: (Hc); rewrite -index_mem size_tuple => Hc'.
+by rewrite nth_tnth tnth_mktuple (tnth_nth i) /= nth_index.
 Qed.
 End merge_lens.
 
@@ -237,8 +237,12 @@ Definition curry T n m (l :lens n m) (st : nvect n T)
   [ffun v : m.-tuple I =>
    [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
 
-Definition lmodType_C := Type.
-Definition transformation m : forall T : lmodType_C, nvect m T -> nvect m T.
+Section application.
+Let lmodType_C := Type.
+Let transformation m : forall T : lmodType_C, nvect m T -> nvect m T.
 (*Definition transformation m : forall T : normedLmodType C,
  {unitary nvect m T -> nvect m T}.*)
+End application.
+End state.
+
 
