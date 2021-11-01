@@ -237,6 +237,28 @@ Definition curry T n m (l :lens n m) (st : nvect n T)
   [ffun v : m.-tuple I =>
    [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
 
+Definition uncurry T n m (l : lens n m) (st : nvect m (nvect (n-m) T))
+  : nvect n T.
+Admitted.
+
+Definition endo m := forall T, nvect m T -> nvect m T.
+
+Definition focus' n m (l : lens n m) (tr : endo m) : endo n :=
+  fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
+
+(* horizontal composition of endomorphisms *)
+Lemma focus'C T n m p (l : lens n m) (l' : lens n p)
+      (tr : endo m) (tr' : endo p) (v : nvect n T) :
+  [disjoint val l & val l'] -> 
+  focus' l tr (focus' l' tr' v) = focus' l' tr' (focus' l tr v).
+Abort.
+
+(* associativity of actions of lenses *)
+Lemma focus'A T n m p (l : lens n m) (l' : lens m p)
+      (tr : endo p) (v : nvect n T) :
+  focus' (lens_comp l l') tr v = focus' l (focus' l' tr) v.
+Abort.
+
 Section application.
 Let lmodType_C := Type.
 Let transformation m : forall T : lmodType_C, nvect m T -> nvect m T.
