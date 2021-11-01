@@ -215,7 +215,7 @@ Defined.
 Definition merge_indices (v : m.-tuple I) (w : (n-m).-tuple I) :=
   [tuple nth (nth dI w (index i lothers)) v (index i l) | i < n].
 
-Lemma merge_indices_ok (v : n.-tuple I) :
+Lemma merge_indices_extract (v : n.-tuple I) :
   merge_indices (extract l v) (extract lothers v) = v.
 Proof.
 apply eq_from_tnth => i.
@@ -230,16 +230,51 @@ have Hc : i \in val lothers.
 move: (Hc); rewrite -index_mem size_tuple => Hc'.
 by rewrite nth_tnth tnth_mktuple (tnth_nth i) /= nth_index.
 Qed.
+
+Lemma extract_merge v1 v2 : extract l (merge_indices v1 v2) = v1.
+Proof.
+apply eq_from_tnth => i. 
+rewrite !tnth_mktuple.
+rewrite [X in index X l](tnth_nth (tnth l i)) nthK.
+- by rewrite -tnth_nth.
+- exact: lens_uniq.
+- by rewrite inE size_tuple.
+Qed.
+
+Lemma extract_lothers_merge v1 v2 : extract lothers (merge_indices v1 v2) = v2.
+Proof.
+apply eq_from_tnth => i. 
+rewrite !tnth_mktuple.
+rewrite nth_default.
+  rewrite (tnth_nth (tnth lothers i)) nthK.
+  - by rewrite -tnth_nth.
+  - exact: lens_uniq.
+  - by rewrite inE size_tuple.
+rewrite memNindex. by rewrite !size_tuple.
+apply/negP => /tnthP [j] Hj.
+move: (mem_tnth i lothers).
+by rewrite Hj mem_filter mem_tnth.
+Qed.
 End merge_lens.
 
-Definition curry T n m (l :lens n m) (st : nvect n T)
-  : nvect m (nvect (n-m) T) :=
+Section curry.
+Variables (T : Type) (n m : nat) (l : lens n m).
+
+Definition curry (st : nvect n T) : nvect m (nvect (n-m) T) :=
   [ffun v : m.-tuple I =>
    [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
 
-Definition uncurry T n m (l : lens n m) (st : nvect m (nvect (n-m) T))
-  : nvect n T.
-Admitted.
+Definition uncurry (st : nvect m (nvect (n-m) T)) : nvect n T :=
+  [ffun v : n.-tuple I => st (extract l v) (extract (lothers l) v)].
+
+Lemma curryK : cancel uncurry curry.
+Proof.
+move=> v. apply/ffunP => v1. apply/ffunP => v2.
+by rewrite !ffunE extract_merge extract_lothers_merge.
+Qed.
+
+Lemma uncurryK : cancel curry uncurry.
+Proof. move=> v. apply/ffunP => w. by rewrite !ffunE merge_indicesE. Qed.
 
 Definition endo m := forall T, nvect m T -> nvect m T.
 
