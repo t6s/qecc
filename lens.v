@@ -32,17 +32,19 @@ Canonical len_subType := Eval hnf in [subType for lens_t].
 Variables (l : lens) (f : m.-tuple T -> m.-tuple T).
 
 Definition extract (t : n.-tuple T) := [tuple tnth t (tnth l i) | i < m].
+
+(* Focusing on subvector *)
 Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
-Definition focus (t : n.-tuple T) := inject t (f (extract t)).
+Definition focus1 (t : n.-tuple T) := inject t (f (extract t)).
 
-Lemma focus_out t i : i \notin val l -> tnth (focus t) i = tnth t i.
+Lemma focus1_out t i : i \notin val l -> tnth (focus1 t) i = tnth t i.
 Proof.
 move=> Hi.
 by rewrite tnth_mktuple nth_default // memNindex // !size_tuple.
 Qed.
 
-Lemma focus_in t : extract (focus t) = f (extract t).
+Lemma focus1_in t : extract (focus1 t) = f (extract t).
 Proof.
 apply eq_from_tnth => i.
 rewrite !tnth_mktuple [RHS](tnth_nth (tnth t (tnth l i))).
@@ -61,10 +63,8 @@ by rewrite nth_default // leqNgt size_tuple.
 Qed.
 End lens.
 
-Section lens_comp.
-
 (* Composition of lenses *)
-
+Section lens_comp.
 Variables (n m p : nat) (l1 : lens n m) (l2 : lens m p).
 
 Definition lens_comp : lens n p.
@@ -73,6 +73,13 @@ abstract (case: l1 l2 => l1' Hl1 [l2' Hl2] /=;
           rewrite map_inj_uniq ?enum_uniq // => i j /tnth_inj /tnth_inj; exact).
 Defined.
 
+Variable (T : eqType).
+
+Lemma extract_comp (t : n.-tuple T) :
+  extract lens_comp t = extract l2 (extract l1 t).
+Proof. apply eq_from_tnth => i; by rewrite !tnth_mktuple. Qed.
+
+(* Composition for subvectors *)
 Lemma index_lens_comp i (H : index i l1 < m) :
   index i lens_comp = index (Ordinal H) l2.
 Proof.
@@ -86,8 +93,6 @@ rewrite nth_tnth index_map.
   by rewrite map_tnth_enum.
 by apply/tnth_inj.
 Qed.
-
-Variable (T : eqType).
 
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
@@ -108,15 +113,11 @@ apply: contra Hl1 => /mapP [j Hj] ->.
 by rewrite mem_tnth.
 Qed.
 
-Lemma extract_comp (t : n.-tuple T) :
-  extract lens_comp t = extract l2 (extract l1 t).
-Proof. apply eq_from_tnth => i; by rewrite !tnth_mktuple. Qed.
+Lemma focus1_comp (f : p.-tuple T -> p.-tuple T) :
+  focus1 l1 (focus1 l2 f) =1 focus1 lens_comp f.
+Proof. move=> t; by rewrite /focus1 inject_comp extract_comp. Qed.
 
-Lemma focus_comp (f : p.-tuple T -> p.-tuple T) :
-  focus l1 (focus l2 f) =1 focus lens_comp f.
-Proof. move=> t; by rewrite /focus inject_comp extract_comp. Qed.
-
-(* Commutativity of focussed operations *)
+(* Commutativity of subvector operations *)
 
 Variables (l3 : lens n p).
 Variable (f : m.-tuple T -> m.-tuple T) (g : p.-tuple T -> p.-tuple T).
@@ -138,52 +139,32 @@ rewrite nth_default // leqNgt size_tuple -[X in _ < X](size_tuple l1).
 by rewrite index_mem (disjointFl Hdisj) // mem_tnth.
 Qed.
 
-Lemma focus_commu : focus l1 f \o focus l3 g =1 focus l3 g \o focus l1 f.
+Lemma focus1_commu : focus1 l1 f \o focus1 l3 g =1 focus1 l3 g \o focus1 l1 f.
 Proof.
 move=> t /=.
 apply eq_from_tnth => i.
 case/boolP: (i \in val l1) => Hl1.
   have Hl3 : i \notin val l3 by rewrite (disjointFr Hdisj).
-  rewrite (focus_out _ _ Hl3).
-  rewrite /focus extract_inject !tnth_mktuple.
+  rewrite (focus1_out _ _ Hl3).
+  rewrite /focus1 extract_inject !tnth_mktuple.
   rewrite (set_nth_default (tnth t i)) //.
   by rewrite size_tuple -[X in _ < X](size_tuple l1) index_mem.
 case/boolP: (i \in val l3) => Hl3.
-  rewrite (focus_out _ _ Hl1).
-  rewrite /focus extract_inject' !tnth_mktuple.
+  rewrite (focus1_out _ _ Hl1).
+  rewrite /focus1 extract_inject' !tnth_mktuple.
   rewrite (set_nth_default (tnth t i)) //.
   by rewrite size_tuple -[X in _ < X](size_tuple l3) index_mem.
-by rewrite !focus_out.
+by rewrite !focus1_out.
 Qed.
-
 End lens_comp.
 
-(* Computable Ordinal constants *)
-Definition succO {n} := lift (@ord0 n).
-Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
-  match m as x return 'I_(x+n) with
-  | 0 => p
-  | m.+1 => cast_ord (esym (addSnnS m n)) (addnO m (succO p))
-  end.
-Definition INO {n} m := addnO m (@ord0 n).
-Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
-
-Notation "[ 'lens' x1 ; .. ; xn ]" :=
-  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
-
-Section ordinal_examples.
-Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
-
-Let lens3_23 : lens 3 2 := [lens 1; 2].
-End ordinal_examples.
-
-Section state.
+Section tensor_space.
 Variable (I : finType) (dI : I).
 
 Definition nvect n T := {ffun n.-tuple I -> T}.
+Definition endo m := forall T, nvect m T -> nvect m T.
 
 Section merge_lens.
-
 Variables (n m : nat) (l : lens n m).
 
 Lemma cards_filter (A : finType) (p : pred A) :
@@ -231,75 +212,90 @@ move: (Hc); rewrite -index_mem size_tuple => Hc'.
 by rewrite nth_tnth tnth_mktuple (tnth_nth i) /= nth_index.
 Qed.
 
+Lemma tnth_lensK p (lp : lens n p) i : index (tnth lp i) lp = i.
+Proof.
+by rewrite (tnth_nth (tnth lp i)) index_uniq // (lens_uniq,size_tuple).
+Qed.
+
 Lemma extract_merge v1 v2 : extract l (merge_indices v1 v2) = v1.
 Proof.
-apply eq_from_tnth => i. 
-rewrite !tnth_mktuple.
-rewrite [X in index X l](tnth_nth (tnth l i)) nthK.
-- by rewrite -tnth_nth.
-- exact: lens_uniq.
-- by rewrite inE size_tuple.
+apply eq_from_tnth => i; by rewrite !tnth_mktuple tnth_lensK -tnth_nth.
 Qed.
 
 Lemma extract_lothers_merge v1 v2 : extract lothers (merge_indices v1 v2) = v2.
 Proof.
 apply eq_from_tnth => i. 
-rewrite !tnth_mktuple.
-rewrite nth_default.
-  rewrite (tnth_nth (tnth lothers i)) nthK.
-  - by rewrite -tnth_nth.
-  - exact: lens_uniq.
-  - by rewrite inE size_tuple.
-rewrite memNindex. by rewrite !size_tuple.
+rewrite !tnth_mktuple nth_default.
+  by rewrite tnth_lensK -tnth_nth.
+rewrite memNindex ?size_tuple //.
 apply/negP => /tnthP [j] Hj.
 move: (mem_tnth i lothers).
 by rewrite Hj mem_filter mem_tnth.
 Qed.
-End merge_lens.
 
-Section curry.
-Variables (T : Type) (n m : nat) (l : lens n m).
+Variables (T : Type).
 
 Definition curry (st : nvect n T) : nvect m (nvect (n-m) T) :=
   [ffun v : m.-tuple I =>
-   [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
+   [ffun w : (n-m).-tuple I => st (merge_indices v w)]].
 
 Definition uncurry (st : nvect m (nvect (n-m) T)) : nvect n T :=
-  [ffun v : n.-tuple I => st (extract l v) (extract (lothers l) v)].
+  [ffun v : n.-tuple I => st (extract l v) (extract lothers v)].
 
 Lemma curryK : cancel uncurry curry.
 Proof.
-move=> v. apply/ffunP => v1. apply/ffunP => v2.
+move=> v; apply/ffunP => v1; apply/ffunP => v2.
 by rewrite !ffunE extract_merge extract_lothers_merge.
 Qed.
 
 Lemma uncurryK : cancel curry uncurry.
-Proof. move=> v. apply/ffunP => w. by rewrite !ffunE merge_indicesE. Qed.
+Proof.
+move=> v; apply/ffunP => w.
+by rewrite !ffunE merge_indices_extract.
+Qed.
+End merge_lens.
 
-Definition endo m := forall T, nvect m T -> nvect m T.
-
-Definition focus' n m (l : lens n m) (tr : endo m) : endo n :=
+Section focus.
+Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
   fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
 
 (* horizontal composition of endomorphisms *)
-Lemma focus'C T n m p (l : lens n m) (l' : lens n p)
+Lemma focusC T n m p (l : lens n m) (l' : lens n p)
       (tr : endo m) (tr' : endo p) (v : nvect n T) :
   [disjoint val l & val l'] -> 
-  focus' l tr (focus' l' tr' v) = focus' l' tr' (focus' l tr v).
+  focus l tr (focus l' tr' v) = focus l' tr' (focus l tr v).
 Abort.
 
 (* associativity of actions of lenses *)
-Lemma focus'A T n m p (l : lens n m) (l' : lens m p)
+Lemma focusA T n m p (l : lens n m) (l' : lens m p)
       (tr : endo p) (v : nvect n T) :
-  focus' (lens_comp l l') tr v = focus' l (focus' l' tr) v.
+  focus (lens_comp l l') tr v = focus l (focus l' tr) v.
 Abort.
+End focus.
 
 Section application.
 Let lmodType_C := Type.
-Let transformation m : forall T : lmodType_C, nvect m T -> nvect m T.
+Let transformation m := forall T : lmodType_C, nvect m T -> nvect m T.
 (*Definition transformation m : forall T : normedLmodType C,
  {unitary nvect m T -> nvect m T}.*)
 End application.
-End state.
+End tensor_space.
 
+(* Computable Ordinal constants *)
+Definition succO {n} := lift (@ord0 n).
+Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
+  match m as x return 'I_(x+n) with
+  | 0 => p
+  | m.+1 => cast_ord (esym (addSnnS m n)) (addnO m (succO p))
+  end.
+Definition INO {n} m := addnO m (@ord0 n).
+Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
 
+Notation "[ 'lens' x1 ; .. ; xn ]" :=
+  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
+
+Section ordinal_examples.
+Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
+
+Let lens3_23 : lens 3 2 := [lens 1; 2].
+End ordinal_examples.
