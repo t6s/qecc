@@ -112,8 +112,7 @@ Lemma inject_comp (t : n.-tuple T) t' :
 Proof.
 apply eq_from_tnth => i.
 rewrite !tnth_mktuple.
-case/boolP: (i \in val l1) => Hl1.
-  move: (Hl1).
+case/boolP: (i \in val l1) => [/[dup]|] Hl1.
   rewrite -index_mem size_tuple => Hl1'.
   rewrite (index_lens_comp Hl1') nth_tnth.
   by rewrite !tnth_mktuple (tnth_nth i) nth_index.
@@ -156,15 +155,11 @@ move=> t /=.
 apply eq_from_tnth => i.
 case/boolP: (i \in val l1) => Hl1.
   have Hl3 : i \notin val l3 by rewrite (disjointFr Hdisj).
-  rewrite (focus1_out _ _ Hl3).
-  rewrite /focus1 extract_inject !tnth_mktuple.
-  rewrite (set_nth_default (tnth t i)) //.
-  by rewrite size_tuple -[X in _ < X](size_tuple l1) index_mem.
+  rewrite (focus1_out _ _ Hl3) /focus1 extract_inject !tnth_mktuple.
+  apply set_nth_default; by rewrite -index_mem !size_tuple in Hl1 *.
 case/boolP: (i \in val l3) => Hl3.
-  rewrite (focus1_out _ _ Hl1).
-  rewrite /focus1 extract_inject' !tnth_mktuple.
-  rewrite (set_nth_default (tnth t i)) //.
-  by rewrite size_tuple -[X in _ < X](size_tuple l3) index_mem.
+  rewrite (focus1_out _ _ Hl1) /focus1 extract_inject' !tnth_mktuple.
+  apply set_nth_default; by rewrite -index_mem !size_tuple in Hl3 *.
 by rewrite !focus1_out.
 Qed.
 End lens_comp.
