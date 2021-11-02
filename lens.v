@@ -4,6 +4,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Lemma addnLR m n p : m + n = p -> n = p - m.
+Proof. move/(f_equal (subn^~ m)); by rewrite addKn. Qed.
+
 Section tnth.
 Lemma nth_tnth T (n i : nat) x0 (v : n.-tuple T) (H : i < n) :
   nth x0 v i = tnth v (Ordinal H).
@@ -52,14 +55,24 @@ case: l => /= s Hu.
 by rewrite index_uniq // size_tuple.
 Qed.
 
+Lemma nth_extract_index dI t i :
+  i \in val l -> nth dI (extract t) (index i l) = tnth t i.
+Proof.
+move/[dup] => Hi; rewrite -index_mem size_tuple => Hi'.
+by rewrite nth_tnth tnth_mktuple (tnth_nth i) /= nth_index.
+Qed.
+
+Lemma nth_extract_out dI t i :
+  i \notin val l -> nth dI (extract t) (index i l) = dI.
+Proof.
+move=> Hi; rewrite nth_default // leqNgt.
+apply: contra Hi; by rewrite -index_mem !size_tuple.
+Qed.
+
 Lemma inject_extract t : inject t (extract t) = t.
 Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_mktuple.
-case/boolP: (index i l < m) => Hi.
-  rewrite nth_tnth tnth_mktuple (tnth_nth i) /=.
-  by rewrite nth_index // -index_mem size_tuple.
-by rewrite nth_default // leqNgt size_tuple.
+apply eq_from_tnth => i; rewrite !tnth_mktuple.
+case/boolP: (i \in val l) => [/nth_extract_index | /nth_extract_out]; exact.
 Qed.
 End lens.
 
@@ -104,9 +117,7 @@ case/boolP: (i \in val l1) => Hl1.
   rewrite -index_mem size_tuple => Hl1'.
   rewrite (index_lens_comp Hl1') nth_tnth.
   by rewrite !tnth_mktuple (tnth_nth i) nth_index.
-rewrite nth_default; last first.
-  rewrite -index_mem -leqNgt size_tuple in Hl1.
-  by rewrite size_tuple.
+rewrite nth_default; last by rewrite -index_mem -leqNgt !size_tuple in Hl1 *.
 rewrite nth_default // leqNgt size_tuple.
 rewrite -[X in _ < X](size_tuple lens_comp) index_mem.
 apply: contra Hl1 => /mapP [j Hj] ->.
@@ -168,24 +179,21 @@ Section merge_lens.
 Variables (n m : nat) (l : lens n m).
 
 Lemma cards_filter (A : finType) (p : pred A) :
-  size [seq a <- enum A | p a] = #|[set a : A | p a]|.
+  #|[set a : A | p a]| = size [seq a <- enum A | p a].
 Proof.
 rewrite cardsE /= cardE -filter_predI.
 congr size; apply eq_filter => /= i. 
-by rewrite !inE andbT -[RHS]topredE.
+by rewrite !inE andbT -topredE.
 Qed.
 
 Definition others := [seq i <- enum 'I_n | i \notin val l].
 Lemma size_others : size others == n - m.
 Proof.
-move: (cardsC [set i in val l]).
-move/(f_equal (subn^~  #|[set i in val l]|)).
-rewrite addKn /setC -cards_filter.
+move/cardsC/addnLR: [set i in val l].
+rewrite [LHS]cards_filter.
 rewrite (_ : filter _ _ = others); last by apply eq_filter => i; rewrite !inE.
-move->.
-rewrite cardT size_enum_ord cardsE.
-move/card_uniqP: (lens_uniq l) => ->.
-by rewrite size_tuple.
+move/card_uniqP: (lens_uniq l).
+by rewrite size_tuple cardT size_enum_ord cardsE => -> ->.
 Qed.
 
 Definition lothers : lens n (n-m).
@@ -201,15 +209,8 @@ Lemma merge_indices_extract (v : n.-tuple I) :
 Proof.
 apply eq_from_tnth => i.
 rewrite tnth_mktuple.
-case/boolP: (i \in val l) => Hi.
-  move: (Hi); rewrite -index_mem size_tuple => Hi'.
-  by rewrite nth_tnth tnth_mktuple (tnth_nth i) nth_index.
-rewrite nth_default; last first.
-  by rewrite -index_mem !size_tuple -leqNgt in Hi *.
-have Hc : i \in val lothers.
-  by rewrite mem_filter Hi /= mem_enum.
-move: (Hc); rewrite -index_mem size_tuple => Hc'.
-by rewrite nth_tnth tnth_mktuple (tnth_nth i) /= nth_index.
+case/boolP: (i \in val l) => Hi; first by rewrite nth_extract_index.
+by rewrite nth_extract_out // nth_extract_index // mem_filter Hi /= mem_enum.
 Qed.
 
 Lemma tnth_lensK p (lp : lens n p) i : index (tnth lp i) lp = i.
@@ -224,13 +225,10 @@ Qed.
 
 Lemma extract_lothers_merge v1 v2 : extract lothers (merge_indices v1 v2) = v2.
 Proof.
-apply eq_from_tnth => i. 
-rewrite !tnth_mktuple nth_default.
+apply eq_from_tnth => i; rewrite !tnth_mktuple nth_default.
   by rewrite tnth_lensK -tnth_nth.
 rewrite memNindex ?size_tuple //.
-apply/negP => /tnthP [j] Hj.
-move: (mem_tnth i lothers).
-by rewrite Hj mem_filter mem_tnth.
+move: (mem_tnth i lothers); rewrite mem_filter; by case/andP.
 Qed.
 
 Variables (T : Type).
