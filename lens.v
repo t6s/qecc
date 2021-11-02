@@ -32,7 +32,9 @@ Variables (T : Type) (n m : nat).
 Record lens := mkLens {lens_t :> m.-tuple 'I_n ; lens_uniq : uniq lens_t}.
 Canonical len_subType := Eval hnf in [subType for lens_t].
 
-Variables (l : lens) (f : m.-tuple T -> m.-tuple T).
+Definition endo1 := m.-tuple T -> m.-tuple T.
+
+Variables (l : lens) (f : endo1).
 
 Definition extract (t : n.-tuple T) := [tuple tnth t (tnth l i) | i < m].
 
@@ -102,8 +104,7 @@ set k := Ordinal H.
 move: (H).
 rewrite -[X in _ < X](size_tuple l1') index_mem map_comp => /nth_index.
 move/(_ i) <-.
-rewrite nth_tnth index_map.
-  by rewrite map_tnth_enum.
+rewrite nth_tnth index_map ?map_tnth_enum //.
 by apply/tnth_inj.
 Qed.
 
@@ -119,8 +120,7 @@ case/boolP: (i \in val l1) => [/[dup]|] Hl1.
 rewrite nth_default; last by rewrite -index_mem -leqNgt !size_tuple in Hl1 *.
 rewrite nth_default // leqNgt size_tuple.
 rewrite -[X in _ < X](size_tuple lens_comp) index_mem.
-apply: contra Hl1 => /mapP [j Hj] ->.
-by rewrite mem_tnth.
+apply: contra Hl1 => /mapP [j Hj] ->; by rewrite mem_tnth.
 Qed.
 
 Lemma focus1_comp (f : p.-tuple T -> p.-tuple T) :
@@ -129,37 +129,36 @@ Proof. move=> t; by rewrite /focus1 inject_comp extract_comp. Qed.
 
 (* Commutativity of subvector operations *)
 
-Variables (l3 : lens n p).
-Variable (f : m.-tuple T -> m.-tuple T) (g : p.-tuple T -> p.-tuple T).
-Hypothesis Hdisj : [disjoint val l1 & val l3].
+Section focus_commu_in.
+Variables (q r : nat) (l : lens n q) (l' : lens n r) (t : n.-tuple T).
+Hypothesis Hdisj : [disjoint val l & val l'].
 
-Lemma extract_inject (t : n.-tuple T) t' :
-  extract l1 (inject l3 t t') = extract l1 t.
+Lemma extract_inject t' : extract l (inject l' t t') = extract l t.
 Proof.
 apply eq_from_tnth => i; rewrite !tnth_mktuple.
-rewrite nth_default // leqNgt size_tuple -[X in _ < X](size_tuple l3).
+rewrite nth_default // leqNgt size_tuple -[X in _ < X](size_tuple l').
 by rewrite index_mem (disjointFr Hdisj) // mem_tnth.
 Qed.
 
-Lemma extract_inject' (t : n.-tuple T) t' :
-  extract l3 (inject l1 t t') = extract l3 t.
+Lemma focus1_commu_in (f : endo1 T q) (g : endo1 T r) i : i \in val l ->
+  tnth (focus1 l f (focus1 l' g t)) i = tnth (focus1 l' g (focus1 l f t)) i.
 Proof.
-apply eq_from_tnth => i; rewrite !tnth_mktuple.
-rewrite nth_default // leqNgt size_tuple -[X in _ < X](size_tuple l1).
-by rewrite index_mem (disjointFl Hdisj) // mem_tnth.
+move=> Hl; have Hl' : i \notin val l' by rewrite (disjointFr Hdisj).
+rewrite (focus1_out _ _ Hl') /focus1 extract_inject // !tnth_mktuple.
+apply set_nth_default; by rewrite -index_mem !size_tuple in Hl *.
 Qed.
+End focus_commu_in.
+
+Variables (l3 : lens n p) (f : endo1 T m) (g : endo1 T p).
+Hypothesis Hdisj : [disjoint val l1 & val l3].
 
 Lemma focus1_commu : focus1 l1 f \o focus1 l3 g =1 focus1 l3 g \o focus1 l1 f.
 Proof.
 move=> t /=.
 apply eq_from_tnth => i.
-case/boolP: (i \in val l1) => Hl1.
-  have Hl3 : i \notin val l3 by rewrite (disjointFr Hdisj).
-  rewrite (focus1_out _ _ Hl3) /focus1 extract_inject !tnth_mktuple.
-  apply set_nth_default; by rewrite -index_mem !size_tuple in Hl1 *.
+case/boolP: (i \in val l1) => Hl1; first exact: focus1_commu_in.
 case/boolP: (i \in val l3) => Hl3.
-  rewrite (focus1_out _ _ Hl1) /focus1 extract_inject' !tnth_mktuple.
-  apply set_nth_default; by rewrite -index_mem !size_tuple in Hl3 *.
+  by rewrite [RHS]focus1_commu_in // disjoint_sym.
 by rewrite !focus1_out.
 Qed.
 End lens_comp.
@@ -202,8 +201,7 @@ Definition merge_indices (v : m.-tuple I) (w : (n-m).-tuple I) :=
 Lemma merge_indices_extract (v : n.-tuple I) :
   merge_indices (extract l v) (extract lothers v) = v.
 Proof.
-apply eq_from_tnth => i.
-rewrite tnth_mktuple.
+apply eq_from_tnth => i; rewrite tnth_mktuple.
 case/boolP: (i \in val l) => Hi; first by rewrite nth_extract_index.
 by rewrite nth_extract_out // nth_extract_index // mem_filter Hi /= mem_enum.
 Qed.
