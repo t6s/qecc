@@ -12,8 +12,8 @@ Lemma nth_tnth T (n i : nat) x0 (v : n.-tuple T) (H : i < n) :
   nth x0 v i = tnth v (Ordinal H).
 Proof. by rewrite (tnth_nth x0). Qed.
 
-Lemma tnth_inj (A : eqType) n (t : n.-tuple A) :
-  reflect (injective (tnth t)) (uniq t).
+Variables (A : eqType) (n : nat).
+Lemma tnth_inj (t : n.-tuple A) : reflect (injective (tnth t)) (uniq t).
 Proof.
 apply: (iffP idP).
 - move=> /uniqP Hu i j.
@@ -24,6 +24,9 @@ apply: (iffP idP).
   rewrite !inE !size_tuple => Hi Hj.
   by rewrite !nth_tnth => /Hinj [].
 Qed.
+
+Lemma index_tuple (t : n.-tuple A) i : (index i t < n) <-> (i \in t).
+Proof. by rewrite -index_mem size_tuple. Qed.
 End tnth.
 
 Section lens.
@@ -43,9 +46,6 @@ Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
 Definition focus1 (t : n.-tuple T) := inject t (f (extract t)).
 
-Lemma index_lens i : (index i l < m) <-> (i \in val l).
-Proof. by rewrite -index_mem size_tuple. Qed.
-
 Lemma focus1_out t i : i \notin val l -> tnth (focus1 t) i = tnth t i.
 Proof.
 move=> Hi; by rewrite tnth_mktuple nth_default // memNindex ?size_tuple.
@@ -62,7 +62,7 @@ Qed.
 Lemma nth_extract_index dI t i :
   i \in val l -> nth dI (extract t) (index i l) = tnth t i.
 Proof.
-move/[dup] => Hi /index_lens Hi'.
+move/[dup] => Hi /index_tuple Hi'.
 by rewrite nth_tnth tnth_mktuple (tnth_nth i) /= nth_index.
 Qed.
 
@@ -100,7 +100,7 @@ Proof.
 rewrite /=.
 move: l1 l2 H => [l1' Hl1'] [l2' Hl2'] /= H.
 set k := Ordinal H.
-move/(index_lens (mkLens Hl1'))/nth_index: (H).
+move/index_tuple/nth_index: (H).
 move/(_ i) => /= <-.
 rewrite map_comp nth_tnth index_map ?map_tnth_enum //; by apply/tnth_inj.
 Qed.
@@ -111,7 +111,7 @@ Proof.
 apply eq_from_tnth => i.
 rewrite !tnth_mktuple.
 case/boolP: (i \in val l1) => Hl1.
-  move/index_lens: (Hl1) => Hl1'.
+  move/index_tuple: (Hl1) => Hl1'.
   rewrite (index_lens_comp Hl1') nth_tnth.
   by rewrite !tnth_mktuple (tnth_nth i) nth_index.
 rewrite !nth_default // memNindex ?size_tuple //.
@@ -139,7 +139,7 @@ Lemma focus1_commu_in (f : endo1 T q) (g : endo1 T r) i : i \in val l ->
 Proof.
 move=> Hl; have Hl' : i \notin val l' by rewrite (disjointFr Hdisj).
 rewrite (focus1_out _ _ Hl') /focus1 extract_inject // !tnth_mktuple.
-apply set_nth_default; by rewrite size_tuple index_lens.
+apply set_nth_default; by rewrite size_tuple index_tuple.
 Qed.
 End focus_commu_in.
 
@@ -157,11 +157,12 @@ by rewrite !focus1_out.
 Qed.
 End lens_comp.
 
+From mathcomp Require Import all_algebra.
+
 Section tensor_space.
 Variable (I : finType) (dI : I).
 
 Definition nvect n T := {ffun n.-tuple I -> T}.
-Definition endo m := forall T, nvect m T -> nvect m T.
 
 Section merge_lens.
 Variables (n m : nat) (l : lens n m).
@@ -218,7 +219,7 @@ rewrite memNindex ?size_tuple //.
 move: (mem_tnth i lothers); rewrite mem_filter; by case/andP.
 Qed.
 
-Variables (T : Type).
+Variables T : Type.
 
 Definition curry (st : nvect n T) : nvect m (nvect (n-m) T) :=
   [ffun v : m.-tuple I =>
@@ -239,6 +240,46 @@ move=> v; apply/ffunP => w.
 by rewrite !ffunE merge_indices_extract.
 Qed.
 End merge_lens.
+
+Variable (R : ringType).
+Definition endo m := forall T : lmodType R, nvect m T -> nvect m T.
+
+Let vsz m := #|I| ^ m.
+Fixpoint index_of_vec_rec (v : seq I) : nat :=
+  match v with
+  | nil => 0
+  | i :: v' => enum_rank i + #|I| * index_of_vec_rec v'
+  end.
+Lemma index_of_vec_ltn m (v : seq I) :
+  size v = m -> index_of_vec_rec v < vsz m.
+Proof.
+rewrite /vsz. 
+elim: v m => [|i v IH []] //= n.
+  move <-. by rewrite expn0.
+case=> Hm.
+rewrite expnS.
+case: enum_rank => j /=.
+rewrite (_ : #|_| = #|I|) // => Hj.
+ Search (_ ^ _ >= _).
+have : #|I| ^ n > 0.
+  rewrite -(expn0 #|I|) leq_pexp2l //.
+  by case: #|I| Hj.
+move CI: (#|I| ^ n) => [|sz] // _.
+by rewrite mulnS -addSn leq_add // leq_mul // -ltnS -CI IH.
+Qed.
+
+Definition index_of_vec m (v : m.-tuple I) : 'I_(vsz m).
+exists (index_of_vec_rec (rev v)).
+abstract (by rewrite index_of_vec_ltn // size_rev size_tuple).
+Defined.
+
+Definition vec_of_index m (i : 'I_(vsz m)) : m.-tuple I.
+Admitted.
+
+Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) : endo m :=
+  fun T (v : nvect m T) =>
+    [ffun vi : m.-tuple I =>
+     \sum_(vj : m.-tuple I) M (index_of_vec vi) (index_of_vec vj) *: v vj]%R.
 
 Section focus.
 Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
