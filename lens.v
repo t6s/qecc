@@ -333,10 +333,28 @@ End index_of_vec_bij.
 Variable (R : ringType).
 Definition endo m := forall T : lmodType R, nvect m T -> nvect m T.
 
-Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) : endo m :=
+Definition nvendo m (M : nvect m (nvect m R)) : endo m :=
   fun T (v : nvect m T) =>
-    [ffun vi : m.-tuple I =>
-     \sum_(vj : m.-tuple I) M (index_of_vec vi) (index_of_vec vj) *: v vj]%R.
+    [ffun vi : m.-tuple I => \sum_(vj : m.-tuple I) M vi vj *: v vj]%R.
+
+Definition mxnvect m (M : 'M[R]_(vsz m,vsz m)) : nvect m (nvect m R) :=
+  [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
+
+Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := nvendo (mxnvect M).
+
+Definition vec_nvect m (X : 'rV[R]_(vsz m)) : nvect m R^o :=
+  [ffun vi => X ord0 (index_of_vec vi)].
+
+Definition nvect_vec H m (X : nvect m R^o) : 'rV[R]_(vsz m) :=
+  \row_i X (vec_of_index H i).
+
+Lemma nvect_vector (H : #|I| > 0) n : Vector.axiom (vsz n) (nvect n R^o).
+Proof.
+exists (@nvect_vec H n).
+- move=> x /= y z. rewrite /nvect_vec.
+  apply/rowP => i.
+  rewrite mxE.
+Abort.
 
 Section focus.
 Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
