@@ -353,8 +353,11 @@ Proof.
 exists (@nvect_vec H n).
 - move=> x /= y z. rewrite /nvect_vec.
   apply/rowP => i.
-  rewrite mxE.
-Abort.
+  by rewrite !mxE !ffunE.
+- exists (@vec_nvect n).
+  + move=> v. apply/ffunP => vi. by rewrite !ffunE !mxE index_of_vecK.
+  + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
+Qed.
 
 Section focus.
 Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
