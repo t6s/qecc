@@ -241,30 +241,27 @@ by rewrite !ffunE merge_indices_extract.
 Qed.
 End merge_lens.
 
-Variable (R : ringType).
-Definition endo m := forall T : lmodType R, nvect m T -> nvect m T.
-
 Let vsz m := #|I| ^ m.
+
+Section index_of_vec_bij.
 Fixpoint index_of_vec_rec (v : seq I) : nat :=
   match v with
   | nil => 0
   | i :: v' => enum_rank i + #|I| * index_of_vec_rec v'
   end.
+
 Lemma index_of_vec_ltn m (v : seq I) :
   size v = m -> index_of_vec_rec v < vsz m.
 Proof.
 rewrite /vsz. 
-elim: v m => [|i v IH []] //= n.
+elim: v m => [|i v IH []] //= m.
   move <-. by rewrite expn0.
-case=> Hm.
-rewrite expnS.
-case: enum_rank => j /=.
-rewrite (_ : #|_| = #|I|) // => Hj.
- Search (_ ^ _ >= _).
-have : #|I| ^ n > 0.
+case=> Hm; rewrite expnS.
+case: enum_rank => j /= Hj.
+have : #|I| ^ m > 0.
   rewrite -(expn0 #|I|) leq_pexp2l //.
   by case: #|I| Hj.
-move CI: (#|I| ^ n) => [|sz] // _.
+move CI: (#|I| ^ m) => [|sz] // _.
 by rewrite mulnS -addSn leq_add // leq_mul // -ltnS -CI IH.
 Qed.
 
@@ -273,8 +270,68 @@ exists (index_of_vec_rec (rev v)).
 abstract (by rewrite index_of_vec_ltn // size_rev size_tuple).
 Defined.
 
+Hypothesis H : #|I| > 0.
+Fixpoint vec_of_index_rec (m i : nat) : seq I :=
+  match m with
+  | 0 => nil
+  | m.+1 =>
+    enum_val (Ordinal (ltn_pmod i H)) :: vec_of_index_rec m (i %/ #|I|)
+  end.
+
+Lemma vec_of_index_size m i : size (vec_of_index_rec m i) = m.
+Proof. by elim: m i => // m IH [|i] /=; rewrite IH. Qed.
+
 Definition vec_of_index m (i : 'I_(vsz m)) : m.-tuple I.
-Admitted.
+exists (rev (vec_of_index_rec m i)).
+abstract (by case: i => i /= _; rewrite size_rev vec_of_index_size).
+Defined.
+
+Lemma vec_of_index_recK m i :
+  i < vsz m -> index_of_vec_rec (vec_of_index_rec m i) = i.
+Proof.
+rewrite /vsz. 
+elim: m i => [|m IH] /=.
+  by case; rewrite expn0 // ltnS.
+move=> i Hi.
+rewrite enum_valK IH /=.
+  by rewrite addnC mulnC -divn_eq.
+rewrite -(ltn_pmul2r H).
+apply (leq_ltn_trans (leq_trunc_div _ _)).
+by rewrite mulnC -expnS.
+Qed.
+
+Lemma vec_of_indexK m : cancel (@vec_of_index m) (@index_of_vec m).
+Proof.
+rewrite /index_of_vec /vec_of_index /= => -[i] Hi.
+apply val_inj => /=.
+by rewrite revK vec_of_index_recK.
+Qed.
+
+Lemma index_of_vecK m : cancel (@index_of_vec m) (@vec_of_index m).
+Proof.
+rewrite /index_of_vec /vec_of_index => -[t Ht].
+apply/val_inj => /=.
+rewrite -[RHS]revK.
+congr rev.
+move/eqP: Ht; rewrite -size_rev.
+elim: (rev t) m => {t} [|i t IH] m <- //=.
+congr (_ :: _).
+  rewrite (_ : Ordinal _ = enum_rank i) ?enum_rankK //.
+  apply val_inj => /=.
+  by rewrite addnC mulnC modnMDl modn_small.
+rewrite divnDr.
+  by rewrite divn_small // add0n mulKn // IH.
+apply/dvdn_mulr/dvdnn.
+Qed.
+
+Lemma index_of_vec_bij m : bijective (@index_of_vec m).
+Proof.
+exists (@vec_of_index m); [exact: index_of_vecK | exact: vec_of_indexK].
+Qed.
+End index_of_vec_bij.
+
+Variable (R : ringType).
+Definition endo m := forall T : lmodType R, nvect m T -> nvect m T.
 
 Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) : endo m :=
   fun T (v : nvect m T) =>
@@ -285,15 +342,17 @@ Section focus.
 Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
   fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
 
+Variables (T : lmodType R) (n m p : nat).
+
 (* horizontal composition of endomorphisms *)
-Lemma focusC T n m p (l : lens n m) (l' : lens n p)
+Lemma focusC (l : lens n m) (l' : lens n p)
       (tr : endo m) (tr' : endo p) (v : nvect n T) :
   [disjoint val l & val l'] -> 
   focus l tr (focus l' tr' v) = focus l' tr' (focus l tr v).
 Abort.
 
 (* associativity of actions of lenses *)
-Lemma focusA T n m p (l : lens n m) (l' : lens m p)
+Lemma focusA (l : lens n m) (l' : lens m p)
       (tr : endo p) (v : nvect n T) :
   focus (lens_comp l l') tr v = focus l (focus l' tr) v.
 Abort.
