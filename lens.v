@@ -351,11 +351,9 @@ Definition nvect_vec H m (X : nvect m R^o) : 'rV[R]_(vsz m) :=
 Lemma nvect_vector (H : #|I| > 0) n : Vector.axiom (vsz n) (nvect n R^o).
 Proof.
 exists (@nvect_vec H n).
-- move=> x /= y z. rewrite /nvect_vec.
-  apply/rowP => i.
-  by rewrite !mxE !ffunE.
+- move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
 - exists (@vec_nvect n).
-  + move=> v. apply/ffunP => vi. by rewrite !ffunE !mxE index_of_vecK.
+  + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.
 
