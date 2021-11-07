@@ -41,6 +41,12 @@ Variables (l : lens) (f : endo1).
 
 Definition extract (t : n.-tuple T) := [tuple tnth t (tnth l i) | i < m].
 
+Lemma lens_leq : m <= n.
+Proof.
+rewrite -(size_enum_ord n) -(size_tuple l) uniq_leq_size // ?lens_uniq //.
+move=> i _; by rewrite mem_enum.
+Qed.
+
 (* Focusing on subvector *)
 Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
@@ -156,6 +162,26 @@ case/boolP: (i \in val l3) => Hl3.
 by rewrite !focus1_out.
 Qed.
 End lens_comp.
+
+(* Composition of lenses *)
+Section lens_cat.
+Variables (n m p : nat) (l1 : lens n m) (l2 : lens n p).
+Hypothesis Hdisj : [disjoint val l1 & val l2].
+
+Definition lens_cat : lens n (m+p).
+exists [tuple of l1 ++ l2].
+abstract
+  (case: l1 l2 Hdisj => l1' Hl1 [l2' Hl2] /= Hdisj';
+   rewrite cat_uniq Hl1 Hl2 andbT /=;
+   by apply/hasPn => /= i /(disjointFl Hdisj') ->).
+Defined.
+
+Variable (T : eqType).
+
+Lemma extract_cat (t : n.-tuple T) :
+  extract lens_cat t = [tuple of extract l1 t ++ extract l2 t].
+Proof. apply val_inj => /=; by rewrite !map_comp -map_cat !map_tnth_enum. Qed.
+End lens_cat.
 
 From mathcomp Require Import all_algebra.
 
@@ -361,19 +387,120 @@ Section focus.
 Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
   fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
 
-Variables (T : lmodType R) (n m p : nat).
+Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
 (* horizontal composition of endomorphisms *)
-Lemma focusC (l : lens n m) (l' : lens n p)
-      (tr : endo m) (tr' : endo p) (v : nvect n T) :
-  [disjoint val l & val l'] -> 
+Lemma focusC (l' : lens n p) (tr : endo m) (tr' : endo p) (v : nvect n T) :
+  [disjoint val l & val l'] ->
   focus l tr (focus l' tr' v) = focus l' tr' (focus l tr v).
 Abort.
 
+(*
+Lemma curry_comp (l : lens n m) (l' : lens m p) (v : nvect n T) :
+  curry l' (curry l) v = 
+*)
+(*
+Lemma uncurry_comp (l : lens n m) (l' : lens m p) (v : nvect n T) :
+*)
+
+Variable l' : lens m p.
+
+Definition lothers_comp := lothers (lens_comp l l').
+
+Lemma others_in_l_present i :
+  index (tnth [tuple of map (tnth l) (lothers l')] i) lothers_comp < n - p.
+Proof.
+rewrite -[X in _ < X](size_tuple lothers_comp) index_mem.
+rewrite mem_filter mem_enum andbT.
+apply/negP => /mapP [k Hk].
+rewrite tnth_map => /tnth_inj Hi.
+move: (mem_tnth i (lothers l')).
+by rewrite Hi (lens_uniq,mem_filter) // mem_nth // size_tuple.
+Qed.
+
+Definition others_in_l :=
+  [tuple Ordinal (others_in_l_present i) | i < m - p].
+
+Lemma uniq_others_in_l : uniq (others_in_l).
+Proof.
+apply/tnth_inj => i j.
+rewrite !tnth_mktuple.
+set k := Ordinal _.
+case.
+move/(f_equal (nth (widen_ord (leq_subr _ _) k) (others (lens_comp l l')))).
+rewrite !nth_index.
+move/tnth_inj => -> //.
+rewrite map_inj_uniq ?(lens_uniq (lothers l')) //.
+by apply/tnth_inj/lens_uniq.
+Admitted.
+
+Definition lothers_in_l : lens (n-p) (m-p).
+exists others_in_l.
+exact uniq_others_in_l.
+Defined.
+
+Lemma cast_lothers_notin_l : n - p - (m - p) = n - m.
+Proof. rewrite subnBA ?subnK // lens_leq //. exact: (lens_comp l l'). Qed.
+
+Lemma size_lothers_notin_l : size (lothers lothers_in_l) == n - m.
+Proof. by rewrite size_tuple cast_lothers_notin_l. Qed.
+
+Definition lothers_notin_l : lens (n-p) (n-m).
+exists (Tuple size_lothers_notin_l).
+exact: (lens_uniq (lothers lothers_in_l)).
+Defined.
+
+Lemma lothers_in_l_comp :
+  lens_comp lothers_comp lothers_in_l = lens_comp l (lothers l').
+Proof.
+apply/val_inj/eq_from_tnth => i.
+rewrite !tnth_mktuple.
+have dm : 'I_m := widen_ord (leq_subr _ _) i.
+have dn : 'I_n := widen_ord (lens_leq l) dm.
+rewrite (tnth_nth dn) nth_index tnth_map //.
+rewrite mem_filter mem_enum andbT.
+apply/negP => /mapP /= [j] _ /tnth_inj Hj.
+have := mem_tnth i (lothers l').
+by rewrite Hj ?lens_uniq // mem_filter mem_tnth.
+Qed.
+
+Lemma lothers_notin_l_comp :
+  lens_comp lothers_comp lothers_notin_l = lothers l.
+Proof.
+apply/val_inj/eq_from_tnth => i.
+rewrite !tnth_mktuple.
+have dn : 'I_n := widen_ord (leq_subr _ _) i.
+rewrite !(tnth_nth dn) /=.
+have dnp : 'I_(n-p) by apply/widen_ord/leq_sub2l/lens_leq: i.
+rewrite (tnth_nth dnp) /=.
+rewrite /others.
+rewrite /lothers_in_l /others_in_l /=.
+Admitted.
+
+(*
+Definition lothers_in_l : lens (n-p) (n-m).
+exists (Tuple size_others_in_l).
+abstract (by rewrite filter_uniq // enum_uniq).
+Defined.
+*)
+
+Lemma extract_lothers_comp (v : n.-tuple I) :
+  extract lothers_comp v =
+  merge_indices lothers_in_l
+                (extract (lens_comp lothers_comp lothers_in_l) v)
+                (extract (lens_comp lothers_comp (lothers lothers_in_l)) v).
+Proof. by rewrite !extract_comp (merge_indices_extract lothers_in_l). Qed.
+
 (* associativity of actions of lenses *)
-Lemma focusA (l : lens n m) (l' : lens m p)
-      (tr : endo p) (v : nvect n T) :
+Lemma focusA (tr : endo p) (v : nvect n T) :
   focus (lens_comp l l') tr v = focus l (focus l' tr) v.
+Proof.
+rewrite /focus.
+apply/ffunP => /= vi.
+rewrite !ffunE.
+rewrite extract_lothers_comp -!extract_comp.
+rewrite -lothers_in_l_comp.
+rewrite -lothers_notin_l_comp.
 Abort.
 End focus.
 
