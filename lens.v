@@ -416,12 +416,12 @@ Lemma focus_is_linear n m l tr T : linear (@focus_fun n m l tr T).
 Proof.
 move=> x y z.
 apply/ffunP => vi; rewrite !ffunE.
-rewrite (_ : curry l (T := T) = Linear (curry_is_linear l (T:=T))) //.
-by rewrite linearP linearD /= !ffunE !linearZ_LR !ffunE.
+rewrite /= (_ : curry l (T := T) = Linear (curry_is_linear l (T:=T))) //.
+by rewrite !linearP !ffunE.
 Qed.
 
 Definition focus n m l tr : endo n :=
-  fun {T} => Linear (@focus_is_linear n m l tr T).
+  fun T => Linear (@focus_is_linear n m l tr T).
 
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
@@ -464,11 +464,12 @@ rewrite !tnth_mktuple.
 set k := Ordinal _.
 case.
 move/(f_equal (nth (widen_ord (leq_subr _ _) k) (others (lens_comp l l')))).
-rewrite !nth_index.
+rewrite !nth_index;
+  try by rewrite -index_mem (eqP (size_others _)) others_in_l_present.
 move/tnth_inj => -> //.
 rewrite map_inj_uniq ?(lens_uniq (lothers l')) //.
 by apply/tnth_inj/lens_uniq.
-Admitted.
+Qed.
 
 Definition lothers_in_l : lens (n-p) (m-p).
 exists others_in_l.
@@ -499,6 +500,61 @@ apply/negP => /mapP /= [j] _ /tnth_inj Hj.
 have := mem_tnth i (lothers l').
 by rewrite Hj ?lens_uniq // mem_filter mem_tnth.
 Qed.
+
+Definition ord_ltn {r} : rel 'I_r := relpre val ltn.
+
+(*
+Definition sorted q r (v : q.-tuple 'I_r) :=
+  forall i j : 'I_q, i < j -> tnth v i < tnth v j.
+
+Lemma sorted_enum r : sorted (ord_tuple r).
+Proof. move=> i j. by rewrite !tnth_ord_tuple. Qed.
+
+Lemma sorted_filter q r s (c : pred 'I_r) (v : q.-tuple 'I_r)
+      (H : size (filter c v) == s) : sorted (Tuple H).
+Proof.
+move=> i j ij.
+*)
+
+Lemma sorted_enum r : sorted ord_ltn (enum 'I_r).
+Proof.
+rewrite -sorted_map val_enum_ord.
+rewrite (_ : 0 = r - r); last by rewrite subnn.
+set q := {2 3}r.
+have : q <= r by [].
+elim: q => // -[] //= q IH Hq.
+rewrite subnS prednK.
+   by rewrite IH (ltnW,andbT).
+by rewrite ltn_subRL addn0.
+Qed.
+
+Lemma sorted_skip r (a b : 'I_r) s :
+  ord_ltn a b -> path ord_ltn b s -> path ord_ltn a s.
+Proof.
+Abort.
+(*
+Lemma sorted_filter r (c : pred 'I_r) s :
+  sorted ord_ltn s -> sorted ord_ltn (filter c s).
+Proof.
+rewrite {1}/sorted.
+case: s => // a s.
+elim: s a => // [|b s IH] a /=.
+  by case: ifP.
+case/andP => ab Hb.
+case: ifP => ca /=.
+  case: ifP => cb /=.
+    move: (IH b Hb) => /=.
+    by rewrite cb /= ab.
+  move: (IH a) => /=.
+  rewrite ca /=.
+  apply.
+
+  apply (IH a).
+Lemma sorted_others q r (ln : lens q r) : sorted ord_ltn (others ln).
+Proof.
+Print sorted.
+Search sorted.
+*)
 
 Lemma lothers_notin_l_comp :
   lens_comp lothers_comp lothers_notin_l = lothers l.
@@ -537,6 +593,7 @@ rewrite !ffunE.
 rewrite extract_lothers_comp -!extract_comp.
 rewrite -lothers_in_l_comp.
 rewrite -lothers_notin_l_comp.
+Check lothers lothers_in_l.
 Abort.
 End focus.
 
