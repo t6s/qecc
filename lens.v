@@ -184,6 +184,7 @@ Proof. apply val_inj => /=; by rewrite !map_comp -map_cat !map_tnth_enum. Qed.
 End lens_cat.
 
 From mathcomp Require Import all_algebra.
+Import GRing.Theory.
 
 Section tensor_space.
 Variable (I : finType) (dI : I).
@@ -356,17 +357,31 @@ exists (@vec_of_index m); [exact: index_of_vecK | exact: vec_of_indexK].
 Qed.
 End index_of_vec_bij.
 
-Variable (R : ringType).
-Definition endo m := forall T : lmodType R, nvect m T -> nvect m T.
+Variable (R : comRingType).
+Definition endofun m := forall T : lmodType R, nvect m T -> nvect m T.
+Definition endo m := forall T : lmodType R, {linear nvect m T -> nvect m T}%R.
+Definition nsquare m := nvect m (nvect m R^o).
 
-Definition nvendo m (M : nvect m (nvect m R^o)) : endo m :=
-  fun T (v : nvect m T) =>
+Definition nvendo_fun m (M : nsquare m) : endofun m :=
+  fun T v =>
     [ffun vi : m.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj]%R.
 
-Definition mxnvect m (M : 'M[R]_(vsz m,vsz m)) : nvect m (nvect m R^o) :=
+Lemma nvendo_is_linear m M T : linear (@nvendo_fun m M T).
+Proof.
+move=> x y z.
+apply/ffunP => vi; rewrite !ffunE.
+rewrite scaler_sumr -big_split /=.
+apply eq_bigr => vj _.
+by rewrite ffunE scalerDr scalerA mulrC -scalerA ffunE.
+Qed.
+
+Definition nvendo m (M : nsquare m) : endo m :=
+  fun T => Linear (@nvendo_is_linear m M T).
+
+Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
-Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := nvendo (mxnvect M).
+Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := nvendo (mxnsquare M).
 
 Definition vec_nvect m (X : 'rV[R]_(vsz m)) : nvect m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
@@ -383,16 +398,37 @@ exists (@nvect_vec H n).
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.
 
+Section curry_linear.
+Variables (n m : nat) (l : lens n m) (T : lmodType R).
+
+Lemma curry_is_linear : linear (curry l (T:=T)).
+Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
+
+Lemma uncurry_is_linear : linear (uncurry l (T:=T)).
+Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
+End curry_linear.
+
 Section focus.
-Definition focus n m (l : lens n m) (tr : endo m) : endo n :=
+Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
   fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
+
+Lemma focus_is_linear n m l tr T : linear (@focus_fun n m l tr T).
+Proof.
+move=> x y z.
+apply/ffunP => vi; rewrite !ffunE.
+rewrite (_ : curry l (T := T) = Linear (curry_is_linear l (T:=T))) //.
+by rewrite linearP linearD /= !ffunE !linearZ_LR !ffunE.
+Qed.
+
+Definition focus n m l tr : endo n :=
+  fun {T} => Linear (@focus_is_linear n m l tr T).
 
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
 (* horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) (tr : endo m) (tr' : endo p) (v : nvect n T) :
   [disjoint val l & val l'] ->
-  focus l tr (focus l' tr' v) = focus l' tr' (focus l tr v).
+  focus l tr _ (focus l' tr' _ v) = focus l' tr' _ (focus l tr _ v).
 Abort.
 
 (*
@@ -493,7 +529,7 @@ Proof. by rewrite !extract_comp (merge_indices_extract lothers_in_l). Qed.
 
 (* associativity of actions of lenses *)
 Lemma focusA (tr : endo p) (v : nvect n T) :
-  focus (lens_comp l l') tr v = focus l (focus l' tr) v.
+  focus (lens_comp l l') tr _ v = focus l (focus l' tr) _ v.
 Proof.
 rewrite /focus.
 apply/ffunP => /= vi.
