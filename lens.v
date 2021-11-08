@@ -29,6 +29,57 @@ Lemma index_tuple (t : n.-tuple A) i : (index i t < n) <-> (i \in t).
 Proof. by rewrite -index_mem size_tuple. Qed.
 End tnth.
 
+Section sorted.
+Definition ord_ltn {r} : rel 'I_r := relpre val ltn.
+
+Lemma sorted_enum r : sorted ord_ltn (enum 'I_r).
+Proof.
+rewrite -sorted_map val_enum_ord.
+rewrite (_ : 0 = r - r); last by rewrite subnn.
+set q := {2 3}r.
+have : q <= r by [].
+elim: q => // -[] //= q IH Hq.
+rewrite subnS prednK.
+   by rewrite IH (ltnW,andbT).
+by rewrite ltn_subRL addn0.
+Qed.
+
+Variables (A : Type) (le : rel A) (le_trans : transitive le).
+
+Lemma sorted_tnth q (lq : q.-tuple A) (a b : 'I_q) :
+  sorted le lq -> ord_ltn a b -> le (tnth lq a) (tnth lq b).
+Proof.
+move=> Hsort ab.
+have := @sorted_ltn_nth _ le le_trans (tnth lq a) lq Hsort a b.
+rewrite !inE !size_tuple !ltn_ord -!tnth_nth; exact.
+Qed.
+
+Lemma sorted_comp q (lq : q.-tuple A) (lr : seq 'I_q) :
+  sorted le lq -> sorted ord_ltn lr -> sorted le (map (tnth lq) lr).
+Proof.
+move=> Hlq /=.
+elim: lr => // a [|b lr] IH //= /andP[ab] Hsort.
+rewrite sorted_tnth //=; exact: IH.
+Qed.
+
+Lemma sorted_skip (a b : A) s :
+  le a b -> path le b s -> path le a s.
+Proof. by case: s => //= c s ab /andP[] /(le_trans ab) ->. Qed.
+
+Lemma sorted_filter (c : pred A) s :
+  sorted le s -> sorted le (filter c s).
+Proof.
+rewrite {1}/sorted.
+case: s => // a s.
+elim: s a => // [|b s IH] a /=; first by case: ifP.
+case/andP => ab Hb.
+case: ifP => ca; last exact: IH.
+case: ifP => cb /=.
+  move: (IH b Hb); by rewrite /= cb ab.
+move: (IH a); rewrite /= ca; apply; exact/(sorted_skip ab).
+Qed.
+End sorted.
+
 Section lens.
 Variables (T : Type) (n m : nat).
 
@@ -502,79 +553,8 @@ have := mem_tnth i (lothers l').
 by rewrite Hj' ?lens_uniq // mem_filter Hj.
 Qed.
 
-Definition ord_ltn {r} : rel 'I_r := relpre val ltn.
-
-(*
-Definition sorted q r (v : q.-tuple 'I_r) :=
-  forall i j : 'I_q, i < j -> tnth v i < tnth v j.
-
-Lemma sorted_enum r : sorted (ord_tuple r).
-Proof. move=> i j. by rewrite !tnth_ord_tuple. Qed.
-
-Lemma sorted_filter q r s (c : pred 'I_r) (v : q.-tuple 'I_r)
-      (H : size (filter c v) == s) : sorted (Tuple H).
-Proof.
-move=> i j ij.
-*)
-
-Lemma sorted_enum r : sorted ord_ltn (enum 'I_r).
-Proof.
-rewrite -sorted_map val_enum_ord.
-rewrite (_ : 0 = r - r); last by rewrite subnn.
-set q := {2 3}r.
-have : q <= r by [].
-elim: q => // -[] //= q IH Hq.
-rewrite subnS prednK.
-   by rewrite IH (ltnW,andbT).
-by rewrite ltn_subRL addn0.
-Qed.
-
-Lemma sorted_skip r (a b : 'I_r) s :
-  ord_ltn a b -> path ord_ltn b s -> path ord_ltn a s.
-Proof.
-rewrite /ord_ltn.
-by case: s => //= c s ab /andP [] /(ltn_trans ab) ->.
-Qed.
-
-Lemma sorted_filter r (c : pred 'I_r) s :
-  sorted ord_ltn s -> sorted ord_ltn (filter c s).
-Proof.
-rewrite {1}/sorted.
-case: s => // a s.
-elim: s a => // [|b s IH] a /=.
-  by case: ifP.
-case/andP => ab Hb.
-case: ifP => ca.
-  case: ifP => cb /=.
-    move: (IH b Hb) => /=.
-    by rewrite cb /= ab.
-  move: (IH a) => /=.
-  rewrite ca /=.
-  apply.
-  move/sorted_skip: ab; exact.
-exact: IH.
-Qed.
-
 Lemma sorted_others q r (ln : lens q r) : sorted ord_ltn (others ln).
-Proof. exact/sorted_filter/sorted_enum. Qed.
-
-Lemma sorted_tnth q r (lq : q.-tuple 'I_r) (a b : 'I_q) :
-  sorted ord_ltn lq -> ord_ltn a b -> ord_ltn (tnth lq a) (tnth lq b).
-Proof.
-move=> Hsort ab.
-have := @sorted_ltn_nth _ (@ord_ltn r) ltn_trans (tnth lq a) lq Hsort a b.
-rewrite !inE !size_tuple !ltn_ord -!tnth_nth; exact.
-Qed.
-
-Lemma sorted_comp q r (lq : q.-tuple 'I_r) (lr : seq 'I_q) :
-  sorted ord_ltn lq -> sorted ord_ltn lr ->
-  sorted ord_ltn (map (tnth lq) lr).
-Proof.
-move=> Hlq /=.
-elim: lr => // a [|b lr] IH //= /andP[ab] Hsort.
-rewrite sorted_tnth //=.
-exact: IH.
-Qed.
+Proof. exact/sorted_filter/sorted_enum/ltn_trans. Qed.
 
 Lemma lothers_notin_l_comp :
   lens_comp lothers_comp lothers_notin_l = lothers l.
@@ -584,7 +564,8 @@ apply/val_inj/val_inj => /=.
 apply (@sorted_eq _ ord_ltn).
 - move=> x y z /=; exact: ltn_trans.
 - move=> x y /andP[]. by rewrite /ord_ltn /= (ltnNge y) => /ltnW ->.
-- apply: sorted_comp; exact: sorted_others.
+- apply/sorted_comp/sorted_others. exact: ltn_trans.
+- exact: sorted_others.
 - exact: sorted_others.
 - apply uniq_perm.
     exact: (lens_uniq (lens_comp lothers_comp lothers_notin_l)).
