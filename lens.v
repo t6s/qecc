@@ -144,6 +144,9 @@ exists (extract l2 l1).
 by (rewrite map_inj_uniq ?lens_uniq // => i j /tnth_inj-> //; exact: lens_uniq).
 Defined.
 
+Lemma tnth_comp i : tnth lens_comp i = tnth l1 (tnth l2 i).
+Proof. by rewrite tnth_map. Qed.
+
 Variable (T : eqType).
 
 Lemma extract_comp (t : n.-tuple T) :
@@ -496,7 +499,7 @@ Variable l' : lens m p.
 Definition lothers_comp := lothers (lens_comp l l').
 
 Lemma others_in_l_present i :
-  index (tnth [tuple of map (tnth l) (lothers l')] i) lothers_comp < n - p.
+  index (tnth (lens_comp l (lothers l')) i) lothers_comp < n - p.
 Proof.
 rewrite -[X in _ < X](size_tuple lothers_comp) index_mem.
 rewrite mem_filter mem_enum andbT.
@@ -561,8 +564,7 @@ Lemma lothers_notin_l_comp :
 Proof.
 Search sorted.
 apply/val_inj/val_inj => /=.
-apply (@sorted_eq _ ord_ltn).
-- move=> x y z /=; exact: ltn_trans.
+apply (@sorted_eq _ ord_ltn ltn_trans).
 - move=> x y /andP[]. by rewrite /ord_ltn /= (ltnNge y) => /ltnW ->.
 - apply/sorted_comp/sorted_others. exact: ltn_trans.
 - exact: sorted_others.
@@ -623,8 +625,8 @@ Lemma extract_lothers_comp (v : n.-tuple I) :
 Proof. by rewrite !extract_comp (merge_indices_extract lothers_in_l). Qed.
 
 (* associativity of actions of lenses *)
-Lemma focusA (tr : endo p) (v : nvect n T) :
-  focus (lens_comp l l') tr _ v = focus l (focus l' tr) _ v.
+Lemma focusA (tr : nsquare p) (v : nvect n T) :
+  focus (lens_comp l l') (nvendo tr) _ v = focus l (focus l' (nvendo tr)) _ v.
 Proof.
 rewrite /focus.
 apply/ffunP => /= vi.
@@ -632,8 +634,89 @@ rewrite !ffunE.
 rewrite extract_lothers_comp -!extract_comp.
 rewrite -lothers_in_l_comp.
 rewrite -lothers_notin_l_comp.
-Check lothers lothers_in_l.
-Abort.
+rewrite !sum_ffunE.
+apply eq_bigr => /= vj _.
+rewrite !ffunE.
+congr (_ *: v _)%R.
+set vk := extract _ vi.
+clearbody vk.
+rewrite /merge_indices.
+apply eq_mktuple => i.
+case/boolP: (i \in val (lens_comp l l')) => Hi.
+  move: (Hi); rewrite -index_mem size_tuple => Hi'.
+  rewrite nth_tnth.
+  case/mapP: Hi => j Hj Hi.
+  rewrite [in index i l]Hi tnth_lensK -tnth_nth tnth_mktuple.
+  move: Hj;  rewrite -index_mem size_tuple => Hj.
+  rewrite (_ : index j l' = Ordinal Hj) // nth_tnth.
+  congr tnth; apply val_inj => /=.
+  rewrite Hi index_map //.
+  exact/tnth_inj/lens_uniq.
+rewrite nth_default; last by rewrite memNindex // !size_tuple.
+have : i \in val lothers_comp by rewrite mem_filter Hi mem_enum.
+rewrite -index_mem size_tuple => Hilo.
+rewrite nth_tnth tnth_mktuple.
+case/boolP: (i \in val l) => Hil.
+  move: (Hil); rewrite -index_mem size_tuple => Hil'.
+  rewrite (nth_tnth _ _ Hil') tnth_mktuple.
+  have Hill' : Ordinal Hil' \notin val l'.
+    apply: contra Hi => Hill'.
+    apply/mapP. exists (Ordinal Hil') => //.
+    by rewrite (tnth_nth i) nth_index.
+  rewrite [RHS]nth_default; last by rewrite memNindex // !size_tuple.
+  have Hlol' : Ordinal Hil' \in val (lothers l').
+    by rewrite mem_filter Hill' mem_enum.
+  move: (Hlol'); rewrite -index_mem size_tuple => Hlol''.
+  rewrite (nth_tnth _ _ Hlol'').
+  have : Ordinal Hilo \in val lothers_in_l.
+    apply/mapP.
+    exists (Ordinal Hlol''). by rewrite mem_enum.
+    apply val_inj => /=. rewrite tnth_map /=.
+    rewrite (tnth_nth (Ordinal Hil')) /= nth_index //.
+    rewrite (tnth_nth i) /= nth_index //.
+  rewrite -index_mem size_tuple => Hlol.
+  rewrite nth_tnth.
+  congr tnth.
+  apply (tnth_inj _ (lens_uniq lothers_in_l)).
+  apply (tnth_inj _ (lens_uniq lothers_comp)).
+  rewrite -[RHS]tnth_comp lothers_in_l_comp tnth_comp.
+  rewrite (tnth_nth (Ordinal Hil')) nth_index //.
+  rewrite (tnth_nth i) nth_index //.
+  rewrite (tnth_nth (Ordinal Hilo)) nth_index //.
+    rewrite (tnth_nth i) nth_index //.
+    by rewrite -index_mem size_tuple.
+  by rewrite -index_mem size_tuple.
+rewrite [RHS]nth_default; last by rewrite memNindex // !size_tuple.
+have Hillo : Ordinal Hilo \notin val lothers_in_l.
+  apply: contra (Hil).
+  case/mapP => j Hj.
+  move/(f_equal (tnth lothers_comp)).
+  rewrite !(tnth_nth i) /= !nth_index //.
+    move ->.
+    by rewrite tnth_map mem_tnth.
+    rewrite mem_filter mem_enum tnth_map andbT mem_map.
+      move: (mem_tnth j (lothers l')).
+      by rewrite mem_filter => /andP[] ->.
+    exact/tnth_inj/lens_uniq.
+  by rewrite -index_mem (size_tuple lothers_comp).
+rewrite [LHS]nth_default; last by rewrite memNindex ?size_tuple.
+congr nth.
+have : Ordinal Hilo \in val (lothers lothers_in_l).
+  by rewrite mem_filter mem_enum andbT.
+rewrite -index_mem ![X in _ < X](size_tuple,cast_lothers_notin_l) => Hillo'.
+rewrite (_ : index _ _ = Ordinal Hillo') //.
+have : i \in val (lothers l) by rewrite mem_filter mem_enum Hil.
+rewrite -index_mem [X in _ < X]size_tuple => Hill.
+rewrite (_ : index i (lothers l) = Ordinal Hill) //.
+congr val.
+apply (tnth_inj _ (lens_uniq (lothers l))).
+rewrite -[in LHS]lothers_notin_l_comp tnth_comp.
+rewrite (tnth_nth (Ordinal Hilo)) nth_index //.
+  rewrite (tnth_nth i) nth_index //.
+    by rewrite (tnth_nth i) nth_index // mem_filter Hil mem_enum.
+  by rewrite mem_filter Hi mem_enum.
+by rewrite mem_filter Hillo mem_enum.
+Qed.
 End focus.
 
 Section application.
