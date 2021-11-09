@@ -624,23 +624,13 @@ Lemma extract_lothers_comp (v : n.-tuple I) :
                 (extract (lens_comp lothers_comp (lothers lothers_in_l)) v).
 Proof. by rewrite !extract_comp (merge_indices_extract lothers_in_l). Qed.
 
-(* associativity of actions of lenses *)
-Lemma focusA (tr : nsquare p) (v : nvect n T) :
-  focus (lens_comp l l') (nvendo tr) _ v = focus l (focus l' (nvendo tr)) _ v.
+Lemma merge_indices_comp vj vk (vl : (n-p - (m-p)).-tuple I)
+                               (vm : (n-m).-tuple I) :
+  val vl = val vm ->
+  merge_indices (lens_comp l l') vj (merge_indices lothers_in_l vk vl) =
+  merge_indices l (merge_indices l' vj vk) vm.
 Proof.
-rewrite /focus.
-apply/ffunP => /= vi.
-rewrite !ffunE.
-rewrite extract_lothers_comp -!extract_comp.
-rewrite -lothers_in_l_comp.
-rewrite -lothers_notin_l_comp.
-rewrite !sum_ffunE.
-apply eq_bigr => /= vj _.
-rewrite !ffunE.
-congr (_ *: v _)%R.
-set vk := extract _ vi.
-clearbody vk.
-rewrite /merge_indices.
+rewrite /merge_indices => Hlm.
 apply eq_mktuple => i.
 case/boolP: (i \in val (lens_comp l l')) => Hi.
   move: (Hi); rewrite -index_mem size_tuple => Hi'.
@@ -700,7 +690,7 @@ have Hillo : Ordinal Hilo \notin val lothers_in_l.
     exact/tnth_inj/lens_uniq.
   by rewrite -index_mem (size_tuple lothers_comp).
 rewrite [LHS]nth_default; last by rewrite memNindex ?size_tuple.
-congr nth.
+congr nth => //.
 have : Ordinal Hilo \in val (lothers lothers_in_l).
   by rewrite mem_filter mem_enum andbT.
 rewrite -index_mem ![X in _ < X](size_tuple,cast_lothers_notin_l) => Hillo'.
@@ -716,6 +706,20 @@ rewrite (tnth_nth (Ordinal Hilo)) nth_index //.
     by rewrite (tnth_nth i) nth_index // mem_filter Hil mem_enum.
   by rewrite mem_filter Hi mem_enum.
 by rewrite mem_filter Hillo mem_enum.
+Qed.
+
+(* associativity of actions of lenses *)
+Lemma focusA (tr : nsquare p) (v : nvect n T) :
+  focus (lens_comp l l') (nvendo tr) _ v = focus l (focus l' (nvendo tr)) _ v.
+Proof.
+rewrite /focus.
+apply/ffunP => /= vi.
+rewrite !ffunE extract_lothers_comp -!extract_comp.
+rewrite -lothers_in_l_comp -lothers_notin_l_comp !sum_ffunE.
+apply eq_bigr => /= vj _.
+rewrite !ffunE.
+congr (_ *: v _)%R.
+exact: merge_indices_comp.
 Qed.
 End focus.
 
