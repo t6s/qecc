@@ -7,6 +7,8 @@ Unset Printing Implicit Defensive.
 Lemma addnLR m n p : m + n = p -> n = p - m.
 Proof. move/(f_equal (subn^~ m)); by rewrite addKn. Qed.
 
+Lemma make_ord n m (H : m < n) : m = Ordinal H. Proof (erefl m).
+
 Section tnth.
 Lemma nth_tnth T (n i : nat) x0 (v : n.-tuple T) (H : i < n) :
   nth x0 v i = tnth v (Ordinal H).
@@ -98,6 +100,16 @@ rewrite -(size_enum_ord n) -(size_tuple l) uniq_leq_size // ?lens_uniq //.
 move=> i _; by rewrite mem_enum.
 Qed.
 
+Lemma tnth_lensK i : index (tnth l i) l = i.
+Proof.
+by rewrite (tnth_nth (tnth l i)) index_uniq // (lens_uniq,size_tuple).
+Qed.
+
+Definition lens_index i (H : i \in val l) : 'I_m.
+exists (Ordinal (proj2 (index_tuple l i) H)).
+done.
+Defined.
+
 (* Focusing on subvector *)
 Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
@@ -164,6 +176,9 @@ have/index_tuple/nth_index := H.
 move/(_ i) => /= <-.
 rewrite nth_tnth index_map ?map_tnth_enum //; by apply/tnth_inj.
 Qed.
+
+Lemma ltn_ordK q (i : 'I_q) : Ordinal (ltn_ord i) = i.
+Proof. by apply val_inj. Qed.
 
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
@@ -283,11 +298,6 @@ Proof.
 apply eq_from_tnth => i; rewrite tnth_mktuple.
 case/boolP: (i \in val l) => Hi; first by rewrite nth_extract_index.
 by rewrite nth_extract_out // nth_extract_index // mem_lothers.
-Qed.
-
-Lemma tnth_lensK p (lp : lens n p) i : index (tnth lp i) lp = i.
-Proof.
-by rewrite (tnth_nth (tnth lp i)) index_uniq // (lens_uniq,size_tuple).
 Qed.
 
 Lemma extract_merge v1 v2 : extract l (merge_indices v1 v2) = v1.
@@ -578,38 +588,29 @@ apply: (sorted_eq (leT:=ord_ltn) ltn_trans).
   apply/mapP; case: ifPn => Hi.
   + have /tnthP[j Hj]:  i \in val lothers_comp.
       rewrite mem_lothers.
-      apply: contra Hi.
-      move/mapP => -[j Hj] ->.
+      apply: contra Hi => /mapP [j Hj] ->.
       exact: mem_tnth.
     exists j => //.
     rewrite mem_lothers.
     apply: contra Hi => /mapP [k _].
     rewrite Hj => ->.
-    rewrite (tnth_nth i) /= nth_index.
-      by rewrite tnth_map mem_tnth.
-    by have/index_tuple := others_in_l_present k.
+    have/index_tuple Hol := others_in_l_present k.
+    by rewrite (tnth_nth i) /= nth_index // tnth_map mem_tnth.
   + rewrite negbK in Hi.
-    case=> j Hj Hi'.
-    rewrite mem_lothers in Hj.
+    case=> j; rewrite mem_lothers => Hj Hi'.
+    apply/negP: Hj; rewrite negbK.
     case/tnthP: Hi => k Hk.
-    have/index_tuple Hk' : k \in val (lothers l').
+    have Hk' : k \in val (lothers l').
       rewrite mem_lothers.
       apply/tnthP => -[h] Hh.
-      have Hi2 : i \in val (lens_comp l l').
-        apply/mapP. exists k => //. by rewrite Hh mem_tnth.
-      have : i \in val lothers_comp.
-         by rewrite Hi' mem_tnth.
-      by rewrite mem_lothers Hi2.
-    apply/negP: Hj.
-    rewrite negbK.
-    apply/mapP.
-    exists (Ordinal Hk').
-      by rewrite mem_enum.
-    apply (tnth_inj _ (lens_uniq (lothers (lens_comp l l')))).
-    rewrite -Hi' Hk.
-    rewrite [RHS](tnth_nth i) nth_index.
-      exact/esym/nth_extract_index/index_tuple.
-    by have/index_tuple := others_in_l_present (Ordinal Hk').
+      have : i \in val lothers_comp by rewrite Hi' mem_tnth.
+      by rewrite Hk Hh -tnth_comp mem_lothers mem_tnth.
+    apply/tnthP.
+    have/index_tuple Hk'' := Hk'.
+    exists (Ordinal Hk'').
+    apply (tnth_inj _ (lens_uniq lothers_comp)).
+    rewrite -tnth_comp lothers_in_l_comp tnth_comp.
+    by rewrite -Hi' Hk (tnth_nth k) nth_index.
 Qed.    
 
 Lemma extract_lothers_comp (v : n.-tuple I) :
@@ -660,12 +661,11 @@ have Hillo : Ordinal Hilo \notin val lothers_in_l.
   by rewrite mem_lothers.
 rewrite [LHS]nth_default; last by rewrite memNindex ?size_tuple.
 congr nth => //.
-have/index_tuple : Ordinal Hilo \in val (lothers lothers_in_l).
+have/index_tuple : Ordinal Hilo \in val (lothers lothers_in_l)
   by rewrite mem_lothers.
 rewrite [X in _ < X]cast_lothers_notin_l => Hillo'.
-rewrite (_ : index _ _ = Ordinal Hillo') //.
 have/index_tuple Hill : i \in val (lothers l) by rewrite mem_lothers.
-rewrite (_ : index i (lothers l) = Ordinal Hill) //.
+rewrite (make_ord Hillo') (make_ord Hill).
 congr val.
 apply (tnth_inj _ (lens_uniq (lothers l))).
 rewrite -[in LHS]lothers_notin_l_comp tnth_comp.
