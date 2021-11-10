@@ -628,14 +628,8 @@ Proof.
 rewrite /merge_indices => Hlm.
 apply eq_mktuple => i.
 case/boolP: (i \in val (lens_comp l l')) => Hi.
-  have/index_tuple Hi' := Hi.
-  rewrite nth_tnth.
-  case/mapP: Hi => j Hj Hi.
-  rewrite [in index i l]Hi tnth_lensK -tnth_nth tnth_mktuple.
-  move/index_tuple in Hj.
-  rewrite nth_tnth.
-  congr tnth; apply val_inj => /=.
-  rewrite Hi index_map //.
+  case/mapP: Hi => j /index_tuple Hj ->.
+  rewrite tnth_lensK -tnth_nth tnth_mktuple index_map ?nth_tnth //.
   exact/tnth_inj/lens_uniq.
 rewrite nth_default; last by rewrite memNindex // !size_tuple.
 have/index_tuple Hilo : i \in val lothers_comp by rewrite mem_lothers.
@@ -651,34 +645,19 @@ case/boolP: (i \in val l) => Hil.
   have Hlol' : Ordinal Hil' \in val (lothers l') by rewrite mem_lothers.
   have/index_tuple Hlol'' := Hlol'.
   rewrite (nth_tnth _ _ Hlol'').
-  have/index_tuple Hlol : Ordinal Hilo \in val lothers_in_l.
-    apply/mapP.
-    exists (Ordinal Hlol''). by rewrite mem_enum.
-    apply val_inj => /=. rewrite tnth_map /=.
-    rewrite (tnth_nth (Ordinal Hil')) /= nth_index //.
-    by rewrite (tnth_nth i) /= nth_index.
-  rewrite nth_tnth.
-  congr tnth.
-  apply (tnth_inj _ (lens_uniq lothers_in_l)).
-  apply (tnth_inj _ (lens_uniq lothers_comp)).
-  rewrite -[RHS]tnth_comp lothers_in_l_comp tnth_comp.
-  rewrite (tnth_nth (Ordinal Hil')) nth_index //.
-  rewrite (tnth_nth i) nth_index //.
-  rewrite (tnth_nth (Ordinal Hilo)) nth_index //.
-    by rewrite (tnth_nth i) nth_index // mem_lothers.
-  exact/index_tuple.
+  have Hlol : tnth lothers_in_l (Ordinal Hlol'') = Ordinal Hilo.
+    apply (tnth_inj _ (lens_uniq lothers_comp)).
+    rewrite -tnth_comp lothers_in_l_comp tnth_comp (tnth_nth (Ordinal Hil')).
+    by rewrite nth_index // !(tnth_nth i) !nth_index // mem_lothers.
+  by rewrite -Hlol tnth_lensK -tnth_nth.
 rewrite [RHS]nth_default; last by rewrite memNindex // !size_tuple.
 have Hillo : Ordinal Hilo \notin val lothers_in_l.
-  apply: contra (Hil).
-  case/mapP => j Hj.
-  move/(f_equal (tnth lothers_comp)).
-  rewrite !(tnth_nth i) /= !nth_index //.
-    move ->.
-    by rewrite tnth_map mem_tnth.
-    rewrite mem_lothers tnth_map mem_map.
-      by rewrite -mem_lothers mem_tnth.
-    exact/tnth_inj/lens_uniq.
-  exact/(index_tuple lothers_comp).
+  apply: contra Hil.
+  case/tnthP => j /(f_equal (tnth lothers_comp)).
+  rewrite -tnth_comp lothers_in_l_comp.
+  rewrite (tnth_nth i) nth_index => [-> |].
+    by rewrite tnth_comp mem_tnth.
+  by rewrite mem_lothers.
 rewrite [LHS]nth_default; last by rewrite memNindex ?size_tuple.
 congr nth => //.
 have/index_tuple : Ordinal Hilo \in val (lothers lothers_in_l).
