@@ -110,6 +110,9 @@ exists (Ordinal (proj2 (index_tuple l i) H)).
 done.
 Defined.
 
+Definition make_lens_index i (H : i \in val l) : index i l = lens_index H.
+Proof. by []. Qed.
+
 (* Focusing on subvector *)
 Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
@@ -606,8 +609,7 @@ apply: (sorted_eq (leT:=ord_ltn) ltn_trans).
       have : i \in val lothers_comp by rewrite Hi' mem_tnth.
       by rewrite Hk Hh -tnth_comp mem_lothers mem_tnth.
     apply/tnthP.
-    have/index_tuple Hk'' := Hk'.
-    exists (Ordinal Hk'').
+    exists (lens_index Hk').
     apply (tnth_inj _ (lens_uniq lothers_comp)).
     rewrite -tnth_comp lothers_in_l_comp tnth_comp.
     by rewrite -Hi' Hk (tnth_nth k) nth_index.
@@ -633,26 +635,24 @@ case/boolP: (i \in val (lens_comp l l')) => Hi.
   rewrite tnth_lensK -tnth_nth tnth_mktuple index_map ?nth_tnth //.
   exact/tnth_inj/lens_uniq.
 rewrite nth_default; last by rewrite memNindex // !size_tuple.
-have/index_tuple Hilo : i \in val lothers_comp by rewrite mem_lothers.
-rewrite nth_tnth tnth_mktuple.
+have Hilo : i \in val lothers_comp by rewrite mem_lothers.
+rewrite make_lens_index -tnth_nth tnth_mktuple.
 case/boolP: (i \in val l) => Hil.
-  have/index_tuple Hil' := Hil.
-  rewrite (nth_tnth _ _ Hil') tnth_mktuple.
-  have Hill' : Ordinal Hil' \notin val l'.
+  rewrite (make_lens_index Hil) -tnth_nth tnth_mktuple.
+  have Hill' : lens_index Hil \notin val l'.
     apply: contra Hi => Hill'.
-    apply/mapP. exists (Ordinal Hil') => //.
+    apply/mapP. exists (lens_index Hil) => //.
     by rewrite (tnth_nth i) nth_index.
   rewrite [RHS]nth_default; last by rewrite memNindex // !size_tuple.
-  have Hlol' : Ordinal Hil' \in val (lothers l') by rewrite mem_lothers.
-  have/index_tuple Hlol'' := Hlol'.
-  rewrite (nth_tnth _ _ Hlol'').
-  have Hlol : tnth lothers_in_l (Ordinal Hlol'') = Ordinal Hilo.
+  have Hlol' : lens_index Hil \in val (lothers l') by rewrite mem_lothers.
+  rewrite (make_lens_index Hlol') -tnth_nth.
+  have Hlol : tnth lothers_in_l (lens_index Hlol') = lens_index Hilo.
     apply (tnth_inj _ (lens_uniq lothers_comp)).
-    rewrite -tnth_comp lothers_in_l_comp tnth_comp (tnth_nth (Ordinal Hil')).
+    rewrite -tnth_comp lothers_in_l_comp tnth_comp (tnth_nth (lens_index Hil)).
     by rewrite nth_index // !(tnth_nth i) !nth_index // mem_lothers.
   by rewrite -Hlol tnth_lensK -tnth_nth.
 rewrite [RHS]nth_default; last by rewrite memNindex // !size_tuple.
-have Hillo : Ordinal Hilo \notin val lothers_in_l.
+have Hillo : lens_index Hilo \notin val lothers_in_l.
   apply: contra Hil.
   case/tnthP => j /(f_equal (tnth lothers_comp)).
   rewrite -tnth_comp lothers_in_l_comp.
@@ -661,15 +661,13 @@ have Hillo : Ordinal Hilo \notin val lothers_in_l.
   by rewrite mem_lothers.
 rewrite [LHS]nth_default; last by rewrite memNindex ?size_tuple.
 congr nth => //.
-have/index_tuple : Ordinal Hilo \in val (lothers lothers_in_l)
-  by rewrite mem_lothers.
-rewrite [X in _ < X]cast_lothers_notin_l => Hillo'.
-have/index_tuple Hill : i \in val (lothers l) by rewrite mem_lothers.
-rewrite (make_ord Hillo') (make_ord Hill).
+have Hillo' : lens_index Hilo \in val lothers_notin_l by rewrite mem_lothers.
+have Hill : i \in val (lothers l) by rewrite mem_lothers.
+rewrite (make_lens_index Hillo') (make_lens_index Hill).
 congr val.
 apply (tnth_inj _ (lens_uniq (lothers l))).
 rewrite -[in LHS]lothers_notin_l_comp tnth_comp.
-by rewrite (tnth_nth (Ordinal Hilo)) !(tnth_nth i,nth_index) // mem_lothers.
+by rewrite (tnth_nth (lens_index Hilo)) !(tnth_nth i,nth_index) // mem_lothers.
 Qed.
 
 (* associativity of actions of lenses *)
