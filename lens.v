@@ -347,6 +347,19 @@ rewrite -mem_lothers in Hil.
 by rewrite nth_lens_index tnth_map lens_indexK.
 Qed.
 
+Lemma extract_merge_disjoint p (l' : lens n p) vi vj :
+  [disjoint l & l'] ->
+  extract l' (merge_indices vj (extract lothers vi)) = extract l' vi.
+Proof.
+move=> Hdisj; apply eq_from_tnth => i.
+rewrite !tnth_map tnth_ord_tuple.
+have Hilo : tnth l' i \in lothers.
+  by rewrite mem_lothers (disjointFl Hdisj) // mem_tnth.
+rewrite nth_lens_out ?nth_lens_index //.
+- by rewrite tnth_map lens_indexK.
+- by rewrite -mem_lothers.
+Qed.
+
 Variables T : Type.
 
 Definition curry (st : nvect n T) : nvect m (nvect (n-m) T) :=
@@ -514,25 +527,6 @@ Lemma uncurry_is_linear : linear (uncurry l (T:=T)).
 Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
 End curry_linear.
 
-Section extract_merge.
-Variables m n p : nat.
-Variables (l : lens n m) (l' : lens n p).
-Hypothesis Hdisj : [disjoint l & l'].
-Variables (vi : n.-tuple I) (vj : p.-tuple I) (vk : m.-tuple I).
-
-Lemma extract_merge_disjoint :
-  extract l (merge_indices l' vj (extract (lothers l') vi)) = extract l vi.
-Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_map tnth_ord_tuple.
-have Hill' : tnth l i \in lothers l'.
-  by rewrite mem_lothers (disjointFr Hdisj) // mem_tnth.
-rewrite nth_lens_out ?nth_lens_index //.
-- by rewrite tnth_map lens_indexK.
-- by rewrite -mem_lothers.
-Qed.
-End extract_merge.
-
 Section focus.
 Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
   fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
@@ -569,8 +563,8 @@ rewrite !ffunE !sum_ffunE scaler_sumr.
 apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (tr _ vk * tr' _ vj *: v _)%R.
-- by rewrite extract_merge_disjoint.
 - by rewrite extract_merge_disjoint // disjoint_sym.
+- by rewrite extract_merge_disjoint.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
 End focusC.
