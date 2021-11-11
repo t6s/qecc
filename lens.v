@@ -4,8 +4,13 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* Utility lemmas *)
+
 Lemma addnLR m n p : m + n = p -> n = p - m.
 Proof. move/(f_equal (subn^~ m)); by rewrite addKn. Qed.
+
+Lemma ltn_ordK q (i : 'I_q) : Ordinal (ltn_ord i) = i.
+Proof. by apply val_inj. Qed.
 
 Section tnth.
 Lemma nth_tnth T (n i : nat) x0 (v : n.-tuple T) (H : i < n) :
@@ -173,6 +178,7 @@ Lemma extract_comp (t : n.-tuple T) :
 Proof. apply eq_from_tnth => i; by rewrite !tnth_map. Qed.
 
 (* Composition for subvectors *)
+
 Lemma index_lens_comp i (H : index i l1 < m) :
   index i lens_comp = index (Ordinal H) l2.
 Proof.
@@ -183,9 +189,6 @@ have/index_tuple/nth_index := H.
 move/(_ i) => /= <-.
 rewrite nth_tnth index_map ?map_tnth_enum //; by apply/tnth_inj.
 Qed.
-
-Lemma ltn_ordK q (i : 'I_q) : Ordinal (ltn_ord i) = i.
-Proof. by apply val_inj. Qed.
 
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
@@ -200,13 +203,13 @@ rewrite !nth_lens_out //.
 apply: contra Hl1 => /mapP [j Hj] ->; by rewrite mem_tnth.
 Qed.
 
-Lemma focus1_comp (f : p.-tuple T -> p.-tuple T) :
+Lemma focus1A (f : p.-tuple T -> p.-tuple T) :
   focus1 l1 (focus1 l2 f) =1 focus1 lens_comp f.
 Proof. move=> t; by rewrite /focus1 inject_comp extract_comp. Qed.
 
 (* Commutativity of subvector operations *)
 
-Section focus_commu_in.
+Section disjoint_lenses.
 Variables (q r : nat) (l : lens n q) (l' : lens n r) (t : n.-tuple T).
 Hypothesis Hdisj : [disjoint l & l'].
 
@@ -238,14 +241,13 @@ move=> Hl; have Hl' : i \notin l' by rewrite (disjointFr Hdisj).
 rewrite (focus1_out _ _ Hl') /focus1 extract_inject // !tnth_mktuple.
 apply set_nth_default; by rewrite size_tuple index_tuple.
 Qed.
-End focus_commu_in.
+End disjoint_lenses.
 
-Variables (l3 : lens n p) (f : endo1 T m) (g : endo1 T p).
-Hypothesis Hdisj : [disjoint l1 & l3].
-
-Lemma focus1_commu : focus1 l1 f \o focus1 l3 g =1 focus1 l3 g \o focus1 l1 f.
+Lemma focus1C l3 (f : endo1 T m) (g : endo1 T p) :
+  [disjoint l1 & l3] ->
+  focus1 l1 f \o focus1 l3 g =1 focus1 l3 g \o focus1 l1 f.
 Proof.
-move=> t /=.
+move=> Hdisj t /=.
 apply eq_from_tnth => i.
 case/boolP: (i \in l1) => Hl1; first exact: focus1_commu_in.
 case/boolP: (i \in l3) => Hl3.
