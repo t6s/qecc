@@ -434,6 +434,11 @@ End index_of_vec_bij.
 Variable (R : comRingType).
 Definition endofun m := forall T : lmodType R, nvect m T -> nvect m T.
 Definition endo m := forall T : lmodType R, {linear nvect m T -> nvect m T}%R.
+(* Actually, need the property (naturality)
+ forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
+   map h \o f T1 = f T2 \o map h
+which is eqauivalent to the fact f = nvendo M for a square matrix M.
+*)
 Definition nsquare m := nvect m (nvect m R^o).
 
 Definition nvendo_fun m (M : nsquare m) : endofun m :=
