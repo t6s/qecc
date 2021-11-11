@@ -134,17 +134,17 @@ case: l => /= s Hu.
 by rewrite index_uniq // size_tuple.
 Qed.
 
-Lemma nth_extract_index dI t i :
-  i \in val l -> nth dI (extract t) (index i l) = tnth t i.
-Proof.
-move/[dup] => Hi /index_tuple Hi'.
-rewrite nth_tnth tnth_map; congr tnth; apply/val_inj.
-by rewrite (tnth_nth i) /= nth_index.
-Qed.
+Lemma nth_lens_index i (H : i \in val l) dI (t : m.-tuple T) :
+  nth dI t (index i l) = tnth t (lens_index H).
+Proof. by rewrite make_lens_index -tnth_nth. Qed.
 
 Lemma nth_lens_out dI (t : m.-tuple T) i :
   i \notin val l -> nth dI t (index i l) = dI.
 Proof. by move=> Hi; rewrite nth_default // memNindex // !size_tuple. Qed.
+
+Lemma nth_extract_index dI t i :
+  i \in val l -> nth dI (extract t) (index i l) = tnth t i.
+Proof. move=> H; by rewrite nth_lens_index tnth_map lens_indexK. Qed.
 
 Lemma inject_extract t : inject t (extract t) = t.
 Proof.
@@ -631,21 +631,21 @@ Proof.
 rewrite /merge_indices => Hlm.
 apply eq_mktuple => i.
 case/boolP: (i \in val (lens_comp l l')) => Hi.
-  case/mapP: Hi => j /index_tuple Hj ->.
-  rewrite tnth_lensK -tnth_nth tnth_mktuple index_map ?nth_tnth //.
+  case/mapP: Hi => j Hj ->.
+  rewrite tnth_lensK -tnth_nth tnth_mktuple index_map ?(nth_lens_index Hj) //.
   exact/tnth_inj/lens_uniq.
 rewrite nth_lens_out //.
 have Hilo : i \in val lothers_comp by rewrite mem_lothers.
-rewrite make_lens_index -tnth_nth tnth_mktuple.
+rewrite nth_lens_index tnth_mktuple.
 case/boolP: (i \in val l) => Hil.
-  rewrite (make_lens_index Hil) -tnth_nth tnth_mktuple.
+  rewrite (nth_lens_index Hil) tnth_mktuple.
   have Hill' : lens_index Hil \notin val l'.
     apply: contra Hi => Hill'.
     apply/mapP. exists (lens_index Hil) => //.
     by rewrite lens_indexK.
   rewrite [RHS]nth_lens_out //.
   have Hlol' : lens_index Hil \in val (lothers l') by rewrite mem_lothers.
-  rewrite (make_lens_index Hlol') -tnth_nth.
+  rewrite (nth_lens_index Hlol').
   have <- : tnth lothers_in_l (lens_index Hlol') = lens_index Hilo.
     apply (tnth_inj _ (lens_uniq lothers_comp)).
     by rewrite -tnth_comp lothers_in_l_comp tnth_comp !lens_indexK.
