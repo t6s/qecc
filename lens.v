@@ -504,19 +504,66 @@ Definition focus n m l tr : endo n :=
 
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
-(* horizontal composition of endomorphisms *)
-Lemma focusC (l' : lens n p) (tr : endo m) (tr' : endo p) (v : nvect n T) :
-  [disjoint l & l'] ->
-  focus l tr _ (focus l' tr' _ v) = focus l' tr' _ (focus l tr _ v).
-Abort.
+Section focusC.
+Variable l' : lens n p.
+Hypothesis Hdisj : [disjoint l & l'].
 
-(*
-Lemma curry_comp (l : lens n m) (l' : lens m p) (v : nvect n T) :
-  curry l' (curry l) v = 
-*)
-(*
-Lemma uncurry_comp (l : lens n m) (l' : lens m p) (v : nvect n T) :
-*)
+(* horizontal composition of endomorphisms *)
+Lemma focusC (tr : nsquare m) (tr' : nsquare p) (v : nvect n T) :
+  focus l (nvendo tr) _ (focus l' (nvendo tr') _ v) =
+  focus l' (nvendo tr') _ (focus l (nvendo tr) _ v).
+Proof.
+rewrite /focus.
+apply/ffunP => /= vi.
+rewrite !ffunE !sum_ffunE.
+under eq_bigr.
+  move=> /= vj _.
+  rewrite !ffunE !sum_ffunE.
+  rewrite scaler_sumr.
+  over.
+rewrite exchange_big /=.
+apply eq_bigr => /= vj _.
+rewrite !ffunE !sum_ffunE scaler_sumr.
+apply eq_bigr => /= vk _.
+rewrite !ffunE.
+rewrite !scalerA [in RHS]mulrC.
+congr (tr _ vk * tr' _ vj *: v _)%R.
+- apply eq_from_tnth => i.
+  rewrite !tnth_map tnth_ord_tuple.
+  have Hill' : tnth l i \in lothers l'.
+    by rewrite mem_lothers (disjointFr Hdisj) // mem_tnth.
+  rewrite nth_lens_out ?nth_lens_index //.
+  - by rewrite tnth_map lens_indexK.
+  - by rewrite -mem_lothers.
+- apply eq_from_tnth => i.
+  rewrite !tnth_map tnth_ord_tuple.
+  have Hill' : tnth l' i \in lothers l.
+    by rewrite mem_lothers (disjointFl Hdisj) // mem_tnth.
+  rewrite nth_lens_out ?nth_lens_index //.
+  - by rewrite tnth_map lens_indexK.
+  - by rewrite -mem_lothers.
+- apply eq_from_tnth => i.
+  rewrite !tnth_map !tnth_ord_tuple.
+  case/boolP: (i \in l) => Hil.
+    rewrite [RHS]nth_lens_index.
+    have Hil' : i \notin l' by rewrite (disjointFr Hdisj) // mem_tnth.
+    rewrite nth_lens_out //.
+    rewrite -mem_lothers in Hil'.
+    rewrite nth_lens_index !tnth_map !tnth_ord_tuple.
+    by rewrite lens_indexK nth_lens_index.
+  rewrite [RHS]nth_lens_out //.
+  have Hill : i \in lothers l by rewrite mem_lothers.
+  rewrite [RHS]nth_lens_index.
+  case/boolP: (i \in l') => Hil'.
+    rewrite nth_lens_index !tnth_map !tnth_ord_tuple.
+    by rewrite lens_indexK nth_lens_index.
+  rewrite nth_lens_out //.
+  have Hill' : i \in lothers l' by rewrite mem_lothers.
+  rewrite nth_lens_index !tnth_map !tnth_ord_tuple !lens_indexK.
+  rewrite nth_lens_out // nth_lens_index //.
+  rewrite [RHS]nth_lens_out // [RHS]nth_lens_index //.
+  by rewrite !tnth_map // !lens_indexK.
+Qed.
 
 Variable l' : lens m p.
 
