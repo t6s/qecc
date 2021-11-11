@@ -602,6 +602,32 @@ Qed.
 Lemma sorted_others q r (ln : lens q r) : sorted ord_ltn (others ln).
 Proof. exact/sorted_filter/sorted_enum/ltn_trans. Qed.
 
+Lemma lothers_notin_l_compi :
+  lens_comp lothers_comp lothers_notin_l =i lothers l.
+Proof.
+move=> /= i; rewrite mem_lothers.
+case/boolP: (i \in l) => /= Hi; apply/mapP.
+- case=> j; rewrite mem_lothers => Hj Hi'.
+  apply/negP: Hj; rewrite negbK.
+  case/tnthP: Hi => k Hk.
+  have Hk' : k \in lothers l'.
+    rewrite mem_lothers; apply/tnthP => -[h] Hh.
+    have : i \in lothers_comp by rewrite Hi' mem_tnth.
+    by rewrite Hk Hh -tnth_comp mem_lothers mem_tnth.
+  apply/tnthP.
+  exists (lens_index Hk').
+  apply (tnth_inj _ (lens_uniq lothers_comp)).
+  by rewrite -tnth_comp lothers_in_l_comp tnth_comp -Hi' Hk lens_indexK.
+- have /tnthP[j Hj]:  i \in lothers_comp.
+    rewrite mem_lothers; apply: contra Hi => /mapP [j Hj] ->.
+    exact: mem_tnth.
+  exists j => //.
+  rewrite mem_lothers; apply: contra Hi => /mapP [k _].
+  rewrite Hj => ->.
+  have Hol := others_in_l_present k.
+  by rewrite lens_indexK tnth_map mem_tnth.
+Qed.
+
 Lemma lothers_notin_l_comp :
   lens_comp lothers_comp lothers_notin_l = lothers l.
 Proof.
@@ -614,27 +640,7 @@ apply: (sorted_eq (leT:=ord_ltn) ltn_trans).
 - apply uniq_perm.
     exact: (lens_uniq (lens_comp lothers_comp lothers_notin_l)).
     exact: (lens_uniq (lothers l)).
-  move=> /= i; rewrite mem_lothers.
-  case/boolP: (i \in l) => /= Hi; apply/mapP.
-  + case=> j; rewrite mem_lothers => Hj Hi'.
-    apply/negP: Hj; rewrite negbK.
-    case/tnthP: Hi => k Hk.
-    have Hk' : k \in lothers l'.
-      rewrite mem_lothers; apply/tnthP => -[h] Hh.
-      have : i \in lothers_comp by rewrite Hi' mem_tnth.
-      by rewrite Hk Hh -tnth_comp mem_lothers mem_tnth.
-    apply/tnthP.
-    exists (lens_index Hk').
-    apply (tnth_inj _ (lens_uniq lothers_comp)).
-    by rewrite -tnth_comp lothers_in_l_comp tnth_comp -Hi' Hk lens_indexK.
-  + have /tnthP[j Hj]:  i \in lothers_comp.
-      rewrite mem_lothers; apply: contra Hi => /mapP [j Hj] ->.
-      exact: mem_tnth.
-    exists j => //.
-    rewrite mem_lothers; apply: contra Hi => /mapP [k _].
-    rewrite Hj => ->.
-    have Hol := others_in_l_present k.
-    by rewrite lens_indexK tnth_map mem_tnth.
+  exact: lothers_notin_l_compi.
 Qed.    
 
 Lemma extract_lothers_comp (v : n.-tuple I) :
