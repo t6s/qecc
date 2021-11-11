@@ -85,7 +85,7 @@ Variables (T : Type) (n m : nat).
 
 Record lens := mkLens {lens_t :> m.-tuple 'I_n ; lens_uniq : uniq lens_t}.
 Canonical lens_subType := Eval hnf in [subType for lens_t].
-Canonical lens_predType := PredType (pred_of_seq \o lens_t).
+Canonical lens_predType := PredType (fun x : lens => pred_of_seq x).
 
 Definition endo1 := m.-tuple T -> m.-tuple T.
 
@@ -216,6 +216,21 @@ apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
 by rewrite nth_lens_out // (disjointFr Hdisj) // mem_tnth.
 Qed.
 
+Lemma inject_disjointC vj vk :
+  inject l' (inject l t vk) vj = inject l (inject l' t vj) vk.
+Proof.
+apply eq_from_tnth => i.
+rewrite !tnth_map !tnth_ord_tuple.
+case/boolP: (i \in l) => Hil.
+  rewrite [RHS]nth_lens_index.
+  have Hil' : i \notin l' by rewrite (disjointFr Hdisj) // mem_tnth.
+  by rewrite nth_lens_out // nth_lens_index.
+rewrite [RHS]nth_lens_out //.
+case/boolP: (i \in l') => Hil'.
+  by rewrite !nth_lens_index.
+by rewrite !nth_lens_out.
+Qed.
+
 Lemma focus1_commu_in (f : endo1 T q) (g : endo1 T r) i : i \in l ->
   tnth (focus1 l f (focus1 l' g t)) i = tnth (focus1 l' g (focus1 l f t)) i.
 Proof.
@@ -318,6 +333,18 @@ Proof.
 apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple nth_lens_out //.
   by rewrite tnth_lensK -tnth_nth.
 move: (mem_tnth i lothers); by rewrite mem_lothers.
+Qed.
+
+Lemma merge_indices_extract_others v1 v2 :
+  merge_indices v2 (extract lothers v1) = inject l v1 v2.
+Proof.
+apply eq_from_tnth => i.
+rewrite !tnth_map !tnth_ord_tuple.
+case/boolP: (i \in l) => Hil.
+  by rewrite !nth_lens_index.
+rewrite nth_lens_out // [RHS]nth_lens_out //.
+rewrite -mem_lothers in Hil.
+by rewrite nth_lens_index tnth_map lens_indexK.
 Qed.
 
 Variables T : Type.
@@ -487,6 +514,25 @@ Lemma uncurry_is_linear : linear (uncurry l (T:=T)).
 Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
 End curry_linear.
 
+Section extract_merge.
+Variables m n p : nat.
+Variables (l : lens n m) (l' : lens n p).
+Hypothesis Hdisj : [disjoint l & l'].
+Variables (vi : n.-tuple I) (vj : p.-tuple I) (vk : m.-tuple I).
+
+Lemma extract_merge_disjoint :
+  extract l (merge_indices l' vj (extract (lothers l') vi)) = extract l vi.
+Proof.
+apply eq_from_tnth => i.
+rewrite !tnth_map tnth_ord_tuple.
+have Hill' : tnth l i \in lothers l'.
+  by rewrite mem_lothers (disjointFr Hdisj) // mem_tnth.
+rewrite nth_lens_out ?nth_lens_index //.
+- by rewrite tnth_map lens_indexK.
+- by rewrite -mem_lothers.
+Qed.
+End extract_merge.
+
 Section focus.
 Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
   fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
@@ -516,55 +562,20 @@ Proof.
 rewrite /focus.
 apply/ffunP => /= vi.
 rewrite !ffunE !sum_ffunE.
-under eq_bigr.
-  move=> /= vj _.
-  rewrite !ffunE !sum_ffunE.
-  rewrite scaler_sumr.
-  over.
+under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
 rewrite exchange_big /=.
 apply eq_bigr => /= vj _.
 rewrite !ffunE !sum_ffunE scaler_sumr.
 apply eq_bigr => /= vk _.
-rewrite !ffunE.
-rewrite !scalerA [in RHS]mulrC.
+rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (tr _ vk * tr' _ vj *: v _)%R.
-- apply eq_from_tnth => i.
-  rewrite !tnth_map tnth_ord_tuple.
-  have Hill' : tnth l i \in lothers l'.
-    by rewrite mem_lothers (disjointFr Hdisj) // mem_tnth.
-  rewrite nth_lens_out ?nth_lens_index //.
-  - by rewrite tnth_map lens_indexK.
-  - by rewrite -mem_lothers.
-- apply eq_from_tnth => i.
-  rewrite !tnth_map tnth_ord_tuple.
-  have Hill' : tnth l' i \in lothers l.
-    by rewrite mem_lothers (disjointFl Hdisj) // mem_tnth.
-  rewrite nth_lens_out ?nth_lens_index //.
-  - by rewrite tnth_map lens_indexK.
-  - by rewrite -mem_lothers.
-- apply eq_from_tnth => i.
-  rewrite !tnth_map !tnth_ord_tuple.
-  case/boolP: (i \in l) => Hil.
-    rewrite [RHS]nth_lens_index.
-    have Hil' : i \notin l' by rewrite (disjointFr Hdisj) // mem_tnth.
-    rewrite nth_lens_out //.
-    rewrite -mem_lothers in Hil'.
-    rewrite nth_lens_index !tnth_map !tnth_ord_tuple.
-    by rewrite lens_indexK nth_lens_index.
-  rewrite [RHS]nth_lens_out //.
-  have Hill : i \in lothers l by rewrite mem_lothers.
-  rewrite [RHS]nth_lens_index.
-  case/boolP: (i \in l') => Hil'.
-    rewrite nth_lens_index !tnth_map !tnth_ord_tuple.
-    by rewrite lens_indexK nth_lens_index.
-  rewrite nth_lens_out //.
-  have Hill' : i \in lothers l' by rewrite mem_lothers.
-  rewrite nth_lens_index !tnth_map !tnth_ord_tuple !lens_indexK.
-  rewrite nth_lens_out // nth_lens_index //.
-  rewrite [RHS]nth_lens_out // [RHS]nth_lens_index //.
-  by rewrite !tnth_map // !lens_indexK.
+- by rewrite extract_merge_disjoint.
+- by rewrite extract_merge_disjoint // disjoint_sym.
+- by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
+End focusC.
 
+Section focusA.
 Variable l' : lens m p.
 
 Definition lothers_comp := lothers (lens_comp l l').
@@ -732,6 +743,7 @@ rewrite !ffunE.
 congr (_ *: v _)%R.
 exact: merge_indices_comp.
 Qed.
+End focusA.
 End focus.
 
 Section application.
