@@ -316,14 +316,6 @@ Proof. by rewrite mem_filter mem_enum andbT. Qed.
 Definition merge_indices (v : m.-tuple I) (w : (n-m).-tuple I) :=
   [tuple nth (nth dI w (index i lothers)) v (index i l) | i < n].
 
-Lemma merge_indices_extract (v : n.-tuple I) :
-  merge_indices (extract l v) (extract lothers v) = v.
-Proof.
-apply eq_from_tnth => i; rewrite tnth_mktuple.
-case/boolP: (i \in l) => Hi; first by rewrite nth_extract_index.
-by rewrite nth_lens_out // nth_extract_index // mem_lothers.
-Qed.
-
 Lemma extract_merge v1 v2 : extract l (merge_indices v1 v2) = v1.
 Proof.
 apply eq_from_tnth => i.
@@ -334,32 +326,29 @@ Lemma extract_lothers_merge v1 v2 : extract lothers (merge_indices v1 v2) = v2.
 Proof.
 apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple nth_lens_out //.
   by rewrite tnth_lensK -tnth_nth.
-move: (mem_tnth i lothers); by rewrite mem_lothers.
+by rewrite -mem_lothers mem_tnth.
 Qed.
 
 Lemma merge_indices_extract_others v1 v2 :
   merge_indices v2 (extract lothers v1) = inject l v1 v2.
 Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_map !tnth_ord_tuple.
-case/boolP: (i \in l) => Hil.
-  by rewrite !nth_lens_index.
-rewrite nth_lens_out // [RHS]nth_lens_out //.
-rewrite -mem_lothers in Hil.
-by rewrite nth_lens_index tnth_map lens_indexK.
+apply eq_from_tnth => i; rewrite !tnth_mktuple.
+case/boolP: (i \in l) => Hil; first by rewrite !nth_lens_index.
+by rewrite !(nth_extract_index,nth_lens_out) // mem_lothers.
 Qed.
+
+Lemma merge_indices_extract (v : n.-tuple I) :
+  merge_indices (extract l v) (extract lothers v) = v.
+Proof. by rewrite merge_indices_extract_others inject_extract. Qed.
 
 Lemma extract_merge_disjoint p (l' : lens n p) vi vj :
   [disjoint l & l'] ->
   extract l' (merge_indices vj (extract lothers vi)) = extract l' vi.
 Proof.
-move=> Hdisj; apply eq_from_tnth => i.
-rewrite !tnth_map tnth_ord_tuple.
-have Hilo : tnth l' i \in lothers.
-  by rewrite mem_lothers (disjointFl Hdisj) // mem_tnth.
-rewrite nth_lens_out ?nth_lens_index //.
-- by rewrite tnth_map lens_indexK.
-- by rewrite -mem_lothers.
+move=> Hdisj; apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
+have Hil : tnth l' i \notin l by rewrite (disjointFl Hdisj) // mem_tnth.
+have Hilo : tnth l' i \in lothers by rewrite mem_lothers.
+by rewrite nth_lens_out ?nth_lens_index // tnth_map lens_indexK.
 Qed.
 
 Variables T : Type.
@@ -433,29 +422,22 @@ Lemma vec_of_index_recK m i :
   i < vsz m -> index_of_vec_rec (vec_of_index_rec m i) = i.
 Proof.
 rewrite /vsz. 
-elim: m i => [|m IH] /=.
-  by case; rewrite expn0 // ltnS.
-move=> i Hi.
-rewrite enum_valK IH /=.
-  by rewrite addnC mulnC -divn_eq.
-rewrite -(ltn_pmul2r H).
-apply (leq_ltn_trans (leq_trunc_div _ _)).
-by rewrite mulnC -expnS.
+elim: m i => [|m IH /= i Hi]; first by case; rewrite expn0 // ltnS.
+rewrite enum_valK IH /=; first by rewrite addnC mulnC -divn_eq.
+by rewrite -(ltn_pmul2r H) (leq_ltn_trans (leq_trunc_div _ _)) // mulnC -expnS.
 Qed.
 
 Lemma vec_of_indexK m : cancel (@vec_of_index m) (@index_of_vec m).
 Proof.
 rewrite /index_of_vec /vec_of_index /= => -[i] Hi.
-apply val_inj => /=.
-by rewrite revK vec_of_index_recK.
+apply val_inj; by rewrite /= revK vec_of_index_recK.
 Qed.
 
 Lemma index_of_vecK m : cancel (@index_of_vec m) (@vec_of_index m).
 Proof.
 rewrite /index_of_vec /vec_of_index => -[t Ht].
 apply/val_inj => /=.
-rewrite -[RHS]revK.
-congr rev.
+rewrite -[RHS]revK; congr rev.
 move/eqP: Ht; rewrite -size_rev.
 elim: (rev t) m => {t} [|i t IH] m <- //=.
 congr (_ :: _).
@@ -464,7 +446,7 @@ congr (_ :: _).
   by rewrite addnC mulnC modnMDl modn_small.
 rewrite divnDr.
   by rewrite divn_small // add0n mulKn // IH.
-apply/dvdn_mulr/dvdnn.
+exact/dvdn_mulr/dvdnn.
 Qed.
 
 Lemma index_of_vec_bij m : bijective (@index_of_vec m).
@@ -489,10 +471,9 @@ Definition nvendo_fun m (M : nsquare m) : endofun m :=
 
 Lemma nvendo_is_linear m M T : linear (@nvendo_fun m M T).
 Proof.
-move=> x y z.
-apply/ffunP => vi; rewrite !ffunE.
-rewrite scaler_sumr -big_split /=.
-apply eq_bigr => vj _.
+move=> /= x y z.
+apply/ffunP => /= vi; rewrite !ffunE.
+rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite ffunE scalerDr scalerA mulrC -scalerA ffunE.
 Qed.
 
@@ -546,30 +527,23 @@ Definition focus n m l tr : endo n :=
 
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
-Section focusC.
-Variable l' : lens n p.
-Hypothesis Hdisj : [disjoint l & l'].
-
 (* horizontal composition of endomorphisms *)
-Lemma focusC (tr : nsquare m) (tr' : nsquare p) (v : nvect n T) :
+Lemma focusC (l' : lens n p) tr tr' (v : nvect n T) :
+  [disjoint l & l'] ->
   focus l (nvendo tr) _ (focus l' (nvendo tr') _ v) =
   focus l' (nvendo tr') _ (focus l (nvendo tr) _ v).
 Proof.
-rewrite /focus.
-apply/ffunP => /= vi.
-rewrite !ffunE !sum_ffunE.
+rewrite /focus => Hdisj.
+apply/ffunP => /= vi; rewrite !ffunE !sum_ffunE.
 under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
-rewrite exchange_big /=.
-apply eq_bigr => /= vj _.
-rewrite !ffunE !sum_ffunE scaler_sumr.
-apply eq_bigr => /= vk _.
+rewrite exchange_big; apply eq_bigr => /= vj _.
+rewrite !ffunE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (tr _ vk * tr' _ vj *: v _)%R.
 - by rewrite extract_merge_disjoint // disjoint_sym.
 - by rewrite extract_merge_disjoint.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
-End focusC.
 
 Section focusA.
 Variable l' : lens m p.
@@ -615,20 +589,14 @@ Proof. by rewrite size_tuple cast_lothers_notin_l. Qed.
 
 Definition lothers_notin_l : lens (n-p) (n-m).
 exists (Tuple size_lothers_notin_l).
-exact: (lens_uniq (lothers lothers_in_l)).
+exact (lens_uniq (lothers lothers_in_l)).
 Defined.
 
 Lemma lothers_in_l_comp :
   lens_comp lothers_comp lothers_in_l = lens_comp l (lothers l').
 Proof.
 apply/val_inj/eq_from_tnth => i.
-rewrite !tnth_map tnth_ord_tuple.
-have dm : 'I_m := widen_ord (leq_subr _ _) i.
-have dn : 'I_n := widen_ord (lens_leq l) dm.
-rewrite (tnth_nth dn) nth_index tnth_map // mem_lothers.
-apply/negP => /mapP /= [j] Hj /tnth_inj Hj'.
-have := mem_tnth i (lothers l').
-by rewrite Hj' ?lens_uniq // mem_lothers Hj.
+by rewrite !tnth_map tnth_ord_tuple lens_indexK.
 Qed.
 
 Lemma sorted_others q r (ln : lens q r) : sorted ord_ltn (others ln).
@@ -646,33 +614,27 @@ apply: (sorted_eq (leT:=ord_ltn) ltn_trans).
 - apply uniq_perm.
     exact: (lens_uniq (lens_comp lothers_comp lothers_notin_l)).
     exact: (lens_uniq (lothers l)).
-  move=> i.
-  rewrite mem_lothers.
-  apply/mapP; case: ifPn => Hi.
-  + have /tnthP[j Hj]:  i \in lothers_comp.
-      rewrite mem_lothers.
-      apply: contra Hi => /mapP [j Hj] ->.
-      exact: mem_tnth.
-    exists j => //.
-    rewrite mem_lothers.
-    apply: contra Hi => /mapP [k _].
-    rewrite Hj => ->.
-    have Hol := others_in_l_present k.
-    by rewrite lens_indexK tnth_map mem_tnth.
-  + rewrite negbK in Hi.
-    case=> j; rewrite mem_lothers => Hj Hi'.
+  move=> /= i; rewrite mem_lothers.
+  case/boolP: (i \in l) => /= Hi; apply/mapP.
+  + case=> j; rewrite mem_lothers => Hj Hi'.
     apply/negP: Hj; rewrite negbK.
     case/tnthP: Hi => k Hk.
     have Hk' : k \in lothers l'.
-      rewrite mem_lothers.
-      apply/tnthP => -[h] Hh.
+      rewrite mem_lothers; apply/tnthP => -[h] Hh.
       have : i \in lothers_comp by rewrite Hi' mem_tnth.
       by rewrite Hk Hh -tnth_comp mem_lothers mem_tnth.
     apply/tnthP.
     exists (lens_index Hk').
     apply (tnth_inj _ (lens_uniq lothers_comp)).
-    rewrite -tnth_comp lothers_in_l_comp tnth_comp.
-    by rewrite -Hi' Hk lens_indexK.
+    by rewrite -tnth_comp lothers_in_l_comp tnth_comp -Hi' Hk lens_indexK.
+  + have /tnthP[j Hj]:  i \in lothers_comp.
+      rewrite mem_lothers; apply: contra Hi => /mapP [j Hj] ->.
+      exact: mem_tnth.
+    exists j => //.
+    rewrite mem_lothers; apply: contra Hi => /mapP [k _].
+    rewrite Hj => ->.
+    have Hol := others_in_l_present k.
+    by rewrite lens_indexK tnth_map mem_tnth.
 Qed.    
 
 Lemma extract_lothers_comp (v : n.-tuple I) :
