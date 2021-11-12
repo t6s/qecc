@@ -112,9 +112,7 @@ Qed.
 Section lens_index.
 Variables (i : 'I_n) (H : i \in l).
 
-Definition lens_index : 'I_m.
-by exists (Ordinal (proj2 (index_tuple l i) H)).
-Defined.
+Definition lens_index : 'I_m := Ordinal (proj2 (index_tuple l i) H).
 
 Definition make_lens_index : index i l = lens_index. Proof. by []. Qed.
 
@@ -478,8 +476,7 @@ Definition nvendo_fun m (M : nsquare m) : endofun m :=
 
 Lemma nvendo_is_linear m M T : linear (@nvendo_fun m M T).
 Proof.
-move=> /= x y z.
-apply/ffunP => /= vi; rewrite !ffunE.
+move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
 rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite ffunE scalerDr scalerA mulrC -scalerA ffunE.
 Qed.
@@ -509,14 +506,12 @@ split => [Hf | [M] HM].
   rewrite [in LHS](decompose_nvect v) linear_sum.
   apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
   apply eq_bigr => /= vj _; rewrite !ffunE.
-  set h := fun (x : R^o) => (x *: v vj)%R.
+  set h : R^o -> T := *:%R^~ _.
   have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
   move: (Hf _ _ (Linear hlin) (nvbasis vj)) => /= <-.
   by rewrite ffunE.
-- move=> T1 T2 h /= v /=.
-  apply/ffunP => /= vi.
-  rewrite !HM !ffunE linear_sum.
-  apply eq_bigr => vj _.
+- move=> T1 T2 h /= v; apply/ffunP => /= vi.
+  rewrite !HM !ffunE linear_sum; apply eq_bigr => vj _.
   by rewrite linearZ_LR !ffunE.
 Qed.
 
@@ -594,8 +589,7 @@ Definition lothers_comp := lothers (lens_comp l l').
 Lemma others_in_l_present i :
   tnth (lens_comp l (lothers l')) i \in lothers_comp.
 Proof.
-rewrite mem_lothers.
-apply/mapP => -[k Hk].
+rewrite mem_lothers; apply/mapP => -[k Hk].
 rewrite tnth_comp => /tnth_inj Hi.
 by apply/negP: Hk; rewrite -mem_lothers -Hi (mem_tnth,lens_uniq).
 Qed.
@@ -605,21 +599,15 @@ Definition others_in_l :=
 
 Lemma uniq_others_in_l : uniq (others_in_l).
 Proof.
-apply/tnth_inj => i j.
-rewrite !tnth_mktuple.
+apply/tnth_inj => i j; rewrite !tnth_mktuple.
 set k := lens_index _.
-case.
-move/(f_equal (nth (widen_ord (leq_subr _ _) k) (others (lens_comp l l')))).
+case=> /(f_equal (nth (widen_ord (leq_subr _ _) k) lothers_comp)).
 rewrite !nth_index; try by rewrite others_in_l_present.
 move/tnth_inj => -> //.
-rewrite map_inj_uniq ?(lens_uniq (lothers l')) //.
-exact/tnth_inj/lens_uniq.
+rewrite map_inj_uniq ?(lens_uniq (lothers l')) //; exact/tnth_inj/lens_uniq.
 Qed.
 
-Definition lothers_in_l : lens (n-p) (m-p).
-exists others_in_l.
-exact uniq_others_in_l.
-Defined.
+Definition lothers_in_l := mkLens uniq_others_in_l.
 
 Lemma cast_lothers_notin_l : n - p - (m - p) = n - m.
 Proof. rewrite subnBA ?subnK // lens_leq //. exact: (lens_comp l l'). Qed.
@@ -738,21 +726,12 @@ rewrite /focus /focus_fun /= !{}Hf {tr}.
 apply/ffunP => /= vi.
 rewrite !ffunE extract_lothers_comp -!extract_comp.
 rewrite -lothers_in_l_comp -lothers_notin_l_comp !sum_ffunE.
-apply eq_bigr => /= vj _.
-rewrite !ffunE.
+apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _)%R.
 exact: merge_indices_comp.
 Qed.
 End focusA.
 End focus.
-
-Section application.
-Let lmodType_C := Type.
-Let transformation m := forall T : lmodType_C, nvect m T -> nvect m T.
-(*Definition transformation m : forall T : normedLmodType C,
- {unitary nvect m T -> nvect m T}.*)
-End application.
-End tensor_space.
 
 (* Computable Ordinal constants *)
 Definition succO {n} := lift (@ord0 n).
