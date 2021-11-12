@@ -468,13 +468,6 @@ which is equivalent to the fact f = nvendo M for a square matrix M : nsquare m.
 Definition map_nvect m T1 T2 (f : T1 -> T2) (nv : nvect m T1) : nvect m T2 :=
   [ffun v : m.-tuple I => f (nv v)].
 
-Lemma map_nvect_is_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}%R) :
-  linear (@map_nvect m T1 T2 f).
-Proof. move=> x /= y z; apply/ffunP => vi; by rewrite !ffunE linearPZ. Qed.
-
-Definition map_nvect_linear {m T1 T2} f :=
-  (Linear (@map_nvect_is_linear m T1 T2 f)).
-  
 Definition naturality m (f : endo m) :=
   forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R),
     map_nvect h \o f T1 =1 f T2 \o map_nvect h.
@@ -500,34 +493,26 @@ Definition nvbasis m (vi : m.-tuple I) : nvect m R^o :=
 Definition endons m (f : endo m) : nsquare m :=
   [ffun vi => [ffun vj => f _ (nvbasis vj) vi]].
 
+Lemma decompose_nvect m (T : lmodType R) (v : nvect m T) :
+  v = (\sum_i map_nvect ( *:%R^~ (v i)) (nvbasis i))%R.
+Proof.
+apply/ffunP => vi; rewrite sum_ffunE.
+rewrite (bigD1 vi) //= !ffunE eqxx scale1r big1 ?addr0 //.
+by move=> vj Hi; rewrite !ffunE (negbTE Hi) scale0r.
+Qed.
+
 Lemma naturalityP m (f : endo m) :
   naturality f <-> exists M, forall T, f T =1 nvendo M T.
 Proof.
 split => [Hf | [M] HM].
-- exists (endons f).
-  move=> T /= v.
-  apply/ffunP => /= vi.
-  rewrite !ffunE.
-  under eq_bigr.
-    move=> /= vj _.
-    rewrite ffunE.
-    pose h (x : R^o) := (x *: v vj)%R.
-    have hlin : linear h.
-      move=> x y z. by rewrite /h scalerDl !scalerA.
-    set g := f _ _.
-    have -> : (g vi *: v vj = map_nvect_linear (Linear hlin) g vi)%R.
-      by rewrite ffunE.
-    move: (Hf _ _ (Linear hlin) (nvbasis vj)) => /= ->.
-    rewrite /h.
-    over.
-  rewrite /=.
-  rewrite -sum_ffunE.
-  rewrite -(linear_sum (f T)).
-  congr (f T _ _).
-  apply/ffunP => {vi}vi.
-  rewrite sum_ffunE.
-  rewrite (bigD1 vi) //= /map_nvect !ffunE eqxx scale1r big1 ?addr0 //.
-  by move=> vj Hi; rewrite !ffunE (negbTE Hi) scale0r.
+- exists (endons f) => T /= v.
+  rewrite [in LHS](decompose_nvect v) linear_sum.
+  apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
+  apply eq_bigr => /= vj _; rewrite !ffunE.
+  set h := fun (x : R^o) => (x *: v vj)%R.
+  have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
+  move: (Hf _ _ (Linear hlin) (nvbasis vj)) => /= <-.
+  by rewrite ffunE.
 - move=> T1 T2 h /= v /=.
   apply/ffunP => /= vi.
   rewrite !HM !ffunE linear_sum.
