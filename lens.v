@@ -458,12 +458,26 @@ End index_of_vec_bij.
 Variable (R : comRingType).
 Definition endofun m := forall T : lmodType R, nvect m T -> nvect m T.
 Definition endo m := forall T : lmodType R, {linear nvect m T -> nvect m T}%R.
+Definition nsquare m := nvect m (nvect m R^o).
+
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
    map h \o f T1 = f T2 \o map h
-which is eqauivalent to the fact f = nvendo M for a square matrix M.
+which is equivalent to the fact f = nvendo M for a square matrix M : nsquare m.
 *)
-Definition nsquare m := nvect m (nvect m R^o).
+Definition map_nvect m T1 T2 (f : T1 -> T2) (nv : nvect m T1) : nvect m T2 :=
+  [ffun v : m.-tuple I => f (nv v)].
+
+Lemma map_nvect_is_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}%R) :
+  linear (@map_nvect m T1 T2 f).
+Proof. move=> x /= y z; apply/ffunP => vi; by rewrite !ffunE linearPZ. Qed.
+
+Definition map_nvect_linear {m T1 T2} f :=
+  (Linear (@map_nvect_is_linear m T1 T2 f)).
+  
+Definition naturality m (f : endo m) :=
+  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R),
+    map_nvect h \o f T1 =1 f T2 \o map_nvect h.
 
 Definition nvendo_fun m (M : nsquare m) : endofun m :=
   fun T v =>
@@ -479,6 +493,47 @@ Qed.
 
 Definition nvendo m (M : nsquare m) : endo m :=
   fun T => Linear (@nvendo_is_linear m M T).
+
+Definition nvbasis m (vi : m.-tuple I) : nvect m R^o :=
+  [ffun vj => (vi == vj)%:R]%R.
+
+Definition endons m (f : endo m) : nsquare m :=
+  [ffun vi => [ffun vj => f _ (nvbasis vj) vi]].
+
+Lemma naturalityP m (f : endo m) :
+  naturality f <-> exists M, forall T, f T =1 nvendo M T.
+Proof.
+split => [Hf | [M] HM].
+- exists (endons f).
+  move=> T /= v.
+  apply/ffunP => /= vi.
+  rewrite !ffunE.
+  under eq_bigr.
+    move=> /= vj _.
+    rewrite ffunE.
+    pose h (x : R^o) := (x *: v vj)%R.
+    have hlin : linear h.
+      move=> x y z. by rewrite /h scalerDl !scalerA.
+    set g := f _ _.
+    have -> : (g vi *: v vj = map_nvect_linear (Linear hlin) g vi)%R.
+      by rewrite ffunE.
+    move: (Hf _ _ (Linear hlin) (nvbasis vj)) => /= ->.
+    rewrite /h.
+    over.
+  rewrite /=.
+  rewrite -sum_ffunE.
+  rewrite -(linear_sum (f T)).
+  congr (f T _ _).
+  apply/ffunP => {vi}vi.
+  rewrite sum_ffunE.
+  rewrite (bigD1 vi) //= /map_nvect !ffunE eqxx scale1r big1 ?addr0 //.
+  by move=> vj Hi; rewrite !ffunE (negbTE Hi) scale0r.
+- move=> T1 T2 h /= v /=.
+  apply/ffunP => /= vi.
+  rewrite !HM !ffunE linear_sum.
+  apply eq_bigr => vj _.
+  by rewrite linearZ_LR !ffunE.
+Qed.
 
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
@@ -529,17 +584,18 @@ Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
 (* horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) tr tr' (v : nvect n T) :
-  [disjoint l & l'] ->
-  focus l (nvendo tr) _ (focus l' (nvendo tr') _ v) =
-  focus l' (nvendo tr') _ (focus l (nvendo tr) _ v).
+  [disjoint l & l'] -> naturality tr -> naturality tr' ->
+  focus l tr _ (focus l' tr' _ v) =
+  focus l' tr' _ (focus l tr _ v).
 Proof.
-rewrite /focus => Hdisj.
-apply/ffunP => /= vi; rewrite !ffunE !sum_ffunE.
+rewrite /focus => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'].
+apply/ffunP => /= vi.
+rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !sum_ffunE.
 under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
 rewrite exchange_big; apply eq_bigr => /= vj _.
 rewrite !ffunE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
-congr (tr _ vk * tr' _ vj *: v _)%R.
+congr (f _ vk * f' _ vj *: v _)%R.
 - by rewrite extract_merge_disjoint // disjoint_sym.
 - by rewrite extract_merge_disjoint.
 - by rewrite !merge_indices_extract_others inject_disjointC.
@@ -556,8 +612,7 @@ Proof.
 rewrite mem_lothers.
 apply/mapP => -[k Hk].
 rewrite tnth_comp => /tnth_inj Hi.
-move: (mem_tnth i (lothers l')).
-by rewrite mem_lothers Hi (Hk,lens_uniq).
+by apply/negP: Hk; rewrite -mem_lothers -Hi (mem_tnth,lens_uniq).
 Qed.
 
 Definition others_in_l :=
@@ -690,10 +745,11 @@ by rewrite -[in LHS]lothers_notin_l_comp tnth_comp !lens_indexK.
 Qed.
 
 (* associativity of actions of lenses *)
-Lemma focusA (tr : nsquare p) (v : nvect n T) :
-  focus (lens_comp l l') (nvendo tr) _ v = focus l (focus l' (nvendo tr)) _ v.
+Lemma focusA tr (v : nvect n T) : naturality tr ->
+  focus (lens_comp l l') tr _ v = focus l (focus l' tr) _ v.
 Proof.
-rewrite /focus.
+case/naturalityP => f Hf.
+rewrite /focus /focus_fun /= !{}Hf {tr}.
 apply/ffunP => /= vi.
 rewrite !ffunE extract_lothers_comp -!extract_comp.
 rewrite -lothers_in_l_comp -lothers_notin_l_comp !sum_ffunE.
