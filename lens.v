@@ -177,25 +177,19 @@ Proof. apply eq_from_tnth => i; by rewrite !tnth_map. Qed.
 
 (* Composition for subvectors *)
 
-Lemma index_lens_comp i (H : index i l1 < m) :
-  index i lens_comp = index (Ordinal H) l2.
+Lemma index_lens_comp i (H : i \in l1) :
+  index i lens_comp = index (lens_index H) l2.
 Proof.
-rewrite /=.
-move: l1 l2 H => [l1' Hl1'] [l2' Hl2'] /= H.
-set k := Ordinal H.
-have/index_tuple/nth_index := H.
-move/(_ i) => /= <-.
-rewrite nth_tnth index_map ?map_tnth_enum //; by apply/tnth_inj.
+have {1}-> : i = tnth l1 (lens_index H) by rewrite (tnth_nth i) nth_index.
+rewrite index_map //; exact/tnth_inj/lens_uniq.
 Qed.
 
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
 Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_mktuple.
+apply eq_from_tnth => i; rewrite !tnth_mktuple.
 case/boolP: (i \in l1) => Hl1.
-  have/index_tuple Hl1' := Hl1.
-  rewrite (index_lens_comp Hl1') nth_tnth.
+  rewrite nth_lens_index index_lens_comp.
   by rewrite !tnth_map tnth_ord_tuple (tnth_nth i) nth_index.
 rewrite !nth_lens_out //.
 apply: contra Hl1 => /mapP [j Hj] ->; by rewrite mem_tnth.
@@ -220,8 +214,7 @@ Qed.
 Lemma inject_disjointC vj vk :
   inject l' (inject l t vk) vj = inject l (inject l' t vj) vk.
 Proof.
-apply eq_from_tnth => i.
-rewrite !tnth_map !tnth_ord_tuple.
+apply eq_from_tnth => i; rewrite !tnth_map !tnth_ord_tuple.
 case/boolP: (i \in l) => Hil.
   rewrite [RHS]nth_lens_index.
   have Hil' : i \notin l' by rewrite (disjointFr Hdisj) // mem_tnth.
@@ -365,10 +358,7 @@ by rewrite !ffunE extract_merge extract_lothers_merge.
 Qed.
 
 Lemma uncurryK : cancel curry uncurry.
-Proof.
-move=> v; apply/ffunP => w.
-by rewrite !ffunE merge_indices_extract.
-Qed.
+Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_indices_extract. Qed.
 End merge_lens.
 
 Let vsz m := #|I| ^ m.
@@ -385,7 +375,7 @@ Lemma index_of_vec_ltn m (v : seq I) :
 Proof.
 rewrite /vsz. 
 elim: v m => [|i v IH []] //= m.
-  move <-. by rewrite expn0.
+  move <-; by rewrite expn0.
 case=> Hm; rewrite expnS.
 case: enum_rank => j /= Hj.
 have : #|I| ^ m > 0.
