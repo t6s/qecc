@@ -457,8 +457,8 @@ Definition map_nvect m T1 T2 (f : T1 -> T2) (nv : nvect m T1) : nvect m T2 :=
   [ffun v : m.-tuple I => f (nv v)].
 
 Definition naturality m (f : endo m) :=
-  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R),
-    map_nvect h \o f T1 =1 f T2 \o map_nvect h.
+  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : nvect m T1),
+    map_nvect h (f T1 v) = f T2 (map_nvect h v).
 
 Definition nvendo_fun m (M : nsquare m) : endofun m :=
   fun T v =>
@@ -498,8 +498,7 @@ split => [Hf | [M] HM].
   apply eq_bigr => /= vj _; rewrite !ffunE.
   set h : R^o -> T := *:%R^~ _.
   have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-  move: (Hf _ _ (Linear hlin) (nvbasis vj)) => /= <-.
-  by rewrite ffunE.
+  by rewrite -(Hf _ _ (Linear hlin) (nvbasis vj)) ffunE.
 - move=> T1 T2 h /= v; apply/ffunP => /= vi.
   rewrite !HM !ffunE linear_sum; apply eq_bigr => vj _.
   by rewrite linearZ_LR !ffunE.
@@ -543,7 +542,7 @@ Lemma focus_is_linear n m l tr T : linear (@focus_fun n m l tr T).
 Proof.
 move=> x y z.
 apply/ffunP => vi; rewrite !ffunE.
-rewrite /= (_ : curry l (T := T) = Linear (curry_is_linear l (T:=T))) //.
+have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
 
@@ -596,11 +595,15 @@ Lemma comp_endo_is_linear A : linear (tr A \o tr' A).
 Proof. by move=> x y z; rewrite !linearP. Qed.
 Definition comp_endo : endo m := fun A => Linear (@comp_endo_is_linear A).
 
+Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
+Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
+
 Lemma focus_comp (v : nvect n T) :
   focus l comp_endo _ v = focus l tr _ (focus l tr' _ v).
 Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
 End comp_endo.
 
+(* associativity of focussing *)
 Section focusA.
 Variable l' : lens m p.
 
