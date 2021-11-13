@@ -552,6 +552,24 @@ Definition focus n m l tr : endo n :=
 
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
+(* Identity *)
+Lemma uniq_ord_tuple : uniq (ord_tuple n). Proof. exact/enum_uniq. Qed.
+Definition lens_id := mkLens uniq_ord_tuple.
+Lemma extract_lens_id (v : n.-tuple I) : extract lens_id v = v.
+Proof. apply eq_from_tnth => i; by rewrite tnth_map tnth_ord_tuple. Qed.
+Lemma index_lens_id i : index i lens_id = i.
+Proof. by rewrite {1}(_ : i = tnth lens_id i) (tnth_ord_tuple,tnth_lensK). Qed.
+
+Lemma focusI tr : naturality tr -> focus lens_id tr T =1 tr T.
+Proof.
+rewrite /focus => /naturalityP [f Hf] /= v.
+apply/ffunP => /= vi.
+rewrite /focus_fun !{}Hf {tr} !ffunE sum_ffunE.
+apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
+congr (_ *: v _)%R.
+apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
+Qed.
+
 (* horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) tr tr' (v : nvect n T) :
   [disjoint l & l'] -> naturality tr -> naturality tr' ->
