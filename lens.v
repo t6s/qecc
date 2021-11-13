@@ -351,13 +351,13 @@ Definition curry (st : nvect n T) : nvect m (nvect (n-m) T) :=
 Definition uncurry (st : nvect m (nvect (n-m) T)) : nvect n T :=
   [ffun v : n.-tuple I => st (extract l v) (extract lothers v)].
 
-Lemma curryK : cancel uncurry curry.
+Lemma uncurryK : cancel uncurry curry.
 Proof.
 move=> v; apply/ffunP => v1; apply/ffunP => v2.
 by rewrite !ffunE extract_merge extract_lothers_merge.
 Qed.
 
-Lemma uncurryK : cancel curry uncurry.
+Lemma curryK : cancel curry uncurry.
 Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_indices_extract. Qed.
 End merge_lens.
 
@@ -588,6 +588,18 @@ congr (f _ vk * f' _ vj *: v _)%R.
 - by rewrite extract_merge_disjoint.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
+
+(* vertical composition of endomorphisms *)
+Section comp_endo.
+Variables tr tr' : endo m.
+Lemma comp_endo_is_linear A : linear (tr A \o tr' A).
+Proof. by move=> x y z; rewrite !linearP. Qed.
+Definition comp_endo : endo m := fun A => Linear (@comp_endo_is_linear A).
+
+Lemma focus_comp (v : nvect n T) :
+  focus l comp_endo _ v = focus l tr _ (focus l tr' _ v).
+Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
+End comp_endo.
 
 Section focusA.
 Variable l' : lens m p.
