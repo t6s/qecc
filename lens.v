@@ -549,6 +549,19 @@ Qed.
 Definition focus n m l tr : endo n :=
   fun T => Linear (@focus_is_linear n m l tr T).
 
+Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
+Proof.
+move=> /naturalityP [f] /= Hf.
+apply/naturalityP.
+exists (endons (focus l (nvendo f))).
+move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE Hf !ffunE sum_ffunE.
+under eq_bigr do rewrite !ffunE.
+under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
+rewrite exchange_big /=; apply eq_bigr => vj _.
+rewrite [in LHS](decompose_nvect v) sum_ffunE scaler_sumr.
+by apply eq_bigr => i _; rewrite !ffunE !scalerA.
+Qed.
+
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
 (* Identity *)
