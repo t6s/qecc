@@ -504,6 +504,10 @@ split => [Hf | [M] HM].
   by rewrite linearZ_LR !ffunE.
 Qed.
 
+Definition bra_ket m (bra : nvect m R^o) (ket : nvect m R^o) : nsquare m :=
+  [ffun vi => [ffun vj => bra vi * ket vj]]%R.
+
+Section vector.
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
@@ -523,6 +527,7 @@ exists (@nvect_vec H n).
   + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.
+End vector.
 
 Section curry_linear.
 Variables (n m : nat) (l : lens n m) (T : lmodType R).
@@ -764,6 +769,7 @@ exact: merge_indices_comp.
 Qed.
 End focusA.
 End focus.
+End tensor_space.
 
 (* Computable Ordinal constants *)
 Definition succO {n} := lift (@ord0 n).
@@ -782,4 +788,16 @@ Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
 
 Let lens3_23 : lens 3 2 := [lens 1; 2].
+
+Import GRing.Theory.
+Require Reals.
+From mathcomp Require Import Rstruct.
+Let R := [comRingType of Reals.Rdefinitions.R].
+Let I := [finType of 'I_2].
+
+Notation "[ 'ket' x1 ; .. ; xn ]" :=
+  (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]).
+Definition qnot : nsquare I R 1 :=
+  (bra_ket [ket 0] [ket 1] + bra_ket [ket 1] [ket 0])%R.
+Eval compute in (qnot [tuple 1%:O] [tuple 0%:O] : R).
 End ordinal_examples.
