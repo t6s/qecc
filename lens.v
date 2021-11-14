@@ -792,12 +792,13 @@ Let lens3_23 : lens 3 2 := [lens 1; 2].
 Import GRing.Theory.
 Require Reals.
 From mathcomp Require Import Rstruct.
+Local Open Scope ring_scope.
 Let R := [comRingType of Reals.Rdefinitions.R].
 Let I := [finType of 'I_2].
 
-Notation "[ 'ket' x1 ; .. ; xn ]" :=
-  (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]).
+Notation "| x1 , .. , xn ⟩" :=
+  (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 Definition qnot : nsquare I R 1 :=
-  (bra_ket [ket 0] [ket 1] + bra_ket [ket 1] [ket 0])%R.
-Eval compute in (qnot [tuple 1%:O] [tuple 0%:O] : R).
+  bra_ket |0⟩ |1⟩ + bra_ket |1⟩ |0⟩.
+Print qnot.
 End ordinal_examples.
