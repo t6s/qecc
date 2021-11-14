@@ -1,4 +1,4 @@
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_ssreflect all_algebra.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -267,7 +267,6 @@ Lemma extract_cat (t : n.-tuple T) :
 Proof. apply val_inj => /=. by rewrite map_cat. Qed.
 End lens_cat.
 
-From mathcomp Require Import all_algebra.
 Import GRing.Theory.
 
 Section tensor_space.
@@ -788,12 +787,14 @@ Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
 
 Let lens3_23 : lens 3 2 := [lens 1; 2].
+End ordinal_examples.
 
-Import GRing.Theory.
+Section gate_examples.
 Require Reals.
 From mathcomp Require Import Rstruct.
 Local Open Scope ring_scope.
 Let R := [comRingType of Reals.Rdefinitions.R].
+Let Ro := [lmodType R of R^o].
 Let I := [finType of 'I_2].
 
 Notation "| x1 , .. , xn ⟩" :=
@@ -801,4 +802,42 @@ Notation "| x1 , .. , xn ⟩" :=
 Definition qnot : nsquare I R 1 :=
   bra_ket |0⟩ |1⟩ + bra_ket |1⟩ |0⟩.
 Print qnot.
-End ordinal_examples.
+
+Definition cnot : nsquare I R 2 :=
+  bra_ket |0,0⟩ |1,0⟩ + bra_ket |1,0⟩ |0,0⟩ +
+  bra_ket |0,1⟩ |0,1⟩ + bra_ket |1,1⟩ |1,1⟩.
+
+Definition linE := (ffunE,mulr0,mul0r,mulr1,addr0,add0r,scale0r,scale1r).
+
+Lemma cnotK : involutive (nvendo cnot Ro).
+Proof.
+move=> v; apply/ffunP=> /= vi.
+have caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
+  case: x => -[]. by left; apply/val_inj.
+  case => //. by right; apply/val_inj.
+rewrite !ffunE.
+case: vi => -[] // i [] // j [] //= H2.
+under eq_bigr do rewrite !ffunE.
+case: (caseI2 i) (caseI2 j) => -> [] -> /=.
+- rewrite (bigD1 [tuple 1%:O; 0%:O]) ?linE //=.
+  rewrite (bigD1 [tuple 0%:O; 0%:O]) ?linE //=.
+  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
+- rewrite (bigD1 [tuple 0%:O; 1%:O]) ?linE //=.
+  rewrite (bigD1 [tuple 0%:O; 1%:O]) ?linE //=.
+  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
+- rewrite (bigD1 [tuple 0%:O; 0%:O]) ?linE //=.
+  rewrite (bigD1 [tuple 1%:O; 0%:O]) ?linE //=.
+  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
+- rewrite (bigD1 [tuple 1%:O; 1%:O]) ?linE //=.
+  rewrite (bigD1 [tuple 1%:O; 1%:O]) ?linE //=.
+  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
+  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
+Qed.
+End gate_examples.
