@@ -468,7 +468,7 @@ Lemma nvendo_is_linear m M T : linear (@nvendo_fun m M T).
 Proof.
 move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
 rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
-by rewrite ffunE scalerDr scalerA mulrC -scalerA ffunE.
+by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
 Definition nvendo m (M : nsquare m) : endo m :=
@@ -551,14 +551,12 @@ Definition focus n m l tr : endo n :=
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
-move=> /naturalityP [f] /= Hf.
-apply/naturalityP.
-exists (endons (focus l (nvendo f))).
-move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE Hf !ffunE sum_ffunE.
-under eq_bigr do rewrite !ffunE.
+case/naturalityP => M /= NM; apply/naturalityP.
+exists (endons (focus l (nvendo M))).
+move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
-rewrite [in LHS](decompose_nvect v) sum_ffunE scaler_sumr.
+rewrite [in LHS](decompose_nvect v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
@@ -604,9 +602,7 @@ Qed.
 (* vertical composition of endomorphisms *)
 Section comp_endo.
 Variables tr tr' : endo m.
-Lemma comp_endo_is_linear A : linear (tr A \o tr' A).
-Proof. by move=> x y z; rewrite !linearP. Qed.
-Definition comp_endo : endo m := fun A => Linear (@comp_endo_is_linear A).
+Definition comp_endo : endo m := fun A => GRing.comp_linear (tr A) (tr' A).
 
 Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
 Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
