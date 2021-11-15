@@ -518,6 +518,11 @@ Qed.
 Definition ket_bra m (ket : nvect m R^o) (bra : nvect m R^o) : nsquare m :=
   [ffun vi => ket vi *: bra]%R.
 
+Definition mul_nsquare m (M1 M2 : nsquare m) : nsquare m :=
+  [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]]%R.
+
+Definition id_nsquare m : nsquare m := [ffun vi => nvbasis vi].
+
 Section vector.
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
@@ -842,6 +847,27 @@ case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
   exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
 Qed.
 
+Lemma size_enum_indices n : size (enum_indices n) = 2 ^ n.
+Proof.
+elim: n => //= n IH.
+by rewrite !size_cat !size_map !IH addnn -mul2n expnS.
+Qed.
+
+Lemma uniq_enum_indices n : uniq (enum_indices n).
+Proof.
+rewrite /is_true -(enum_uniq (tuple_finType n I)).
+apply eq_uniq.
+  by rewrite -cardT card_tuple card_ord size_enum_indices.
+move=> t. by rewrite mem_enum_indices mem_enum.
+Qed.
+
+Lemma sum_enum_indices n (F : n.-tuple 'I_2 -> R) :
+  (\sum_vi F vi = \sum_(vi <- enum_indices n) F vi)%R.
+Proof.
+rewrite [RHS]big_uniq ?uniq_enum_indices //=.
+apply/esym/eq_bigl => vi. exact/mem_enum_indices.
+Qed.
+
 Lemma eq_from_indicesP n (T : eqType) (v w : nvect I n T) :
   reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
 Proof.
@@ -856,6 +882,14 @@ Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_nvbasisK,ffunE).
+Qed.
+
+Lemma cnotK' : mul_nsquare cnot cnot = id_nsquare _ _ _.
+Proof.
+apply/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=;
+apply/eqP; rewrite !(linE,sum_enum_indices,ffunE);
+by rewrite unlock /=  !(linE,sum_enum_indices,ffunE).
 Qed.
 
 Lemma qnotK : involutive (nvendo qnot Ro).
