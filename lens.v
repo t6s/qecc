@@ -269,6 +269,9 @@ End lens_cat.
 
 Import GRing.Theory.
 
+(* Reduce a linear form *)
+Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
+
 Section tensor_space.
 Variable (I : finType) (dI : I).
 
@@ -479,12 +482,21 @@ Definition nvbasis m (vi : m.-tuple I) : nvect m R^o :=
 Definition endons m (f : endo m) : nsquare m :=
   [ffun vi => [ffun vj => f _ (nvbasis vj) vi]].
 
+Lemma nvbasisC m (vi vj : m.-tuple I) : nvbasis vi vj = nvbasis vj vi.
+Proof. by rewrite !ffunE eq_sym. Qed.
+
+Lemma sum_nvbasisK n (T : lmodType R) (vi : n.-tuple I) (F : nvect n T) :
+  (\sum_vj (nvbasis vi vj *: F vj) = F vi)%R.
+Proof.
+rewrite (bigD1 vi) //= !ffunE eqxx big1 ?linE //.
+move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite !linE.
+Qed.
+
 Lemma decompose_nvect m (T : lmodType R) (v : nvect m T) :
   v = (\sum_i map_nvect ( *:%R^~ (v i)) (nvbasis i))%R.
 Proof.
-apply/ffunP => vi; rewrite sum_ffunE.
-rewrite (bigD1 vi) //= !ffunE eqxx scale1r big1 ?addr0 //.
-by move=> vj Hi; rewrite !ffunE (negbTE Hi) scale0r.
+apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_nvbasisK /=.
+by apply eq_bigr => vj _; rewrite [RHS]ffunE nvbasisC.
 Qed.
 
 Lemma naturalityP m (f : endo m) :
@@ -806,8 +818,6 @@ Definition cnot : nsquare I R 2 :=
   (ket_bra ¦0,0⟩ ¦1,0⟩ + ket_bra ¦1,0⟩ ¦0,0⟩ +
    ket_bra ¦0,1⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩)%R.
 
-Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
-
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
   | 0 => [:: [tuple of [::]]]
@@ -832,13 +842,6 @@ case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
   exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
 Qed.
 
-Lemma sum_scale_ket n (T : lmodType R) (vi : n.-tuple I) (F : nvect I n T) :
-  (\sum_vj (nvbasis _ vi vj *: F vj) = F vi)%R.
-Proof.
-rewrite (bigD1 vi) //= !ffunE eqxx scale1r big1 ?addr0 //.
-move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite !linE.
-Qed.
-
 Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
 move=> v; apply/ffunP=> /= vi.
@@ -846,6 +849,6 @@ apply/eqP; rewrite !ffunE.
 have : vi \in enum_indices 2 by rewrite mem_enum_indices.
 apply/allP: vi => /=.
 do! (apply/andP; split) => //;
-  by rewrite !linE sum_scale_ket !ffunE !linE sum_scale_ket.
+  by rewrite !linE sum_nvbasisK !ffunE !linE sum_nvbasisK.
 Qed.
 End gate_examples.
