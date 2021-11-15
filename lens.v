@@ -842,13 +842,27 @@ case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
   exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
 Qed.
 
+Lemma eq_all_indicesP n (T : eqType) (v w : n.-tuple 'I_2 -> T) :
+  reflect (v =1 w) (all (fun x => v x == w x) (enum_indices n)).
+Proof.
+apply (iffP idP).
+  move=> H => vi; apply/eqP.
+  have : vi \in enum_indices _ by rewrite mem_enum_indices.
+  by apply/allP: vi.
+move=> H. apply/allP => vi _. by rewrite H.
+Qed.
+
 Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
-move=> v; apply/ffunP=> /= vi.
-apply/eqP; rewrite !ffunE.
-have : vi \in enum_indices 2 by rewrite mem_enum_indices.
-apply/allP: vi => /=.
-do! (apply/andP; split) => //;
-  by rewrite !linE sum_nvbasisK !ffunE !linE sum_nvbasisK.
+move=> v; apply/ffunP=> /= vi; rewrite !ffunE.
+apply/eq_all_indicesP: vi.
+do! (apply/andP; split) => //=; by rewrite !(linE,sum_nvbasisK,ffunE).
+Qed.
+
+Lemma qnotK : involutive (nvendo qnot Ro).
+Proof. (* exactly the same proof *)
+move=> v; apply/ffunP=> /= vi; rewrite !ffunE.
+apply/eq_all_indicesP: vi.
+do! (apply/andP; split) => //=; by rewrite !(linE,sum_nvbasisK,ffunE).
 Qed.
 End gate_examples.
