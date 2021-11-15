@@ -846,7 +846,6 @@ apply/eqP; rewrite !ffunE.
 have : vi \in enum_indices 2 by rewrite mem_enum_indices.
 apply/allP: vi => /=.
 do! (apply/andP; split) => //;
-  under eq_bigr do rewrite !linE;
-  by rewrite sum_scale_ket !ffunE !linE sum_scale_ket.
+  by rewrite !linE sum_scale_ket !ffunE !linE sum_scale_ket.
 Qed.
 End gate_examples.
