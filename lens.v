@@ -504,7 +504,7 @@ split => [Hf | [M] HM].
 Qed.
 
 Definition ket_bra m (ket : nvect m R^o) (bra : nvect m R^o) : nsquare m :=
-  [ffun vi => [ffun vj => ket vi * bra vj]]%R.
+  [ffun vi => ket vi *: bra]%R.
 
 Section vector.
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
@@ -792,58 +792,61 @@ End ordinal_examples.
 Section gate_examples.
 Require Reals.
 From mathcomp Require Import Rstruct.
-Local Open Scope ring_scope.
 Let R := [comRingType of Reals.Rdefinitions.R].
 Let Ro := [lmodType R of R^o].
 Let I := [finType of 'I_2].
 
-Notation "| x1 , .. , xn ⟩" :=
+Notation "¦ x1 , .. , xn ⟩" :=
   (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 Definition qnot : nsquare I R 1 :=
-  ket_bra |0⟩ |1⟩ + ket_bra |1⟩ |0⟩.
+  (ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩)%R.
 Print qnot.
 
 Definition cnot : nsquare I R 2 :=
-  ket_bra |0,0⟩ |1,0⟩ + ket_bra |1,0⟩ |0,0⟩ +
-  ket_bra |0,1⟩ |0,1⟩ + ket_bra |1,1⟩ |1,1⟩.
+  (ket_bra ¦0,0⟩ ¦1,0⟩ + ket_bra ¦1,0⟩ ¦0,0⟩ +
+   ket_bra ¦0,1⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩)%R.
 
-Definition linE := (ffunE,mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
+Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
+
+Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
+  match n as n return seq (n.-tuple 'I_2) with
+  | 0 => [:: [tuple of [::]]]
+  | S m =>
+    let l := enum_indices m in
+    [seq [tuple of 0%:O :: val t] | t <- l] ++
+    [seq [tuple of 1%:O :: val t] | t <- l]
+  end.
+
+Lemma caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
+Proof.
+case: x => -[]. by left; apply/val_inj.
+case => //. by right; apply/val_inj.
+Qed.
+
+Lemma mem_enum_indices n t : t \in enum_indices n.
+Proof.
+elim: n t => [|n IH] [[|i t] Hlen] //=.
+rewrite mem_cat; apply/orP.
+move/eqP: (Hlen) => [] /eqP Hlen'.
+case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
+  exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
+Qed.
+
+Lemma sum_scale_ket n (T : lmodType R) (vi : n.-tuple I) (F : nvect I n T) :
+  (\sum_vj (nvbasis _ vi vj *: F vj) = F vi)%R.
+Proof.
+rewrite (bigD1 vi) //= !ffunE eqxx scale1r big1 ?addr0 //.
+move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite !linE.
+Qed.
 
 Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
 move=> v; apply/ffunP=> /= vi.
-(*
-apply/eqP.
-have : vi \in enum [finType of 2.-tuple 'I_2] by rewrite mem_enum.
-apply/allP: vi.
-rewrite enumT /= unlock /=.
-*)
-have caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
-  case: x => -[]. by left; apply/val_inj.
-  case => //. by right; apply/val_inj.
-rewrite !ffunE.
-under eq_bigr do rewrite !ffunE scaler_sumr.
-rewrite exchange_big /= (bigD1 vi) //=.
-rewrite [X in _ + X]big1; last first.
-  move=> vj; rewrite eq_sym => /negbTE Hi.
-  rewrite big1 // => vk _ /=.
-  rewrite !ffunE.
-  case: vk => -[] // i [] // j [] //= H2.
-  case: (caseI2 i) (caseI2 j) => -> [] -> /=; rewrite !linE;
-  by case: eqP => [->|]; first rewrite Hi; rewrite !linE.
-case: vi => -[] // i [] // j [] //= H2.
-case: (caseI2 i) (caseI2 j) => -> [] -> /=.
-- rewrite (bigD1 [tuple 1%:O; 0%:O]) ?linE //=.
-  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
-- rewrite (bigD1 [tuple 0%:O; 1%:O]) ?linE //=.
-  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
-- rewrite (bigD1 [tuple 0%:O; 0%:O]) ?linE //=.
-  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
-- rewrite (bigD1 [tuple 1%:O; 1%:O]) ?linE //=.
-  rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
+apply/eqP; rewrite !ffunE.
+have : vi \in enum_indices 2 by rewrite mem_enum_indices.
+apply/allP: vi => /=.
+do! (apply/andP; split) => //;
+  under eq_bigr do rewrite !linE;
+  by rewrite sum_scale_ket !ffunE !linE sum_scale_ket.
 Qed.
 End gate_examples.
