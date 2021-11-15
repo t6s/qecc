@@ -812,6 +812,12 @@ Definition linE := (ffunE,mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
 Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
 move=> v; apply/ffunP=> /= vi.
+(*
+apply/eqP.
+have : vi \in enum [finType of 2.-tuple 'I_2] by rewrite mem_enum.
+apply/allP: vi.
+rewrite enumT /= unlock /=.
+*)
 have caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
   case: x => -[]. by left; apply/val_inj.
   case => //. by right; apply/val_inj.
