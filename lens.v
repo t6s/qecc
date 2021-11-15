@@ -503,8 +503,8 @@ split => [Hf | [M] HM].
   by rewrite linearZ_LR !ffunE.
 Qed.
 
-Definition bra_ket m (bra : nvect m R^o) (ket : nvect m R^o) : nsquare m :=
-  [ffun vi => [ffun vj => bra vi * ket vj]]%R.
+Definition ket_bra m (ket : nvect m R^o) (bra : nvect m R^o) : nsquare m :=
+  [ffun vi => [ffun vj => ket vi * bra vj]]%R.
 
 Section vector.
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
@@ -800,14 +800,14 @@ Let I := [finType of 'I_2].
 Notation "| x1 , .. , xn ⟩" :=
   (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 Definition qnot : nsquare I R 1 :=
-  bra_ket |0⟩ |1⟩ + bra_ket |1⟩ |0⟩.
+  ket_bra |0⟩ |1⟩ + ket_bra |1⟩ |0⟩.
 Print qnot.
 
 Definition cnot : nsquare I R 2 :=
-  bra_ket |0,0⟩ |1,0⟩ + bra_ket |1,0⟩ |0,0⟩ +
-  bra_ket |0,1⟩ |0,1⟩ + bra_ket |1,1⟩ |1,1⟩.
+  ket_bra |0,0⟩ |1,0⟩ + ket_bra |1,0⟩ |0,0⟩ +
+  ket_bra |0,1⟩ |0,1⟩ + ket_bra |1,1⟩ |1,1⟩.
 
-Definition linE := (ffunE,mulr0,mul0r,mulr1,addr0,add0r,scale0r,scale1r).
+Definition linE := (ffunE,mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
 
 Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
@@ -816,28 +816,28 @@ have caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
   case: x => -[]. by left; apply/val_inj.
   case => //. by right; apply/val_inj.
 rewrite !ffunE.
+under eq_bigr do rewrite !ffunE scaler_sumr.
+rewrite exchange_big /= (bigD1 vi) //=.
+rewrite [X in _ + X]big1; last first.
+  move=> vj; rewrite eq_sym => /negbTE Hi.
+  rewrite big1 // => vk _ /=.
+  rewrite !ffunE.
+  case: vk => -[] // i [] // j [] //= H2.
+  case: (caseI2 i) (caseI2 j) => -> [] -> /=; rewrite !linE;
+  by case: eqP => [->|]; first rewrite Hi; rewrite !linE.
 case: vi => -[] // i [] // j [] //= H2.
-under eq_bigr do rewrite !ffunE.
 case: (caseI2 i) (caseI2 j) => -> [] -> /=.
 - rewrite (bigD1 [tuple 1%:O; 0%:O]) ?linE //=.
-  rewrite (bigD1 [tuple 0%:O; 0%:O]) ?linE //=.
   rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
   move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
 - rewrite (bigD1 [tuple 0%:O; 1%:O]) ?linE //=.
-  rewrite (bigD1 [tuple 0%:O; 1%:O]) ?linE //=.
   rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
   move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
 - rewrite (bigD1 [tuple 0%:O; 0%:O]) ?linE //=.
-  rewrite (bigD1 [tuple 1%:O; 0%:O]) ?linE //=.
   rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
   move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
 - rewrite (bigD1 [tuple 1%:O; 1%:O]) ?linE //=.
-  rewrite (bigD1 [tuple 1%:O; 1%:O]) ?linE //=.
   rewrite !big1 ?addr0; first by congr (fun_of_fin v); apply val_inj.
-  move=> vk; rewrite !linE eq_sym => /negbTE -> ; first by rewrite !linE.
   move=> vk; rewrite !linE eq_sym => /negbTE -> ; by rewrite !linE.
 Qed.
 End gate_examples.
