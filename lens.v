@@ -843,6 +843,15 @@ Definition hadamart : nsquare I R 1 :=
   (1 / Num.sqrt 2%:R *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩))%R.
 
+Definition hadamart2 := tensor_nsquare hadamart hadamart.
+
+Definition cnotH : nsquare I R 2 :=
+  (ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
+   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩)%R.
+
+Definition cnotHe :=
+  comp_endo (nvendo hadamart2) (comp_endo (nvendo cnot) (nvendo hadamart2)).
+
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
   | 0 => [:: [tuple of [::]]]
@@ -928,6 +937,64 @@ all: rewrite !scalerA -invrM // -expr2 sqr_sqrtr ?ler0n //.
 2: rewrite opprK addrAC !addrA subrr linE -mulr2n.
 all: by rewrite -(scaler_nat 2 (_ *: v _))%R scalerA Hnn scale1r.
 Qed.
+
+Lemma eq_tuple (T : eqType) n (t1 t2 : n.-tuple T) :
+  (t1 == t2) = (val t1 == val t2).
+Proof. by case: eqP => [-> // | H]; apply/esym/eqP => // /val_inj. Qed.
+
+Lemma eq_ord_tuple m n (t1 t2 : n.-tuple 'I_m) :
+  (t1 == t2) = (map val t1 == map val t2).
+Proof.
+case: eqP => [-> | H]; apply/esym/eqP => // /inj_map.
+by move=> H'; elim H; apply/val_inj/H'/val_inj.
+Qed.
+
+Fixpoint enum_ordinal n : seq 'I_n :=
+  match n as n return seq 'I_n with
+  | 0 => [::]
+  | m.+1 => ord0 :: map (lift ord0) (enum_ordinal m)
+  end.
+
+Lemma enum_ordinalE n : enum 'I_n = enum_ordinal n.
+Proof.
+apply/(@inj_map _ _ (val : 'I_n -> nat)). apply val_inj.
+rewrite val_enum_ord.
+elim: n => //= n IH.
+rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
+by rewrite map_comp -IH (iotaDl 1 0 n).
+Qed.
+
+(* Trying to check the hadamart representation of cnot... *)
+Lemma cnotH_ok : nvendo cnotH Ro =1 cnotHe Ro.
+Proof.
+move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
+all: rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
+rewrite !(eq_ord_tuple,linE,subr0,ffunE,scalerDl) /=.
+rewrite !enum_ordinalE /=.
+rewrite !(linE,subr0,ffunE,scalerDl,sum_nvbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /=.
+rewrite !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite !linE.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 20!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite -!scalerA !linE.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite !(scalerA,addrA,scalerDr).
+have Hsqrt n : (Num.sqrt n.+1%:R : R) \is a GRing.unit
+  by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn.
+rewrite -!invrM // -!expr2 sqr_sqrtr ?ler0n //=.
+Abort.
 
 (* Checking equality of matrices *)
 Lemma cnotK' : mul_nsquare cnot cnot = id_nsquare _ _ _.
