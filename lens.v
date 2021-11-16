@@ -523,6 +523,22 @@ Definition mul_nsquare m (M1 M2 : nsquare m) : nsquare m :=
 
 Definition id_nsquare m : nsquare m := [ffun vi => nvbasis vi].
 
+Definition lens_left m n : lens (m+n) m.
+exists [tuple lshift n i | i < m].
+abstract (rewrite map_inj_uniq ? enum_uniq //; exact/lshift_inj).
+Defined.
+
+Definition lens_right m n : lens (m+n) n.
+exists [tuple rshift m i | i < n].
+abstract (rewrite map_inj_uniq ? enum_uniq //; exact/rshift_inj).
+Defined.
+
+Definition tensor_nsquare m n (M1 : nsquare m) (M2 : nsquare n)
+  : nsquare (m + n) :=
+  [ffun vi => [ffun vj =>
+     M1 (extract (lens_left m n) vi) (extract (lens_left m n) vj) *
+     M2 (extract (lens_right m n) vi) (extract (lens_right m n) vj)]]%R.
+
 Section vector.
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
@@ -823,6 +839,10 @@ Definition cnot : nsquare I R 2 :=
   (ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
    ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩)%R.
 
+Definition hadamart : nsquare I R 1 :=
+  (1/(R_sqrt.sqrt 2%:R) *:
+    (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩))%R.
+
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
   | 0 => [:: [tuple of [::]]]
@@ -890,6 +910,40 @@ Lemma qnotK : involutive (nvendo qnot Ro).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_nvbasisK,ffunE).
+Qed.
+
+Lemma hadamartK : involutive (nvendo hadamart Ro).
+Proof.
+move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: rewrite !(linE,subr0,sum_nvbasisK,ffunE).
+all: under eq_bigr do rewrite scalerDr ?scalerN 2!ffunE scalerDl -scalerA.
+all: rewrite big_split /= -!scaler_sumr !(linE,subr0,sum_nvbasisK,ffunE).
+1: under eq_bigr do rewrite ffunE -scalerA.
+2: under eq_bigr do rewrite 2!ffunE scaleNr -scalerA.
+all: rewrite ?sumrN /= -!scaler_sumr sum_nvbasisK.
+all: under eq_bigr do rewrite scalerDr 2!ffunE scalerDl -scalerA.
+all: rewrite big_split /= -!scaler_sumr !(linE,subr0,sum_nvbasisK,ffunE).
+all: under eq_bigr do rewrite ffunE -scalerA.
+all: rewrite -scaler_sumr sum_nvbasisK.
+all: under eq_bigr do rewrite scalerDr 2!ffunE scalerDl -scalerA.
+all: under eq_bigr do rewrite scalerN.
+all: rewrite big_split /= -!scaler_sumr !(linE,subr0,sum_nvbasisK,ffunE).
+all: under eq_bigr do rewrite ffunE scaleNr ffunE -scalerA.
+all: rewrite sumrN -scaler_sumr sum_nvbasisK.
+all: rewrite !scalerDr !scalerN !scalerA.
+Import Num.Theory.
+all: rewrite -invrM ?RsqrtE ?ler0n //.
+all: set st2 := Num.sqrt 2%:R.
+all: have Hsqrt2 : st2 \is a GRing.unit
+  by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn.
+all: rewrite ?Hsqrt2 //.
+all: rewrite -expr2 sqr_sqrtr ?ler0n //.
+rewrite addrCA -addrA subrr addr0 -mulr2n -scaler_nat scalerA divrr.
+  by rewrite scale1r.
+by rewrite unitf_gt0 // ltr0Sn.
+rewrite opprB addrA addrC !addrA addNr add0r -mulr2n -scaler_nat scalerA divrr.
+  by rewrite scale1r.
+by rewrite unitf_gt0 // ltr0Sn.
 Qed.
 
 (* Checking equality of matrices *)
