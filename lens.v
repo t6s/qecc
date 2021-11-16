@@ -820,8 +820,8 @@ Definition qnot : nsquare I R 1 :=
 Print qnot.
 
 Definition cnot : nsquare I R 2 :=
-  (ket_bra ¦0,0⟩ ¦1,0⟩ + ket_bra ¦1,0⟩ ¦0,0⟩ +
-   ket_bra ¦0,1⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩)%R.
+  (ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
+   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩)%R.
 
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
@@ -883,7 +883,7 @@ Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: time (by rewrite !(linE,sum_nvbasisK,ffunE)).
-(* 2.38s *)
+(* 2.4s *)
 Qed.
 
 Lemma qnotK : involutive (nvendo qnot Ro).
@@ -898,6 +898,6 @@ Proof.
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: time (apply/eqP; do! rewrite !(linE,ffunE,sum_enum_indices) => //=).
-(* 28s ! *)
+(* 18s ! *)
 Qed.
 End gate_examples.
