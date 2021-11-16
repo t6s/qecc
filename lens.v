@@ -862,9 +862,9 @@ move=> t. by rewrite mem_enum_indices mem_enum.
 Qed.
 
 Lemma sum_enum_indices n (F : n.-tuple 'I_2 -> R) :
-  (\sum_vi F vi = \sum_(vi <- enum_indices n) F vi)%R.
+  (\sum_vi F vi = foldr +%R 0 (map F (enum_indices n)))%R.
 Proof.
-rewrite [RHS]big_uniq ?uniq_enum_indices //=.
+rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
 apply/esym/eq_bigl => vi. exact/mem_enum_indices.
 Qed.
 
@@ -878,23 +878,26 @@ apply (iffP idP).
 move -> ; by apply/allP.
 Qed.
 
+(* Checking equality of functions (sum of tensors) *)
 Lemma cnotK : involutive (nvendo cnot Ro).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(linE,sum_nvbasisK,ffunE).
-Qed.
-
-Lemma cnotK' : mul_nsquare cnot cnot = id_nsquare _ _ _.
-Proof.
-apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=;
-apply/eqP; rewrite !(linE,sum_enum_indices,ffunE);
-by rewrite unlock /=  !(linE,sum_enum_indices,ffunE).
+all: time (by rewrite !(linE,sum_nvbasisK,ffunE)).
+(* 2.38s *)
 Qed.
 
 Lemma qnotK : involutive (nvendo qnot Ro).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_nvbasisK,ffunE).
+Qed.
+
+(* Checking equality of matrices *)
+Lemma cnotK' : mul_nsquare cnot cnot = id_nsquare _ _ _.
+Proof.
+apply/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: time (apply/eqP; do! rewrite !(linE,ffunE,sum_enum_indices) => //=).
+(* 28s ! *)
 Qed.
 End gate_examples.
