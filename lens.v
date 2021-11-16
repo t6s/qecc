@@ -523,21 +523,37 @@ Definition mul_nsquare m (M1 M2 : nsquare m) : nsquare m :=
 
 Definition id_nsquare m : nsquare m := [ffun vi => nvbasis vi].
 
-Definition lens_left m n : lens (m+n) m.
+(* Tensor product of nsquare matrices *)
+Section tensor_nsquare.
+Variables m n : nat.
+
+Definition lens_left : lens (m+n) m.
 exists [tuple lshift n i | i < m].
 abstract (rewrite map_inj_uniq ? enum_uniq //; exact/lshift_inj).
 Defined.
 
-Definition lens_right m n : lens (m+n) n.
+Definition lens_right : lens (m+n) n.
 exists [tuple rshift m i | i < n].
 abstract (rewrite map_inj_uniq ? enum_uniq //; exact/rshift_inj).
 Defined.
 
-Definition tensor_nsquare m n (M1 : nsquare m) (M2 : nsquare n)
-  : nsquare (m + n) :=
+Definition tensor_nsquare (M1 : nsquare m) (M2 : nsquare n) : nsquare (m + n) :=
   [ffun vi => [ffun vj =>
-     M1 (extract (lens_left m n) vi) (extract (lens_left m n) vj) *
-     M2 (extract (lens_right m n) vi) (extract (lens_right m n) vj)]]%R.
+     M1 (extract lens_left vi) (extract lens_left vj) *
+     M2 (extract lens_right vi) (extract lens_right vj)]]%R.
+
+Lemma tensor_linearl (M2 : nsquare n) : linear (tensor_nsquare ^~ M2).
+Proof.
+move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
+by rewrite !ffunE /= mulrDl scalerA.
+Qed.
+
+Lemma tensor_linearr (M1 : nsquare m) : linear (tensor_nsquare M1).
+Proof.
+move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
+by rewrite !ffunE /= mulrDr !scalerA (mulrC x) -scalerA.
+Qed.
+End tensor_nsquare.
 
 Section vector.
 Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
@@ -825,6 +841,9 @@ End ordinal_examples.
 Section gate_examples.
 Require Reals.
 From mathcomp Require Import Rstruct.
+Import Num.Theory.
+Local Open Scope ring_scope.
+
 Let R := [comRingType of Reals.Rdefinitions.R].
 Let Ro := [lmodType R of R^o].
 Let I := [finType of 'I_2].
@@ -832,22 +851,21 @@ Let I := [finType of 'I_2].
 Notation "¦ x1 , .. , xn ⟩" :=
   (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 Definition qnot : nsquare I R 1 :=
-  (ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩)%R.
-Print qnot.
+  ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
 
 Definition cnot : nsquare I R 2 :=
-  (ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
-   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩)%R.
+  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
+  ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
 Definition hadamart : nsquare I R 1 :=
-  (1 / Num.sqrt 2%:R *:
-    (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩))%R.
+  1 / Num.sqrt 2%:R *:
+    (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
 
 Definition hadamart2 := tensor_nsquare hadamart hadamart.
 
 Definition cnotH : nsquare I R 2 :=
-  (ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
-   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩)%R.
+  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
+  ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
 
 Definition cnotHe :=
   comp_endo (nvendo hadamart2) (comp_endo (nvendo cnot) (nvendo hadamart2)).
@@ -876,7 +894,7 @@ case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
   exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
 Qed.
 
-Lemma size_enum_indices n : size (enum_indices n) = 2 ^ n.
+Lemma size_enum_indices n : size (enum_indices n) = (2 ^ n)%N.
 Proof.
 elim: n => //= n IH.
 by rewrite !size_cat !size_map !IH addnn -mul2n expnS.
@@ -891,7 +909,7 @@ move=> t. by rewrite mem_enum_indices mem_enum.
 Qed.
 
 Lemma sum_enum_indices n (F : n.-tuple 'I_2 -> R) :
-  (\sum_vi F vi = foldr +%R 0 (map F (enum_indices n)))%R.
+  \sum_vi F vi = foldr +%R 0 (map F (enum_indices n)).
 Proof.
 rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
 apply/esym/eq_bigl => vi. exact/mem_enum_indices.
@@ -921,18 +939,19 @@ move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_nvbasisK,ffunE).
 Qed.
 
-Import Num.Theory.
+Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
+Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
+
+Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
+Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
 Lemma hadamartK : involutive (nvendo hadamart Ro).
 Proof.
-have Hsqrt n : (Num.sqrt n.+1%:R : R) \is a GRing.unit
-  by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn.
-have Hnn n : (n.+1%:R / n.+1%:R = 1 :>R)%R
-  by rewrite divrr // unitf_gt0 // ltr0Sn.
+have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: do! rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
 all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
-all: rewrite !scalerA -invrM // -expr2 sqr_sqrtr ?ler0n //.
+all: rewrite !scalerA -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
 1: rewrite addrCA -addrA subrr linE -mulr2n.
 2: rewrite opprK addrAC !addrA subrr linE -mulr2n.
 all: by rewrite -(scaler_nat 2 (_ *: v _))%R scalerA Hnn scale1r.
@@ -974,26 +993,28 @@ rewrite !enum_ordinalE /=.
 rewrite !(linE,subr0,ffunE,scalerDl,sum_nvbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /=.
 rewrite !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite !linE.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 10!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 20!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite -!scalerA !linE.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
 rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
 rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite -!scalerA !linE.
 rewrite !(scalerA,addrA,scalerDr).
-have Hsqrt n : (Num.sqrt n.+1%:R : R) \is a GRing.unit
-  by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn.
-rewrite -!invrM // -!expr2 sqr_sqrtr ?ler0n //=.
+have Hmin1 : ((1 *- 1) = -1 :> R)%R by rewrite -mulNrn.
+rewrite !Hmin1 !(mulrN,mulNr,mulr1,scaleNr,opprK).
+rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr.
+Abort.
+
+Lemma cnotH_ok' : nvendo cnotH Ro =1 cnotHe Ro.
+Proof.
+move=> v /=.
+rewrite /hadamart2 /hadamart.
+set hadam := (_ *: (_ + _ + _ - _))%R.
+rewrite (_ : tensor_nsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
+rewrite linearZ_LR.
+set hadam' := (_ + _ + _ - _)%R.
+rewrite (_ : Linear _ _ = Linear (tensor_linearr hadam') hadam) //.
+rewrite linearZ_LR scalerA.
+rewrite !mul1r -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //=.
 Abort.
 
 (* Checking equality of matrices *)
