@@ -840,7 +840,7 @@ Definition cnot : nsquare I R 2 :=
    ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩)%R.
 
 Definition hadamart : nsquare I R 1 :=
-  (1/(R_sqrt.sqrt 2%:R) *:
+  (1 / Num.sqrt 2%:R *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩))%R.
 
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
@@ -912,38 +912,21 @@ move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_nvbasisK,ffunE).
 Qed.
 
+Import Num.Theory.
+
 Lemma hadamartK : involutive (nvendo hadamart Ro).
 Proof.
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: rewrite !(linE,subr0,sum_nvbasisK,ffunE).
-all: under eq_bigr do rewrite scalerDr ?scalerN 2!ffunE scalerDl -scalerA.
-all: rewrite big_split /= -!scaler_sumr !(linE,subr0,sum_nvbasisK,ffunE).
-1: under eq_bigr do rewrite ffunE -scalerA.
-2: under eq_bigr do rewrite 2!ffunE scaleNr -scalerA.
-all: rewrite ?sumrN /= -!scaler_sumr sum_nvbasisK.
-all: under eq_bigr do rewrite scalerDr 2!ffunE scalerDl -scalerA.
-all: rewrite big_split /= -!scaler_sumr !(linE,subr0,sum_nvbasisK,ffunE).
-all: under eq_bigr do rewrite ffunE -scalerA.
-all: rewrite -scaler_sumr sum_nvbasisK.
-all: under eq_bigr do rewrite scalerDr 2!ffunE scalerDl -scalerA.
-all: under eq_bigr do rewrite scalerN.
-all: rewrite big_split /= -!scaler_sumr !(linE,subr0,sum_nvbasisK,ffunE).
-all: under eq_bigr do rewrite ffunE scaleNr ffunE -scalerA.
-all: rewrite sumrN -scaler_sumr sum_nvbasisK.
-all: rewrite !scalerDr !scalerN !scalerA.
-Import Num.Theory.
-all: rewrite -invrM ?RsqrtE ?ler0n //.
-all: set st2 := Num.sqrt 2%:R.
-all: have Hsqrt2 : st2 \is a GRing.unit
+have Hsqrt n : (Num.sqrt n.+1%:R : R) \is a GRing.unit
   by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn.
-all: rewrite ?Hsqrt2 //.
-all: rewrite -expr2 sqr_sqrtr ?ler0n //.
-rewrite addrCA -addrA subrr addr0 -mulr2n -scaler_nat scalerA divrr.
-  by rewrite scale1r.
-by rewrite unitf_gt0 // ltr0Sn.
-rewrite opprB addrA addrC !addrA addNr add0r -mulr2n -scaler_nat scalerA divrr.
-  by rewrite scale1r.
-by rewrite unitf_gt0 // ltr0Sn.
+have Hnn n : (n.+1%:R / n.+1%:R = 1 :>R)%R
+  by rewrite divrr // unitf_gt0 // ltr0Sn.
+move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: do! rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
+all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
+all: rewrite !scalerA -invrM // -expr2 sqr_sqrtr ?ler0n //.
+1: rewrite addrCA -addrA subrr linE -mulr2n.
+2: rewrite opprK addrAC !addrA subrr linE -mulr2n.
+all: by rewrite -(scaler_nat 2 (_ *: v _))%R scalerA Hnn scale1r.
 Qed.
 
 (* Checking equality of matrices *)
