@@ -157,6 +157,19 @@ case/boolP: (i \in l) => [/nth_extract_index | /nth_lens_out]; exact.
 Qed.
 End lens.
 
+(* Identity *)
+Section lens_id.
+Variable n : nat.
+Lemma uniq_ord_tuple : uniq (ord_tuple n). Proof. exact/enum_uniq. Qed.
+Definition lens_id := mkLens uniq_ord_tuple.
+
+Lemma extract_lens_id I (v : n.-tuple I) : extract lens_id v = v.
+Proof. apply eq_from_tnth => i; by rewrite tnth_map tnth_ord_tuple. Qed.
+
+Lemma index_lens_id i : index i lens_id = i.
+Proof. by rewrite {1}(_ : i = tnth lens_id i) (tnth_ord_tuple,tnth_lensK). Qed.
+End lens_id.
+
 (* Composition of lenses *)
 Section lens_comp.
 Variables (n m p : nat) (l1 : lens n m) (l2 : lens m p).
@@ -538,6 +551,25 @@ exists [tuple rshift m i | i < n].
 abstract (rewrite map_inj_uniq ? enum_uniq //; exact/rshift_inj).
 Defined.
 
+Lemma lens_left_right_disjoint : [disjoint lens_left & lens_right].
+Proof.
+apply/pred0P => /= i.
+rewrite simpl_predE /=.
+case: (split_ordP i) => j ->.
+  suff /negbTE -> : lshift n j \notin lens_right.
+    by rewrite andbF.
+  apply/mapP => -[k] _ /esym/eqP.
+  by rewrite eq_rlshift.
+have /negbTE -> // : rshift m j \notin lens_left.
+apply/mapP => -[k] _ /eqP.
+by rewrite eq_rlshift.
+Qed.
+
+Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
+Proof.
+apply/val_inj/val_inj => /=.
+Admitted.
+
 Definition tensor_nsquare (M1 : nsquare m) (M2 : nsquare n) : nsquare (m + n) :=
   [ffun vi => [ffun vj =>
      M1 (extract lens_left vi) (extract lens_left vj) *
@@ -620,14 +652,7 @@ Qed.
 Variables (T : lmodType R) (n m p : nat) (l : lens n m).
 
 (* Identity *)
-Lemma uniq_ord_tuple : uniq (ord_tuple n). Proof. exact/enum_uniq. Qed.
-Definition lens_id := mkLens uniq_ord_tuple.
-Lemma extract_lens_id (v : n.-tuple I) : extract lens_id v = v.
-Proof. apply eq_from_tnth => i; by rewrite tnth_map tnth_ord_tuple. Qed.
-Lemma index_lens_id i : index i lens_id = i.
-Proof. by rewrite {1}(_ : i = tnth lens_id i) (tnth_ord_tuple,tnth_lensK). Qed.
-
-Lemma focusI tr : naturality tr -> focus lens_id tr T =1 tr T.
+Lemma focusI tr : naturality tr -> focus (lens_id n) tr T =1 tr T.
 Proof.
 rewrite /focus => /naturalityP [f Hf] /= v.
 apply/ffunP => /= vi.
@@ -655,6 +680,26 @@ congr (f _ vk * f' _ vj *: v _)%R.
 - by rewrite extract_merge_disjoint.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
+
+Lemma focus_tensor (M : nsquare m) (M' : nsquare n) (v : nvect (m+n) T) :
+  focus (lens_left m n) (nvendo M) _ (focus (lens_right m n) (nvendo M') _ v) =
+  nvendo (tensor_nsquare M M') _ v.
+Proof.
+apply/ffunP => /= vi.
+rewrite /focus_fun !ffunE !sum_ffunE.
+under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
+rewrite pair_bigA /=.
+rewrite [LHS](reindex (fun v : (m+n).-tuple I => (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
+  exists (fun v : m.-tuple I * n.-tuple I => [tuple of v.1 ++ v.2]) => /= vj _. 
+    apply eq_from_tnth => i /=.
+    rewrite (tnth_nth (tnth vj i)) /= -map_cat.
+    move: (lens_left_right m n) => /(f_equal val) /(f_equal val) /= ->.
+    by rewrite map_tnth_enum -tnth_nth.
+  admit.
+apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
+rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
+rewrite scalerA (_ : inject _ _ _ = vj) //.
+Admitted.
 
 (* vertical composition of endomorphisms *)
 Section comp_endo.
