@@ -565,10 +565,40 @@ apply/mapP => -[k] _ /eqP.
 by rewrite eq_rlshift.
 Qed.
 
+Lemma eq_from_nth' A (s1 s2 : seq A) :
+  size s1 = size s2 -> (forall a i, i < size s1 -> nth a s1 i = nth a s2 i) ->
+  s1 = s2.
+Proof.
+case: s1 => [|a s1 Hsz Heq].
+   by move/esym/eqP/nilP ->.
+exact (eq_from_nth Hsz (Heq a)).
+Qed.
+
 Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
 Proof.
 apply/val_inj/val_inj => /=.
-Admitted.
+rewrite -[RHS](cat_take_drop m).
+congr cat.
+  apply eq_from_nth'.
+    by rewrite size_map size_takel -cardT card_ord // leq_addr.
+  move=> a i.
+  rewrite size_map -cardT card_ord => Hi.
+  rewrite (_ : i = Ordinal Hi) //.
+  rewrite (nth_map (Ordinal Hi) a (lshift n)); last by rewrite -cardT card_ord.
+  rewrite -val_ord_tuple -tnth_nth tnth_ord_tuple.
+  rewrite nth_take //.
+  apply val_inj. by rewrite [RHS]nth_enum_ord // (leq_trans Hi) // leq_addr.
+apply eq_from_nth'.
+  by rewrite size_map size_drop -!cardT !card_ord addKn.
+move=> a i.
+rewrite size_map -cardT card_ord => Hi.
+rewrite (_ : i = Ordinal Hi) //.
+rewrite (nth_map (Ordinal Hi) a (rshift m (n:=n)));
+  last by rewrite -cardT card_ord.
+rewrite -val_ord_tuple -tnth_nth tnth_ord_tuple.
+rewrite nth_drop //.
+apply val_inj. by rewrite [RHS]nth_enum_ord //= -addnS leq_add2l.
+Qed.
 
 Definition tensor_nsquare (M1 : nsquare m) (M2 : nsquare n) : nsquare (m + n) :=
   [ffun vi => [ffun vj =>
@@ -681,6 +711,36 @@ congr (f _ vk * f' _ vj *: v _)%R.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
 
+Section inject_all.
+Variables (lm : lens (m+n) m) (ln : lens (m+n) n) (Hdisj : [disjoint lm & ln]).
+
+Lemma lens_all i : (i \in lm) || (i \in ln).
+Proof.
+have : [set a in lm] == [set a | a \notin ln].
+  rewrite eqEcard.
+  rewrite cards_filter (eqP (size_others ln)) addnK.
+  have -> : #|[set a in lm]| = #|lm| by apply eq_card => j; rewrite inE.
+  have/card_uniqP -> := lens_uniq lm.
+  rewrite size_tuple leqnn andbT.
+  apply/subsetP => j. by rewrite !inE => /(disjointFr Hdisj) ->.
+move/eqP/setP/(_ i). rewrite !inE.
+by case: (i \in ln) => ->.
+Qed.
+
+Lemma inject_all (vi vj : (m+n).-tuple I) :
+  (inject ln (inject lm vi (extract lm vj)) (extract ln vj)) = vj.
+Proof.
+apply eq_from_tnth => i.
+rewrite tnth_mktuple.
+case/boolP: (i \in ln) => Hi.
+  by rewrite (nth_lens_index Hi) tnth_map lens_indexK.
+rewrite nth_lens_out // tnth_mktuple.
+have := lens_all i.
+rewrite (negbTE Hi) orbF => Him.
+by rewrite (nth_lens_index Him) tnth_map lens_indexK.
+Qed.      
+End inject_all.
+
 Lemma focus_tensor (M : nsquare m) (M' : nsquare n) (v : nvect (m+n) T) :
   focus (lens_left m n) (nvendo M) _ (focus (lens_right m n) (nvendo M') _ v) =
   nvendo (tensor_nsquare M M') _ v.
@@ -689,17 +749,23 @@ apply/ffunP => /= vi.
 rewrite /focus_fun !ffunE !sum_ffunE.
 under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
 rewrite pair_bigA /=.
-rewrite [LHS](reindex (fun v : (m+n).-tuple I => (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
+rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
+         (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
   exists (fun v : m.-tuple I * n.-tuple I => [tuple of v.1 ++ v.2]) => /= vj _. 
     apply eq_from_tnth => i /=.
     rewrite (tnth_nth (tnth vj i)) /= -map_cat.
     move: (lens_left_right m n) => /(f_equal val) /(f_equal val) /= ->.
     by rewrite map_tnth_enum -tnth_nth.
-  admit.
+  case: vj => vl vr /=; congr pair; apply eq_from_tnth => i.
+    rewrite tnth_map tnth_mktuple.
+    by rewrite (tnth_nth (tnth vl i)) /= nth_cat size_tuple ltn_ord -tnth_nth.
+  rewrite tnth_map tnth_mktuple.
+  rewrite (tnth_nth (tnth vr i)) /= nth_cat size_tuple ltnNge leq_addr /=.
+  by rewrite addKn -tnth_nth.
 apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
-rewrite scalerA (_ : inject _ _ _ = vj) //.
-Admitted.
+by rewrite scalerA inject_all // lens_left_right_disjoint.
+Qed.
 
 (* vertical composition of endomorphisms *)
 Section comp_endo.
