@@ -5,6 +5,10 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Reserved Notation "T ^(x) n" (at level 29, format "T  ^(x)  n").
+Reserved Notation "T `^ I ^(x) n" (at level 29, I, n at next level,
+  format "T  `^  I  ^(x)  n").
+
 Import GRing.Theory.
 
 Section tensor_space.
@@ -12,21 +16,24 @@ Variables (I : finType) (dI : I) (R : comRingType).
 Local Notation merge_indices := (merge_indices dI).
 
 Definition tpower n T := {ffun n.-tuple I -> T}.
-Definition endofun m := forall T : lmodType R, tpower m T -> tpower m T.
+
+Local Notation "T ^(x) n" := (tpower n T) (at level 29, format "T  ^(x)  n").
+
+Definition endofun m := forall T : lmodType R, T ^(x) m -> T ^(x) m.
 Definition endo m :=
-  forall T : lmodType R, {linear tpower m T -> tpower m T}%R.
-Definition tsquare m := tpower m (tpower m R^o).
+  forall T : lmodType R, {linear T ^(x) m -> T ^(x) m}%R.
+Definition tsquare m := (R^o ^(x) m) ^(x) m.
 
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
    map h \o f T1 = f T2 \o map h
 which is equivalent to the fact f = nvendo M for a square matrix M : tsquare m.
 *)
-Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : tpower m T1)
-  : tpower m T2 := [ffun v : m.-tuple I => f (nv v)].
+Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : T1 ^(x) m) : T2 ^(x) m :=
+  [ffun v : m.-tuple I => f (nv v)].
 
 Definition naturality m (f : endo m) :=
-  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : tpower m T1),
+  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : T1 ^(x) m),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
 
 Definition nvendo_fun m (M : tsquare m) : endofun m :=
@@ -43,7 +50,7 @@ Qed.
 Definition nvendo m (M : tsquare m) : endo m :=
   fun T => Linear (@nvendo_is_linear m M T).
 
-Definition nvbasis m (vi : m.-tuple I) : tpower m R^o :=
+Definition nvbasis m (vi : m.-tuple I) : R^o ^(x) m:=
   [ffun vj => (vi == vj)%:R]%R.
 
 Definition endons m (f : endo m) : tsquare m :=
@@ -52,14 +59,14 @@ Definition endons m (f : endo m) : tsquare m :=
 Lemma nvbasisC m (vi vj : m.-tuple I) : nvbasis vi vj = nvbasis vj vi.
 Proof. by rewrite !ffunE eq_sym. Qed.
 
-Lemma sum_nvbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
+Lemma sum_nvbasisK n (T : lmodType R) (vi : n.-tuple I) (F : T ^(x) n) :
   (\sum_vj (nvbasis vi vj *: F vj) = F vi)%R.
 Proof.
 rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
-Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
+Lemma decompose_tpower m (T : lmodType R) (v : T ^(x) m) :
   v = (\sum_i map_tpower ( *:%R^~ (v i)) (nvbasis i))%R.
 Proof.
 apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_nvbasisK /=.
@@ -82,7 +89,7 @@ split => [Hf | [M] HM].
   by rewrite linearZ_LR !ffunE.
 Qed.
 
-Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
+Definition ket_bra m (ket : R^o ^(x) m) (bra : R^o ^(x) m) : tsquare m :=
   [ffun vi => ket vi *: bra]%R.
 
 Definition mul_tsquare m (M1 M2 : tsquare m) : tsquare m :=
@@ -115,11 +122,11 @@ End tensor_tsquare.
 Section curry.
 Variables (T : lmodType R) (n m : nat) (l : lens n m).
 
-Definition curry (st : tpower n T) : tpower m (tpower (n-m) T) :=
+Definition curry (st : T ^(x) n) : (T ^(x) (n - m)) ^(x) m:=
   [ffun v : m.-tuple I =>
    [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
 
-Definition uncurry (st : tpower m (tpower (n-m) T)) : tpower n T :=
+Definition uncurry (st : (T ^(x) (n - m)) ^(x) m) : T ^(x) n :=
   [ffun v : n.-tuple I => st (extract l v) (extract (lothers l) v)].
 
 Lemma uncurryK : cancel uncurry curry.
@@ -140,7 +147,7 @@ End curry.
 
 Section focus.
 Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
-  fun T (v : tpower n T) => uncurry l (tr _ (curry l v)).
+  fun T (v : T ^(x) n) => uncurry l (tr _ (curry l v)).
 
 Lemma focus_is_linear n m l tr T : linear (@focus_fun n m l tr T).
 Proof.
@@ -178,7 +185,7 @@ apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
 Qed.
 
 (* horizontal composition of endomorphisms *)
-Lemma focusC (l' : lens n p) tr tr' (v : tpower n T) :
+Lemma focusC (l' : lens n p) tr tr' (v : T ^(x) n) :
   [disjoint l & l'] -> naturality tr -> naturality tr' ->
   focus l tr _ (focus l' tr' _ v) =
   focus l' tr' _ (focus l tr _ v).
@@ -196,7 +203,7 @@ congr (f _ vk * f' _ vj *: v _)%R.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
 
-Lemma focus_tensor (M : tsquare m) (M' : tsquare n) (v : tpower (m+n) T) :
+Lemma focus_tensor (M : tsquare m) (M' : tsquare n) (v : T ^(x) (m + n)) :
   focus (lens_left m n) (nvendo M) _ (focus (lens_right m n) (nvendo M') _ v) =
   nvendo (tensor_tsquare M M') _ v.
 Proof.
@@ -230,13 +237,13 @@ Definition comp_endo : endo m := fun A => GRing.comp_linear (tr A) (tr' A).
 Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
 Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
 
-Lemma focus_comp (v : tpower n T) :
+Lemma focus_comp (v : T ^(x) n) :
   focus l comp_endo _ v = focus l tr _ (focus l tr' _ v).
 Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
 End comp_endo.
 
 (* associativity of actions of lenses *)
-Lemma focusM (l' : lens m p) tr (v : tpower n T) : naturality tr ->
+Lemma focusM (l' : lens m p) tr (v : T ^(x) n) : naturality tr ->
   focus (lens_comp l l') tr _ v = focus l (focus l' tr) _ v.
 Proof.
 case/naturalityP => f Hf.
@@ -250,6 +257,8 @@ exact: merge_indices_comp.
 Qed.
 End focus.
 End tensor_space.
+
+Notation "T `^ I ^(x) n" := (tpower I n T).
 
 (* Conversion between tpower and vector space *)
 
@@ -347,13 +356,13 @@ Definition mxtsquare m (M : 'M[R]_(vsz m,vsz m)) : tsquare m :=
 
 Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := nvendo (mxtsquare M).
 
-Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
+Definition vec_tpower m (X : 'rV[R]_(vsz m)) : R^o `^ I ^(x) m :=
   [ffun vi => X ord0 (index_of_vec vi)].
 
-Definition tpower_vec H m (X : tpower I m R^o) : 'rV[R]_(vsz m) :=
+Definition tpower_vec H m (X : R^o `^ I ^(x) m) : 'rV[R]_(vsz m) :=
   \row_i X (vec_of_index H i).
 
-Lemma tpower_vector (H : #|I| > 0) n : Vector.axiom (vsz n) (tpower I n R^o).
+Lemma tpower_vector (H : #|I| > 0) n : Vector.axiom (vsz n) (R^o `^ I ^(x) n).
 Proof.
 exists (@tpower_vec H n).
 - move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
