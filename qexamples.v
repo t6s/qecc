@@ -1,5 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra.
-Require Import lens itensor.
+Require Import lens tpower.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -106,7 +106,7 @@ rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
 apply/esym/eq_bigl => vi. exact/mem_enum_indices.
 Qed.
 
-Lemma eq_from_indicesP n (T : eqType) (v w : itensor I n T) :
+Lemma eq_from_indicesP n (T : eqType) (v w : tpower I n T) :
   reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
 Proof.
 apply (iffP idP).
