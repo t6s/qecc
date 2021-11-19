@@ -1,10 +1,14 @@
 From mathcomp Require Import all_ssreflect all_algebra.
 Require Import lens itensor.
-Import GRing.Theory.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+Import GRing.Theory.
+
+(* Reduce a linear form *)
+Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
 
 (* Computable Ordinal constants *)
 Definition succO {n} := lift (@ord0 n).
