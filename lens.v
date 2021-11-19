@@ -32,6 +32,15 @@ Qed.
 
 Lemma index_tuple (t : n.-tuple A) i : (index i t < n) <-> (i \in t).
 Proof. by rewrite -index_mem size_tuple. Qed.
+
+Lemma eq_from_nth' (s1 s2 : seq A) :
+  size s1 = size s2 -> (forall a i, i < size s1 -> nth a s1 i = nth a s2 i) ->
+  s1 = s2.
+Proof.
+case: s1 => [|a s1 Hsz Heq].
+   by move/esym/eqP/nilP ->.
+exact (eq_from_nth Hsz (Heq a)).
+Qed.
 End tnth.
 
 Section sorted.
@@ -182,7 +191,7 @@ Defined.
 Lemma tnth_comp i : tnth lens_comp i = tnth l1 (tnth l2 i).
 Proof. by rewrite tnth_map. Qed.
 
-Variable (T : eqType).
+Variable (T : Type).
 
 Lemma extract_comp (t : n.-tuple T) :
   extract lens_comp t = extract l2 (extract l1 t).
@@ -280,101 +289,8 @@ Lemma extract_cat (t : n.-tuple T) :
 Proof. apply val_inj => /=. by rewrite map_cat. Qed.
 End lens_cat.
 
-Section index_of_vec_bij.
-Variable I : finType.
-Let vsz m := #|I| ^ m.
-
-Fixpoint index_of_vec_rec (v : seq I) : nat :=
-  match v with
-  | nil => 0
-  | i :: v' => enum_rank i + #|I| * index_of_vec_rec v'
-  end.
-
-Lemma index_of_vec_ltn m (v : seq I) :
-  size v = m -> index_of_vec_rec v < vsz m.
-Proof.
-rewrite /vsz.
-elim: v m => [|i v IH []] //= m.
-  move <-; by rewrite expn0.
-case=> Hm; rewrite expnS.
-case: enum_rank => j /= Hj.
-have : #|I| ^ m > 0.
-  rewrite -(expn0 #|I|) leq_pexp2l //.
-  by case: #|I| Hj.
-move CI: (#|I| ^ m) => [|sz] // _.
-by rewrite mulnS -addSn leq_add // leq_mul // -ltnS -CI IH.
-Qed.
-
-Definition index_of_vec m (v : m.-tuple I) : 'I_(vsz m).
-exists (index_of_vec_rec (rev v)).
-abstract (by rewrite index_of_vec_ltn // size_rev size_tuple).
-Defined.
-
-Hypothesis H : #|I| > 0.
-Fixpoint vec_of_index_rec (m i : nat) : seq I :=
-  match m with
-  | 0 => nil
-  | m.+1 =>
-    enum_val (Ordinal (ltn_pmod i H)) :: vec_of_index_rec m (i %/ #|I|)
-  end.
-
-Lemma vec_of_index_size m i : size (vec_of_index_rec m i) = m.
-Proof. by elim: m i => // m IH [|i] /=; rewrite IH. Qed.
-
-Definition vec_of_index m (i : 'I_(vsz m)) : m.-tuple I.
-exists (rev (vec_of_index_rec m i)).
-abstract (by case: i => i /= _; rewrite size_rev vec_of_index_size).
-Defined.
-
-Lemma vec_of_index_recK m i :
-  i < vsz m -> index_of_vec_rec (vec_of_index_rec m i) = i.
-Proof.
-rewrite /vsz.
-elim: m i => [|m IH /= i Hi]; first by case; rewrite expn0 // ltnS.
-rewrite enum_valK IH /=; first by rewrite addnC mulnC -divn_eq.
-by rewrite -(ltn_pmul2r H) (leq_ltn_trans (leq_trunc_div _ _)) // mulnC -expnS.
-Qed.
-
-Lemma vec_of_indexK m : cancel (@vec_of_index m) (@index_of_vec m).
-Proof.
-rewrite /index_of_vec /vec_of_index /= => -[i] Hi.
-apply val_inj; by rewrite /= revK vec_of_index_recK.
-Qed.
-
-Lemma index_of_vecK m : cancel (@index_of_vec m) (@vec_of_index m).
-Proof.
-rewrite /index_of_vec /vec_of_index => -[t Ht].
-apply/val_inj => /=.
-rewrite -[RHS]revK; congr rev.
-move/eqP: Ht; rewrite -size_rev.
-elim: (rev t) m => {t} [|i t IH] m <- //=.
-congr (_ :: _).
-  rewrite (_ : Ordinal _ = enum_rank i) ?enum_rankK //.
-  apply val_inj => /=.
-  by rewrite addnC mulnC modnMDl modn_small.
-rewrite divnDr.
-  by rewrite divn_small // add0n mulKn // IH.
-exact/dvdn_mulr/dvdnn.
-Qed.
-
-Lemma index_of_vec_bij m : bijective (@index_of_vec m).
-Proof.
-exists (@vec_of_index m); [exact: index_of_vecK | exact: vec_of_indexK].
-Qed.
-End index_of_vec_bij.
-
-Import GRing.Theory.
-
-(* Reduce a linear form *)
-Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
-
-Section tensor_space.
-Variable (I : finType) (dI : I).
-
-Definition nvect n T := {ffun n.-tuple I -> T}.
-
 Section merge_lens.
-Variables (n m : nat) (l : lens n m).
+Variables (I : Type) (dI : I) (n m : nat) (l : lens n m).
 
 Lemma cards_filter (A : finType) (p : pred A) :
   #|[set a : A | p a]| = size [seq a <- enum A | p a].
@@ -439,106 +355,9 @@ have Hil : tnth l' i \notin l by rewrite (disjointFl Hdisj) // mem_tnth.
 have Hilo : tnth l' i \in lothers by rewrite mem_lothers.
 by rewrite nth_lens_out ?nth_lens_index // tnth_map lens_indexK.
 Qed.
-
-Variables T : Type.
-
-Definition curry (st : nvect n T) : nvect m (nvect (n-m) T) :=
-  [ffun v : m.-tuple I =>
-   [ffun w : (n-m).-tuple I => st (merge_indices v w)]].
-
-Definition uncurry (st : nvect m (nvect (n-m) T)) : nvect n T :=
-  [ffun v : n.-tuple I => st (extract l v) (extract lothers v)].
-
-Lemma uncurryK : cancel uncurry curry.
-Proof.
-move=> v; apply/ffunP => v1; apply/ffunP => v2.
-by rewrite !ffunE extract_merge extract_lothers_merge.
-Qed.
-
-Lemma curryK : cancel curry uncurry.
-Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_indices_extract. Qed.
 End merge_lens.
 
-Variable (R : comRingType).
-Definition endofun m := forall T : lmodType R, nvect m T -> nvect m T.
-Definition endo m := forall T : lmodType R, {linear nvect m T -> nvect m T}%R.
-Definition nsquare m := nvect m (nvect m R^o).
-
-(* Actually, need the property (naturality)
- forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
-   map h \o f T1 = f T2 \o map h
-which is equivalent to the fact f = nvendo M for a square matrix M : nsquare m.
-*)
-Definition map_nvect m T1 T2 (f : T1 -> T2) (nv : nvect m T1) : nvect m T2 :=
-  [ffun v : m.-tuple I => f (nv v)].
-
-Definition naturality m (f : endo m) :=
-  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : nvect m T1),
-    map_nvect h (f T1 v) = f T2 (map_nvect h v).
-
-Definition nvendo_fun m (M : nsquare m) : endofun m :=
-  fun T v =>
-    [ffun vi : m.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj]%R.
-
-Lemma nvendo_is_linear m M T : linear (@nvendo_fun m M T).
-Proof.
-move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
-rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
-by rewrite !ffunE scalerDr !scalerA mulrC.
-Qed.
-
-Definition nvendo m (M : nsquare m) : endo m :=
-  fun T => Linear (@nvendo_is_linear m M T).
-
-Definition nvbasis m (vi : m.-tuple I) : nvect m R^o :=
-  [ffun vj => (vi == vj)%:R]%R.
-
-Definition endons m (f : endo m) : nsquare m :=
-  [ffun vi => [ffun vj => f _ (nvbasis vj) vi]].
-
-Lemma nvbasisC m (vi vj : m.-tuple I) : nvbasis vi vj = nvbasis vj vi.
-Proof. by rewrite !ffunE eq_sym. Qed.
-
-Lemma sum_nvbasisK n (T : lmodType R) (vi : n.-tuple I) (F : nvect n T) :
-  (\sum_vj (nvbasis vi vj *: F vj) = F vi)%R.
-Proof.
-rewrite (bigD1 vi) //= !ffunE eqxx big1 ?linE //.
-move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite !linE.
-Qed.
-
-Lemma decompose_nvect m (T : lmodType R) (v : nvect m T) :
-  v = (\sum_i map_nvect ( *:%R^~ (v i)) (nvbasis i))%R.
-Proof.
-apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_nvbasisK /=.
-by apply eq_bigr => vj _; rewrite [RHS]ffunE nvbasisC.
-Qed.
-
-Lemma naturalityP m (f : endo m) :
-  naturality f <-> exists M, forall T, f T =1 nvendo M T.
-Proof.
-split => [Hf | [M] HM].
-- exists (endons f) => T /= v.
-  rewrite [in LHS](decompose_nvect v) linear_sum.
-  apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
-  apply eq_bigr => /= vj _; rewrite !ffunE.
-  set h : R^o -> T := *:%R^~ _.
-  have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-  by rewrite -(Hf _ _ (Linear hlin) (nvbasis vj)) ffunE.
-- move=> T1 T2 h /= v; apply/ffunP => /= vi.
-  rewrite !HM !ffunE linear_sum; apply eq_bigr => vj _.
-  by rewrite linearZ_LR !ffunE.
-Qed.
-
-Definition ket_bra m (ket : nvect m R^o) (bra : nvect m R^o) : nsquare m :=
-  [ffun vi => ket vi *: bra]%R.
-
-Definition mul_nsquare m (M1 M2 : nsquare m) : nsquare m :=
-  [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]]%R.
-
-Definition id_nsquare m : nsquare m := [ffun vi => nvbasis vi].
-
-(* Tensor product of nsquare matrices *)
-Section tensor_nsquare.
+Section lens_left_right.
 Variables m n : nat.
 
 Definition lens_left : lens (m+n) m.
@@ -563,15 +382,6 @@ case: (split_ordP i) => j ->.
 have /negbTE -> // : rshift m j \notin lens_left.
 apply/mapP => -[k] _ /eqP.
 by rewrite eq_rlshift.
-Qed.
-
-Lemma eq_from_nth' A (s1 s2 : seq A) :
-  size s1 = size s2 -> (forall a i, i < size s1 -> nth a s1 i = nth a s2 i) ->
-  s1 = s2.
-Proof.
-case: s1 => [|a s1 Hsz Heq].
-   by move/esym/eqP/nilP ->.
-exact (eq_from_nth Hsz (Heq a)).
 Qed.
 
 Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
@@ -599,120 +409,11 @@ rewrite -val_ord_tuple -tnth_nth tnth_ord_tuple.
 rewrite nth_drop //.
 apply val_inj. by rewrite [RHS]nth_enum_ord //= -addnS leq_add2l.
 Qed.
-
-Definition tensor_nsquare (M1 : nsquare m) (M2 : nsquare n) : nsquare (m + n) :=
-  [ffun vi => [ffun vj =>
-     M1 (extract lens_left vi) (extract lens_left vj) *
-     M2 (extract lens_right vi) (extract lens_right vj)]]%R.
-
-Lemma tensor_linearl (M2 : nsquare n) : linear (tensor_nsquare ^~ M2).
-Proof.
-move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
-by rewrite !ffunE /= mulrDl scalerA.
-Qed.
-
-Lemma tensor_linearr (M1 : nsquare m) : linear (tensor_nsquare M1).
-Proof.
-move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
-by rewrite !ffunE /= mulrDr !scalerA (mulrC x) -scalerA.
-Qed.
-End tensor_nsquare.
-
-(* nvect n R^o forms a vector space of size #|I|^m *)
-Section vector.
-Let vsz m := #|I| ^ m.
-
-Definition mxnsquare m (M : 'M[R]_(vsz m,vsz m)) : nsquare m :=
-  [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
-
-Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := nvendo (mxnsquare M).
-
-Definition vec_nvect m (X : 'rV[R]_(vsz m)) : nvect m R^o :=
-  [ffun vi => X ord0 (index_of_vec vi)].
-
-Definition nvect_vec H m (X : nvect m R^o) : 'rV[R]_(vsz m) :=
-  \row_i X (vec_of_index H i).
-
-Lemma nvect_vector (H : #|I| > 0) n : Vector.axiom (vsz n) (nvect n R^o).
-Proof.
-exists (@nvect_vec H n).
-- move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
-- exists (@vec_nvect n).
-  + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
-  + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
-Qed.
-End vector.
-
-Section curry_linear.
-Variables (n m : nat) (l : lens n m) (T : lmodType R).
-
-Lemma curry_is_linear : linear (curry l (T:=T)).
-Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
-
-Lemma uncurry_is_linear : linear (uncurry l (T:=T)).
-Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
-End curry_linear.
-
-Section focus.
-Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
-  fun T (v : nvect n T) => uncurry l (tr _ (curry l v)).
-
-Lemma focus_is_linear n m l tr T : linear (@focus_fun n m l tr T).
-Proof.
-move=> x y z.
-apply/ffunP => vi; rewrite !ffunE.
-have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
-by rewrite !linearP !ffunE.
-Qed.
-
-Definition focus n m l tr : endo n :=
-  fun T => Linear (@focus_is_linear n m l tr T).
-
-Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
-Proof.
-case/naturalityP => M /= NM; apply/naturalityP.
-exists (endons (focus l (nvendo M))).
-move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
-under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
-rewrite exchange_big /=; apply eq_bigr => vj _.
-rewrite [in LHS](decompose_nvect v) !ffunE sum_ffunE scaler_sumr.
-by apply eq_bigr => i _; rewrite !ffunE !scalerA.
-Qed.
-
-Variables (T : lmodType R) (n m p : nat) (l : lens n m).
-
-(* Identity *)
-Lemma focusI tr : naturality tr -> focus (lens_id n) tr T =1 tr T.
-Proof.
-rewrite /focus => /naturalityP [f Hf] /= v.
-apply/ffunP => /= vi.
-rewrite /focus_fun !{}Hf {tr} !ffunE sum_ffunE.
-apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
-congr (_ *: v _)%R.
-apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
-Qed.
-
-(* horizontal composition of endomorphisms *)
-Lemma focusC (l' : lens n p) tr tr' (v : nvect n T) :
-  [disjoint l & l'] -> naturality tr -> naturality tr' ->
-  focus l tr _ (focus l' tr' _ v) =
-  focus l' tr' _ (focus l tr _ v).
-Proof.
-rewrite /focus => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'].
-apply/ffunP => /= vi.
-rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !sum_ffunE.
-under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
-rewrite exchange_big; apply eq_bigr => /= vj _.
-rewrite !ffunE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
-rewrite !ffunE !scalerA [in RHS]mulrC.
-congr (f _ vk * f' _ vj *: v _)%R.
-- by rewrite extract_merge_disjoint // disjoint_sym.
-- by rewrite extract_merge_disjoint.
-- by rewrite !merge_indices_extract_others inject_disjointC.
-Qed.
+End lens_left_right.
 
 Section inject_all.
-Variables (lm : lens (m+n) m) (ln : lens (m+n) n) (Hdisj : [disjoint lm & ln]).
+Variables (I : Type) (m n : nat) (lm : lens (m+n) m) (ln : lens (m+n) n).
+Hypothesis Hdisj : [disjoint lm & ln].
 
 Lemma lens_all i : (i \in lm) || (i \in ln).
 Proof.
@@ -741,48 +442,11 @@ by rewrite (nth_lens_index Him) tnth_map lens_indexK.
 Qed.      
 End inject_all.
 
-Lemma focus_tensor (M : nsquare m) (M' : nsquare n) (v : nvect (m+n) T) :
-  focus (lens_left m n) (nvendo M) _ (focus (lens_right m n) (nvendo M') _ v) =
-  nvendo (tensor_nsquare M M') _ v.
-Proof.
-apply/ffunP => /= vi.
-rewrite /focus_fun !ffunE !sum_ffunE.
-under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
-rewrite pair_bigA /=.
-rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
-         (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
-  exists (fun v : m.-tuple I * n.-tuple I => [tuple of v.1 ++ v.2]) => /= vj _. 
-    apply eq_from_tnth => i /=.
-    rewrite (tnth_nth (tnth vj i)) /= -map_cat.
-    move: (lens_left_right m n) => /(f_equal val) /(f_equal val) /= ->.
-    by rewrite map_tnth_enum -tnth_nth.
-  case: vj => vl vr /=; congr pair; apply eq_from_tnth => i.
-    rewrite tnth_map tnth_mktuple.
-    by rewrite (tnth_nth (tnth vl i)) /= nth_cat size_tuple ltn_ord -tnth_nth.
-  rewrite tnth_map tnth_mktuple.
-  rewrite (tnth_nth (tnth vr i)) /= nth_cat size_tuple ltnNge leq_addr /=.
-  by rewrite addKn -tnth_nth.
-apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
-rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
-by rewrite scalerA inject_all // lens_left_right_disjoint.
-Qed.
-
-(* vertical composition of endomorphisms *)
-Section comp_endo.
-Variables tr tr' : endo m.
-Definition comp_endo : endo m := fun A => GRing.comp_linear (tr A) (tr' A).
-
-Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
-Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
-
-Lemma focus_comp (v : nvect n T) :
-  focus l comp_endo _ v = focus l tr _ (focus l tr' _ v).
-Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
-End comp_endo.
-
 (* associativity of focussing *)
-Section focusA.
-Variable l' : lens m p.
+Section lens_assoc.
+Variables (I : Type) (dI : I) (n m p : nat) (l : lens n m) (l' : lens m p).
+
+Local Notation merge_indices := (merge_indices dI).
 
 Definition lothers_comp := lothers (lens_comp l l').
 
@@ -871,11 +535,11 @@ Lemma extract_lothers_comp (v : n.-tuple I) :
   merge_indices lothers_in_l
                 (extract (lens_comp lothers_comp lothers_in_l) v)
                 (extract (lens_comp lothers_comp (lothers lothers_in_l)) v).
-Proof. by rewrite !extract_comp (merge_indices_extract lothers_in_l). Qed.
+Proof. by rewrite !extract_comp merge_indices_extract. Qed.
 
 Lemma merge_indices_comp vj vk (vl : (n-p - (m-p)).-tuple I)
                                (vm : (n-m).-tuple I) :
-  vl = vm :> seq I ->
+  vl = vm :> seq I ->  (* can we use S-prop here? *)
   merge_indices (lens_comp l l') vj (merge_indices lothers_in_l vk vl) =
   merge_indices l (merge_indices l' vj vk) vm.
 Proof.
@@ -916,229 +580,4 @@ congr val.
 apply (tnth_inj _ (lens_uniq (lothers l))).
 by rewrite -[in LHS]lothers_notin_l_comp tnth_comp !lens_indexK.
 Qed.
-
-(* associativity of actions of lenses *)
-Lemma focusA tr (v : nvect n T) : naturality tr ->
-  focus (lens_comp l l') tr _ v = focus l (focus l' tr) _ v.
-Proof.
-case/naturalityP => f Hf.
-rewrite /focus /focus_fun /= !{}Hf {tr}.
-apply/ffunP => /= vi.
-rewrite !ffunE extract_lothers_comp -!extract_comp.
-rewrite -lothers_in_l_comp -lothers_notin_l_comp !sum_ffunE.
-apply eq_bigr => /= vj _; rewrite !ffunE.
-congr (_ *: v _)%R.
-exact: merge_indices_comp.
-Qed.
-End focusA.
-End focus.
-End tensor_space.
-
-(* Computable Ordinal constants *)
-Definition succO {n} := lift (@ord0 n).
-Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
-  match m as x return 'I_(x+n) with
-  | 0 => p
-  | m.+1 => cast_ord (esym (addSnnS m n)) (addnO m (succO p))
-  end.
-Definition INO {n} m := addnO m (@ord0 n).
-Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
-
-Notation "[ 'lens' x1 ; .. ; xn ]" :=
-  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
-
-Section ordinal_examples.
-Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
-
-Let lens3_23 : lens 3 2 := [lens 1; 2].
-End ordinal_examples.
-
-Section gate_examples.
-Require Reals.
-From mathcomp Require Import Rstruct.
-Import Num.Theory.
-Local Open Scope ring_scope.
-
-Let R := [comRingType of Reals.Rdefinitions.R].
-Let Ro := [lmodType R of R^o].
-Let I := [finType of 'I_2].
-
-Notation "¦ x1 , .. , xn ⟩" :=
-  (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
-Definition qnot : nsquare I R 1 :=
-  ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
-
-Definition cnot : nsquare I R 2 :=
-  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
-  ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
-
-Definition hadamart : nsquare I R 1 :=
-  1 / Num.sqrt 2%:R *:
-    (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
-
-Definition hadamart2 := tensor_nsquare hadamart hadamart.
-
-Definition cnotH : nsquare I R 2 :=
-  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
-  ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
-
-Definition cnotHe :=
-  comp_endo (nvendo hadamart2) (comp_endo (nvendo cnot) (nvendo hadamart2)).
-
-Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
-  match n as n return seq (n.-tuple 'I_2) with
-  | 0 => [:: [tuple of [::]]]
-  | S m =>
-    let l := enum_indices m in
-    [seq [tuple of 0%:O :: val t] | t <- l] ++
-    [seq [tuple of 1%:O :: val t] | t <- l]
-  end.
-
-Lemma caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
-Proof.
-case: x => -[]. by left; apply/val_inj.
-case => //. by right; apply/val_inj.
-Qed.
-
-Lemma mem_enum_indices n t : t \in enum_indices n.
-Proof.
-elim: n t => [|n IH] [[|i t] Hlen] //=.
-rewrite mem_cat; apply/orP.
-move/eqP: (Hlen) => [] /eqP Hlen'.
-case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
-  exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
-Qed.
-
-Lemma size_enum_indices n : size (enum_indices n) = (2 ^ n)%N.
-Proof.
-elim: n => //= n IH.
-by rewrite !size_cat !size_map !IH addnn -mul2n expnS.
-Qed.
-
-Lemma uniq_enum_indices n : uniq (enum_indices n).
-Proof.
-rewrite /is_true -(enum_uniq (tuple_finType n I)).
-apply eq_uniq.
-  by rewrite -cardT card_tuple card_ord size_enum_indices.
-move=> t. by rewrite mem_enum_indices mem_enum.
-Qed.
-
-Lemma sum_enum_indices n (F : n.-tuple 'I_2 -> R) :
-  \sum_vi F vi = foldr +%R 0 (map F (enum_indices n)).
-Proof.
-rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
-apply/esym/eq_bigl => vi. exact/mem_enum_indices.
-Qed.
-
-Lemma eq_from_indicesP n (T : eqType) (v w : nvect I n T) :
-  reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
-Proof.
-apply (iffP idP).
-  move=> H; apply/ffunP => vi; apply/eqP.
-  have : vi \in enum_indices _ by rewrite mem_enum_indices.
-  by apply/allP: vi.
-move -> ; by apply/allP.
-Qed.
-
-(* Checking equality of functions (sum of tensors) *)
-Lemma cnotK : involutive (nvendo cnot Ro).
-Proof.
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(linE,sum_nvbasisK,ffunE)).
-(* 2.4s *)
-Qed.
-
-Lemma qnotK : involutive (nvendo qnot Ro).
-Proof. (* exactly the same proof *)
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(linE,sum_nvbasisK,ffunE).
-Qed.
-
-Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
-Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
-
-Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
-Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
-
-Lemma hadamartK : involutive (nvendo hadamart Ro).
-Proof.
-have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: do! rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
-all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
-all: rewrite !scalerA -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
-1: rewrite addrCA -addrA subrr linE -mulr2n.
-2: rewrite opprK addrAC !addrA subrr linE -mulr2n.
-all: by rewrite -(scaler_nat 2 (_ *: v _))%R scalerA Hnn scale1r.
-Qed.
-
-Lemma eq_tuple (T : eqType) n (t1 t2 : n.-tuple T) :
-  (t1 == t2) = (val t1 == val t2).
-Proof. by case: eqP => [-> // | H]; apply/esym/eqP => // /val_inj. Qed.
-
-Lemma eq_ord_tuple m n (t1 t2 : n.-tuple 'I_m) :
-  (t1 == t2) = (map val t1 == map val t2).
-Proof.
-case: eqP => [-> | H]; apply/esym/eqP => // /inj_map.
-by move=> H'; elim H; apply/val_inj/H'/val_inj.
-Qed.
-
-Fixpoint enum_ordinal n : seq 'I_n :=
-  match n as n return seq 'I_n with
-  | 0 => [::]
-  | m.+1 => ord0 :: map (lift ord0) (enum_ordinal m)
-  end.
-
-Lemma enum_ordinalE n : enum 'I_n = enum_ordinal n.
-Proof.
-apply/(@inj_map _ _ (val : 'I_n -> nat)). apply val_inj.
-rewrite val_enum_ord.
-elim: n => //= n IH.
-rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
-by rewrite map_comp -IH (iotaDl 1 0 n).
-Qed.
-
-(* Trying to check the hadamart representation of cnot... *)
-Lemma cnotH_ok : nvendo cnotH Ro =1 cnotHe Ro.
-Proof.
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
-all: rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
-rewrite !(eq_ord_tuple,linE,subr0,ffunE,scalerDl) /=.
-rewrite !enum_ordinalE /=.
-rewrite !(linE,subr0,ffunE,scalerDl,sum_nvbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /=.
-rewrite !enum_ordinalE /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite -!scalerA !linE.
-rewrite !(scalerA,addrA,scalerDr).
-have Hmin1 : ((1 *- 1) = -1 :> R)%R by rewrite -mulNrn.
-rewrite !Hmin1 !(mulrN,mulNr,mulr1,scaleNr,opprK).
-rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr.
-Abort.
-
-(* Use linearity to extra the global factor first *)
-Lemma cnotH_ok' : nvendo cnotH Ro =1 cnotHe Ro.
-Proof.
-move=> v /=.
-rewrite /hadamart2 /hadamart.
-set hadam := (_ *: (_ + _ + _ - _))%R.
-rewrite (_ : tensor_nsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
-rewrite linearZ_LR.
-set hadam' := (_ + _ + _ - _)%R.
-rewrite (_ : Linear _ _ = Linear (tensor_linearr hadam') hadam) //.
-rewrite linearZ_LR scalerA.
-rewrite !mul1r -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //=.
-Abort.
-
-(* Checking equality of matrices *)
-Lemma cnotK' : mul_nsquare cnot cnot = id_nsquare _ _ _.
-Proof.
-apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (apply/eqP; do! rewrite !(linE,ffunE,sum_enum_indices) => //=).
-(* 18s ! *)
-Qed.
-End gate_examples.
+End lens_assoc.
