@@ -40,34 +40,34 @@ rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
-Definition nvendo m (M : tsquare m) : endo m :=
+Definition tsendo m (M : tsquare m) : endo m :=
   fun T => Linear (@nvendo_is_linear m M T).
 
-Definition nvbasis m (vi : m.-tuple I) : tpower m R^o :=
+Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
   [ffun vj => (vi == vj)%:R]%R.
 
 Definition endons m (f : endo m) : tsquare m :=
-  [ffun vi => [ffun vj => f _ (nvbasis vj) vi]].
+  [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
 
-Lemma nvbasisC m (vi vj : m.-tuple I) : nvbasis vi vj = nvbasis vj vi.
+Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
 Proof. by rewrite !ffunE eq_sym. Qed.
 
-Lemma sum_nvbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
-  (\sum_vj (nvbasis vi vj *: F vj) = F vi)%R.
+Lemma sum_tpbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
+  (\sum_vj (tpbasis vi vj *: F vj) = F vi)%R.
 Proof.
 rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
 Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
-  v = (\sum_i map_tpower ( *:%R^~ (v i)) (nvbasis i))%R.
+  v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i))%R.
 Proof.
-apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_nvbasisK /=.
-by apply eq_bigr => vj _; rewrite [RHS]ffunE nvbasisC.
+apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
+by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
 
 Lemma naturalityP m (f : endo m) :
-  naturality f <-> exists M, forall T, f T =1 nvendo M T.
+  naturality f <-> exists M, forall T, f T =1 tsendo M T.
 Proof.
 split => [Hf | [M] HM].
 - exists (endons f) => T /= v.
@@ -76,7 +76,7 @@ split => [Hf | [M] HM].
   apply eq_bigr => /= vj _; rewrite !ffunE.
   set h : R^o -> T := *:%R^~ _.
   have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-  by rewrite -(Hf _ _ (Linear hlin) (nvbasis vj)) ffunE.
+  by rewrite -(Hf _ _ (Linear hlin) (tpbasis vj)) ffunE.
 - move=> T1 T2 h /= v; apply/ffunP => /= vi.
   rewrite !HM !ffunE linear_sum; apply eq_bigr => vj _.
   by rewrite linearZ_LR !ffunE.
@@ -88,7 +88,7 @@ Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
 Definition mul_tsquare m (M1 M2 : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]]%R.
 
-Definition id_tsquare m : tsquare m := [ffun vi => nvbasis vi].
+Definition id_tsquare m : tsquare m := [ffun vi => tpbasis vi].
 
 (* Tensor product of tsquare matrices *)
 Section tensor_tsquare.
@@ -156,7 +156,7 @@ Definition focus n m l tr : endo n :=
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
-exists (endons (focus l (nvendo M))).
+exists (endons (focus l (tsendo M))).
 move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
@@ -197,8 +197,8 @@ congr (f _ vk * f' _ vj *: v _)%R.
 Qed.
 
 Lemma focus_tensor (M : tsquare m) (M' : tsquare n) (v : tpower (m+n) T) :
-  focus (lens_left m n) (nvendo M) _ (focus (lens_right m n) (nvendo M') _ v) =
-  nvendo (tensor_tsquare M M') _ v.
+  focus (lens_left m n) (tsendo M) _ (focus (lens_right m n) (tsendo M') _ v) =
+  tsendo (tensor_tsquare M M') _ v.
 Proof.
 apply/ffunP => /= vi.
 rewrite /focus_fun !ffunE !sum_ffunE.
@@ -345,7 +345,7 @@ Let tsquare := tsquare I R.
 Definition mxtsquare m (M : 'M[R]_(vsz m,vsz m)) : tsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
-Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := nvendo (mxtsquare M).
+Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := tsendo (mxtsquare M).
 
 Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].

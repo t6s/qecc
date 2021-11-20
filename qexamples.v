@@ -31,35 +31,56 @@ End ordinal_examples.
 
 Section gate_examples.
 Require Reals.
-From mathcomp Require Import Rstruct.
+From mathcomp Require Import Rstruct complex.
 Import Num.Theory.
 Local Open Scope ring_scope.
+Local Open Scope complex_scope.
 
-Let R := [comRingType of Reals.Rdefinitions.R].
-Let Ro := [lmodType R of R^o].
+Let R := Reals.Rdefinitions.R.
+Let C := [comRingType of R[i]].
+Let Co := [lmodType C of C^o].
 Let I := [finType of 'I_2].
 
 Notation "¦ x1 , .. , xn ⟩" :=
-  (nvbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
-Definition qnot : tsquare I R 1 :=
+  (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
+
+Definition qnot : tsquare I C 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
 
-Definition cnot : tsquare I R 2 :=
+Definition cnot : tsquare I C 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
-Definition hadamart : tsquare I R 1 :=
-  1 / Num.sqrt 2%:R *:
+Definition hadamard : tsquare I C 1 :=
+  (1 / Num.sqrt 2%:R)%:C *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
 
-Definition hadamart2 := tensor_tsquare hadamart hadamart.
+Definition toffoli : tsquare I C 3 :=
+  (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
+      ket_bra k k) +
+  ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩.
+(* =
+  ket_bra ¦0,0,0⟩ ¦0,0,0⟩ + ket_bra ¦0,0,1⟩ ¦0,0,1⟩ +
+  ket_bra ¦0,1,0⟩ ¦0,1,0⟩ + ket_bra ¦0,1,1⟩ ¦0,1,1⟩ +
+  ket_bra ¦1,0,0⟩ ¦1,0,0⟩ + ket_bra ¦1,0,1⟩ ¦1,0,1⟩ +
+  ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
-Definition cnotH : tsquare I R 2 :=
+Notation "f \v g" := (comp_endo f g) (at level 50, format "f  \v  g").
+Local Notation focus := (focus 0%:O).
+
+Definition bit_flip (chan : endo I C 3) : endo I C 3 :=
+  focus [lens 0; 1] (tsendo cnot) \v focus [lens 0; 2] (tsendo cnot) \v chan \v
+  focus [lens 0; 1] (tsendo cnot) \v focus [lens 0; 2] (tsendo cnot) \v
+  focus [lens 1; 2; 0] (tsendo toffoli).
+
+Definition hadamard2 := tensor_tsquare hadamard hadamard.
+
+Definition cnotH : tsquare I C 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
 
 Definition cnotHe :=
-  comp_endo (nvendo hadamart2) (comp_endo (nvendo cnot) (nvendo hadamart2)).
+  comp_endo (tsendo hadamard2) (comp_endo (tsendo cnot) (tsendo hadamard2)).
 
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
@@ -99,7 +120,7 @@ apply eq_uniq.
 move=> t. by rewrite mem_enum_indices mem_enum.
 Qed.
 
-Lemma sum_enum_indices n (F : n.-tuple 'I_2 -> R) :
+Lemma sum_enum_indices (CR : comRingType) n (F : n.-tuple 'I_2 -> CR^o) :
   \sum_vi F vi = foldr +%R 0 (map F (enum_indices n)).
 Proof.
 rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
@@ -117,17 +138,17 @@ move -> ; by apply/allP.
 Qed.
 
 (* Checking equality of functions (sum of tensors) *)
-Lemma cnotK : involutive (nvendo cnot Ro).
+Lemma cnotK : involutive (tsendo cnot Co).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(linE,sum_nvbasisK,ffunE)).
-(* 2.4s *)
+all: time (by rewrite !(linE,sum_tpbasisK,ffunE)).
+(* 2.8s *)
 Qed.
 
-Lemma qnotK : involutive (nvendo qnot Ro).
+Lemma qnotK : involutive (tsendo qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(linE,sum_nvbasisK,ffunE).
+all: by rewrite !(linE,sum_tpbasisK,ffunE).
 Qed.
 
 Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
@@ -136,16 +157,21 @@ Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
-Lemma hadamartK : involutive (nvendo hadamart Ro).
+Lemma hadamardK : involutive (tsendo hadamard Co).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: do! rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
 all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
-all: rewrite !scalerA -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
-1: rewrite addrCA -addrA subrr linE -mulr2n.
-2: rewrite opprK addrAC !addrA subrr linE -mulr2n.
-all: by rewrite -(scaler_nat 2 (_ *: v _))%R scalerA Hnn scale1r.
+all: rewrite !scalerA.
+all: simpc.
+all: rewrite !(linE,subr0).
+all: rewrite -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
+1: rewrite addrCA -addrA subrr linE -scalerDl.
+2: rewrite opprK addrAC !addrA subrr linE -scalerDl.
+all: rewrite -mulr2n -mulr_natl -rmorphMn /=.
+all: simpc.
+all: by rewrite Hnn mul0r scale1r.
 Qed.
 
 Lemma eq_tuple (T : eqType) n (t1 t2 : n.-tuple T) :
@@ -175,17 +201,21 @@ by rewrite map_comp -IH (iotaDl 1 0 n).
 Qed.
 
 (* Trying to check the hadamart representation of cnot... *)
-Lemma cnotH_ok : nvendo cnotH Ro =1 cnotHe Ro.
+Lemma cnotH_ok : tsendo cnotH Co =1 cnotHe Co.
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
 all: rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
-rewrite !(eq_ord_tuple,linE,subr0,ffunE,scalerDl) /=.
+rewrite 50!(eq_ord_tuple,linE,subr0,ffunE,scalerDl) /=.
 rewrite !enum_ordinalE /=.
-rewrite !(linE,subr0,ffunE,scalerDl,sum_nvbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /=.
 rewrite !enum_ordinalE /=.
 rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
 rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /=.
+rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
 rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
 rewrite -!scalerA !linE.
@@ -196,7 +226,7 @@ rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr.
 Abort.
 
 (* Use linearity to extra the global factor first *)
-Lemma cnotH_ok' : nvendo cnotH Ro =1 cnotHe Ro.
+Lemma cnotH_ok' : tsendo cnotH Co =1 cnotHe Co.
 Proof.
 move=> v /=.
 rewrite /hadamart2 /hadamart.
