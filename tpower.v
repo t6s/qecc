@@ -7,6 +7,8 @@ Unset Printing Implicit Defensive.
 
 Import GRing.Theory.
 
+Reserved Notation "f \v g" (at level 50, format "f  \v  g").
+
 Section tensor_space.
 Variables (I : finType) (dI : I) (R : comRingType).
 Local Notation merge_indices := (merge_indices dI).
@@ -250,6 +252,8 @@ exact: merge_indices_comp.
 Qed.
 End focus.
 End tensor_space.
+
+Notation "f \v g" := (comp_endo f g).
 
 (* Conversion between tpower and vector space *)
 

@@ -44,18 +44,23 @@ Let I := [finType of 'I_2].
 Notation "¦ x1 , .. , xn ⟩" :=
   (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 
-Definition qnot : tsquare I C 1 :=
+Notation focus := (focus 0%:O).
+Notation tpower := (tpower I).
+Notation tsquare := (tsquare I C).
+Notation endo := (endo I C).
+
+Definition qnot : tsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
 
-Definition cnot : tsquare I C 2 :=
+Definition cnot : tsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
-Definition hadamard : tsquare I C 1 :=
+Definition hadamard : tsquare 1 :=
   (1 / Num.sqrt 2%:R)%:C *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
 
-Definition toffoli : tsquare I C 3 :=
+Definition toffoli : tsquare 3 :=
   (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
       ket_bra k k) +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩.
@@ -65,22 +70,19 @@ Definition toffoli : tsquare I C 3 :=
   ket_bra ¦1,0,0⟩ ¦1,0,0⟩ + ket_bra ¦1,0,1⟩ ¦1,0,1⟩ +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
-Notation "f \v g" := (comp_endo f g) (at level 50, format "f  \v  g").
-Local Notation focus := (focus 0%:O).
-
-Definition bit_flip (chan : endo I C 3) : endo I C 3 :=
+Definition bit_flip (chan : endo 3) : endo 3 :=
   focus [lens 0; 1] (tsendo cnot) \v focus [lens 0; 2] (tsendo cnot) \v chan \v
   focus [lens 0; 1] (tsendo cnot) \v focus [lens 0; 2] (tsendo cnot) \v
   focus [lens 1; 2; 0] (tsendo toffoli).
 
 Definition hadamard2 := tensor_tsquare hadamard hadamard.
 
-Definition cnotH : tsquare I C 2 :=
+Definition cnotH : tsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
 
 Definition cnotHe :=
-  comp_endo (tsendo hadamard2) (comp_endo (tsendo cnot) (tsendo hadamard2)).
+  tsendo hadamard2 \v tsendo cnot \v tsendo hadamard2.
 
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
@@ -127,7 +129,7 @@ rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
 apply/esym/eq_bigl => vi. exact/mem_enum_indices.
 Qed.
 
-Lemma eq_from_indicesP n (T : eqType) (v w : tpower I n T) :
+Lemma eq_from_indicesP n (T : eqType) (v w : tpower n T) :
   reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
 Proof.
 apply (iffP idP).
