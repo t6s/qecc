@@ -75,23 +75,6 @@ move=> Hlq /=.
 elim: lr => // a [|b lr] IH //= /andP[ab] Hsort.
 rewrite sorted_tnth //=; exact: IH.
 Qed.
-
-Lemma sorted_skip (a b : A) s :
-  le a b -> path le b s -> path le a s.
-Proof. by case: s => //= c s ab /andP[] /(le_trans ab) ->. Qed.
-
-Lemma sorted_filter (c : pred A) s :
-  sorted le s -> sorted le (filter c s).
-Proof.
-rewrite {1}/sorted.
-case: s => // a s.
-elim: s a => // [|b s IH] a /=; first by case: ifP.
-case/andP => ab Hb.
-case: ifP => ca; last exact: IH.
-case: ifP => cb /=.
-  move: (IH b Hb); by rewrite /= cb ab.
-move: (IH a); rewrite /= ca; apply; exact/(sorted_skip ab).
-Qed.
 End sorted.
 
 Section lens.
@@ -384,30 +367,30 @@ apply/mapP => -[k] _ /eqP.
 by rewrite eq_rlshift.
 Qed.
 
-Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
+Lemma take_enum_lshift : take m (enum 'I_(m + n)) = [tuple lshift n i | i < m].
 Proof.
-apply/val_inj/val_inj => /=.
-rewrite -[RHS](cat_take_drop m).
-congr cat.
-  apply eq_from_nth'.
-    by rewrite size_map size_takel -cardT card_ord // leq_addr.
-  move=> a i.
-  rewrite size_map -cardT card_ord => Hi.
-  rewrite (_ : i = Ordinal Hi) //.
-  rewrite (nth_map (Ordinal Hi) a (lshift n)); last by rewrite -cardT card_ord.
-  rewrite -val_ord_tuple -tnth_nth tnth_ord_tuple.
-  rewrite nth_take //.
-  apply val_inj. by rewrite [RHS]nth_enum_ord // (leq_trans Hi) // leq_addr.
-apply eq_from_nth'.
+apply/esym/eq_from_nth'.
+  by rewrite size_map size_takel -cardT card_ord // leq_addr.
+move=> a i.
+rewrite size_map -cardT card_ord => Hi.
+rewrite nth_tnth tnth_map tnth_ord_tuple nth_take //.
+apply val_inj. by rewrite [RHS]nth_enum_ord // (leq_trans Hi) // leq_addr.
+Qed.
+
+Lemma drop_enum_rshift : drop m (enum 'I_(m + n)) = [tuple rshift m i | i < n].
+Proof.
+apply/esym/eq_from_nth'.
   by rewrite size_map size_drop -!cardT !card_ord addKn.
 move=> a i.
 rewrite size_map -cardT card_ord => Hi.
-rewrite (_ : i = Ordinal Hi) //.
-rewrite (nth_map (Ordinal Hi) a (rshift m (n:=n)));
-  last by rewrite -cardT card_ord.
-rewrite -val_ord_tuple -tnth_nth tnth_ord_tuple.
-rewrite nth_drop //.
+rewrite nth_tnth tnth_map tnth_ord_tuple nth_drop //.
 apply val_inj. by rewrite [RHS]nth_enum_ord //= -addnS leq_add2l.
+Qed.
+
+Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
+Proof.
+apply/val_inj/val_inj => /=.
+by rewrite -[RHS](cat_take_drop m) take_enum_lshift drop_enum_rshift.
 Qed.
 End lens_left_right.
 
