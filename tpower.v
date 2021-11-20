@@ -29,11 +29,11 @@ Definition naturality m (f : endo m) :=
   forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : tpower m T1),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
 
-Definition nvendo_fun m (M : tsquare m) : endofun m :=
+Definition tsendo_fun m (M : tsquare m) : endofun m :=
   fun T v =>
     [ffun vi : m.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj]%R.
 
-Lemma nvendo_is_linear m M T : linear (@nvendo_fun m M T).
+Lemma tsendo_is_linear m M T : linear (@tsendo_fun m M T).
 Proof.
 move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
 rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
@@ -41,12 +41,12 @@ by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
 Definition tsendo m (M : tsquare m) : endo m :=
-  fun T => Linear (@nvendo_is_linear m M T).
+  fun T => Linear (@tsendo_is_linear m M T).
 
 Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
   [ffun vj => (vi == vj)%:R]%R.
 
-Definition endons m (f : endo m) : tsquare m :=
+Definition endots m (f : endo m) : tsquare m :=
   [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
 
 Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
@@ -70,7 +70,7 @@ Lemma naturalityP m (f : endo m) :
   naturality f <-> exists M, forall T, f T =1 tsendo M T.
 Proof.
 split => [Hf | [M] HM].
-- exists (endons f) => T /= v.
+- exists (endots f) => T /= v.
   rewrite [in LHS](decompose_tpower v) linear_sum.
   apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
   apply eq_bigr => /= vj _; rewrite !ffunE.
@@ -156,7 +156,7 @@ Definition focus n m l tr : endo n :=
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
-exists (endons (focus l (tsendo M))).
+exists (endots (focus l (tsendo M))).
 move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
