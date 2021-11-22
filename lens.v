@@ -189,6 +189,10 @@ have {1}-> : i = tnth l1 (lens_index H) by rewrite (tnth_nth i) nth_index.
 rewrite index_map //; exact/tnth_inj/lens_uniq.
 Qed.
 
+Lemma mem_lens_comp i (H : i \in l1) :
+  (i \in lens_comp) = (lens_index H \in l2).
+Proof. by rewrite -!index_mem !size_tuple index_lens_comp. Qed.
+
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
 Proof.
@@ -532,33 +536,27 @@ case/boolP: (i \in lens_comp l l') => Hi.
   case/mapP: Hi => j Hj ->.
   rewrite tnth_lensK -tnth_nth tnth_mktuple index_map ?(nth_lens_index Hj) //.
   exact/tnth_inj/lens_uniq.
-rewrite nth_lens_out //.
 have Hilo : i \in lothers_comp by rewrite mem_lothers.
-rewrite nth_lens_index tnth_mktuple.
+rewrite nth_lens_out // nth_lens_index tnth_mktuple.
 case/boolP: (i \in l) => Hil.
-  rewrite (nth_lens_index Hil) tnth_mktuple.
-  have Hill' : lens_index Hil \notin l'.
-    apply: contra Hi => Hill'.
-    apply/mapP. exists (lens_index Hil) => //.
-    by rewrite lens_indexK.
-  rewrite [RHS]nth_lens_out //.
-  have Hlol' : lens_index Hil \in lothers l' by rewrite mem_lothers.
-  rewrite (nth_lens_index Hlol').
-  have <- : tnth lothers_in_l (lens_index Hlol') = lens_index Hilo.
+  rewrite mem_lens_comp in Hi.
+  rewrite (nth_lens_index Hil) tnth_mktuple [RHS]nth_lens_out //.
+  rewrite -mem_lothers in Hi.
+  rewrite (nth_lens_index Hi).
+  have <- : tnth lothers_in_l (lens_index Hi) = lens_index Hilo.
     apply (tnth_inj _ (lens_uniq lothers_comp)).
     by rewrite -tnth_comp lothers_in_l_comp tnth_comp !lens_indexK.
   by rewrite tnth_lensK -tnth_nth.
 rewrite [RHS]nth_lens_out //.
 have Hillo : lens_index Hilo \notin lothers_in_l.
   apply: contra Hil.
-  case/tnthP => j /(f_equal (tnth lothers_comp)).
-  rewrite -tnth_comp lothers_in_l_comp lens_indexK => ->.
-  by rewrite tnth_comp mem_tnth.
+  case/tnthP => j /(f_equal (tnth lothers_comp)); rewrite lens_indexK => ->.
+  by rewrite -tnth_comp lothers_in_l_comp tnth_comp mem_tnth.
 rewrite [LHS]nth_lens_out //.
 congr nth => //.
 have Hillo' : lens_index Hilo \in lothers_notin_l by rewrite mem_lothers.
-have Hill : i \in lothers l by rewrite mem_lothers.
-rewrite (make_lens_index Hillo') (make_lens_index Hill).
+rewrite -mem_lothers in Hil.
+rewrite (make_lens_index Hillo') (make_lens_index Hil).
 congr val.
 apply (tnth_inj _ (lens_uniq (lothers l))).
 by rewrite -[in LHS]lothers_notin_l_comp tnth_comp !lens_indexK.

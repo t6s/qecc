@@ -183,8 +183,8 @@ Proof. by case: eqP => [-> // | H]; apply/esym/eqP => // /val_inj. Qed.
 Lemma eq_ord_tuple m n (t1 t2 : n.-tuple 'I_m) :
   (t1 == t2) = (map val t1 == map val t2).
 Proof.
-case: eqP => [-> | H]; apply/esym/eqP => // /inj_map.
-by move=> H'; elim H; apply/val_inj/H'/val_inj.
+case: eqP => [-> | H]; apply/esym/eqP => // /inj_map H'.
+by elim H; apply/val_inj/H'/val_inj.
 Qed.
 
 Fixpoint enum_ordinal n : seq 'I_n :=
