@@ -159,6 +159,8 @@ Qed.
 Canonical focus n m l tr : endo n :=
   fun T => Linear (@focus_is_linear n m l tr T).
 
+Definition tsapp n m l M := @focus n m l (tsendo M).
+
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
@@ -220,7 +222,7 @@ congr (f _ vk * f' _ vj *: v _)%R.
 Qed.
 
 Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
-  focus (lens_left m n) (tsendo M) \v focus (lens_right m n) (tsendo M') =e
+  tsapp (lens_left m n) M \v tsapp (lens_right m n) M' =e
   tsendo (tensor_tsquare M M').
 Proof.
 move=> T v; apply/ffunP => /= vi.
@@ -263,8 +265,7 @@ Notation "f \v g" := (comp_endo f g).
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
       (M : tsquare m) (M' : tsquare p) :
-  focus l (tsendo M) \v focus l' (tsendo M') =e
-  focus (lens_cat H) (tsendo (tensor_tsquare M M')).
+  tsapp l M \v tsapp l' M' =e tsapp (lens_cat H) (tensor_tsquare M M').
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
 rewrite focusM; last by apply/naturalityP; eexists.

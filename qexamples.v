@@ -45,12 +45,10 @@ Notation "¦ x1 , .. , xn ⟩" :=
   (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 
 Notation focus := (focus 0%:O).
+Notation tsapp := (tsapp 0%:O).
 Notation tpower := (tpower I).
 Notation tsquare := (tsquare I C).
 Notation endo := (endo I C).
-
-Definition tsapp n m (l : lens n m) (M : tsquare m) : endo n :=
-  focus l (tsendo M).
 
 Definition qnot : tsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
