@@ -49,6 +49,9 @@ Notation tpower := (tpower I).
 Notation tsquare := (tsquare I C).
 Notation endo := (endo I C).
 
+Definition tsapp n m (l : lens n m) (M : tsquare m) : endo n :=
+  focus l (tsendo M).
+
 Definition qnot : tsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
 
@@ -70,10 +73,34 @@ Definition toffoli : tsquare 3 :=
   ket_bra ¦1,0,0⟩ ¦1,0,0⟩ + ket_bra ¦1,0,1⟩ ¦1,0,1⟩ +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
-Definition bit_flip (chan : endo 3) : endo 3 :=
-  focus [lens 0; 1] (tsendo cnot) \v focus [lens 0; 2] (tsendo cnot) \v chan \v
-  focus [lens 0; 1] (tsendo cnot) \v focus [lens 0; 2] (tsendo cnot) \v
-  focus [lens 1; 2; 0] (tsendo toffoli).
+Definition bit_flip_enc : endo 3 :=
+  tsapp [lens 0; 2] cnot \v  tsapp [lens 0; 1] cnot.
+
+Definition bit_flip_dec : endo 3 :=
+  tsapp [lens 1; 2; 0] toffoli \v bit_flip_enc.
+
+Definition bit_flip_code (chan : endo 3) : endo 3 :=
+  bit_flip_dec \v chan \v bit_flip_enc.
+
+Definition hadamard3 : endo 3 :=
+  tsapp [lens 2] hadamard \v tsapp [lens 1] hadamard \v tsapp [lens 0] hadamard.
+
+Definition sign_flip_dec := bit_flip_dec \v hadamard3.
+Definition sign_flip_enc := hadamard3 \v bit_flip_enc.
+
+Definition sign_flip_code (chan : endo 3) :=
+  sign_flip_dec \v chan \v sign_flip_enc.
+
+Definition shor_enc : endo 9 :=
+  focus [lens 0; 1; 2] bit_flip_enc \v focus [lens 3; 4; 5] bit_flip_enc \v
+  focus [lens 6; 7; 8] bit_flip_enc \v focus [lens 0; 3; 6] sign_flip_enc.
+
+Definition shor_dec : endo 9 :=
+  focus [lens 0; 3; 6] sign_flip_dec \v focus [lens 0; 1; 2] bit_flip_dec \v
+  focus [lens 3; 4; 5] bit_flip_dec \v focus [lens 6; 7; 8] bit_flip_dec.
+
+Definition shor_code (chan : endo 9) :=
+  shor_dec \v chan \v shor_enc.
 
 Definition hadamard2 := tensor_tsquare hadamard hadamard.
 
