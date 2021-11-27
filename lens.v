@@ -396,6 +396,22 @@ Proof.
 apply/val_inj/val_inj => /=.
 by rewrite -[RHS](cat_take_drop m) take_enum_lshift drop_enum_rshift.
 Qed.
+
+Variables (p : nat) (l : lens p m) (l' : lens p n) (H : [disjoint l & l']).
+
+Lemma lens_comp_left : l = lens_comp (lens_cat H) lens_left.
+Proof.
+apply/val_inj/eq_from_tnth => i /=.
+rewrite !tnth_map tnth_ord_tuple [RHS](tnth_nth (tnth l i)) /=.
+by rewrite nth_cat size_tuple ltn_ord -tnth_nth.
+Qed.
+
+Lemma lens_comp_right : l' = lens_comp (lens_cat H) lens_right.
+Proof.
+apply/val_inj/eq_from_tnth => i /=.
+rewrite !tnth_map tnth_ord_tuple [RHS](tnth_nth (tnth l' i)) /=.
+by rewrite nth_cat size_tuple ltnNge leq_addr /= addKn -tnth_nth.
+Qed.
 End lens_left_right.
 
 Section inject_all.

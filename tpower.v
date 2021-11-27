@@ -8,6 +8,7 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 
 Reserved Notation "f \v g" (at level 50, format "f  \v  g").
+Reserved Notation "f =e g" (at level 70).
 
 Section tensor_space.
 Variables (I : finType) (dI : I) (R : comRingType).
@@ -30,6 +31,9 @@ Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : tpower m T1)
 Definition naturality m (f : endo m) :=
   forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : tpower m T1),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
+
+Definition eq_endo m (f1 f2 : endo m) := forall T : lmodType R, f1 T =1 f2 T.
+Notation "f1 =e f2" := (eq_endo f1 f2).
 
 Definition tsendo_fun m (M : tsquare m) : endofun m :=
   fun T v =>
@@ -69,7 +73,7 @@ by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
 
 Lemma naturalityP m (f : endo m) :
-  naturality f <-> exists M, forall T, f T =1 tsendo M T.
+  naturality f <-> exists M, f =e tsendo M.
 Proof.
 split => [Hf | [M] HM].
 - exists (endots f) => T /= v.
@@ -152,7 +156,7 @@ have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
 
-Definition focus n m l tr : endo n :=
+Canonical focus n m l tr : endo n :=
   fun T => Linear (@focus_is_linear n m l tr T).
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
@@ -166,12 +170,12 @@ rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
-Variables (T : lmodType R) (n m p : nat) (l : lens n m).
+Variables (n m p : nat) (l : lens n m).
 
 (* Identity *)
-Lemma focusI tr : naturality tr -> focus (lens_id n) tr T =1 tr T.
+Lemma focusI tr : naturality tr -> focus (lens_id n) tr =e tr.
 Proof.
-rewrite /focus => /naturalityP [f Hf] /= v.
+rewrite /focus => /naturalityP [f Hf] /= T v.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf {tr} !ffunE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
@@ -179,13 +183,30 @@ congr (_ *: v _)%R.
 apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
 Qed.
 
-(* horizontal composition of endomorphisms *)
-Lemma focusC (l' : lens n p) tr tr' (v : tpower n T) :
+(* Equality *)
+Lemma focus_eq (f1 f2 : endo m) : f1 =e f2 -> focus l f1 =e focus l f2.
+Proof. move=> Heq T v /=; by rewrite /focus_fun Heq. Qed.
+
+(* Vertical composition of endomorphisms *)
+Section comp_endo.
+Variables (r q : nat) (tr tr' : endo q).
+Definition comp_endo : endo q := fun A => GRing.comp_linear (tr A) (tr' A).
+
+Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
+Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
+
+Lemma focus_comp (T : lmodType R) (lq : lens r q) (v : tpower r T) :
+  focus lq comp_endo _ v = focus lq tr _ (focus lq tr' _ v).
+Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
+End comp_endo.
+Notation "f \v g" := (comp_endo f g).
+
+(* Horizontal composition of endomorphisms *)
+Lemma focusC (l' : lens n p) tr tr' :
   [disjoint l & l'] -> naturality tr -> naturality tr' ->
-  focus l tr _ (focus l' tr' _ v) =
-  focus l' tr' _ (focus l tr _ v).
+  focus l tr \v focus l' tr' =e focus l' tr' \v focus l tr.
 Proof.
-rewrite /focus => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'].
+rewrite /focus => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'] T v /=.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !sum_ffunE.
 under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
@@ -198,11 +219,11 @@ congr (f _ vk * f' _ vj *: v _)%R.
 - by rewrite !merge_indices_extract_others inject_disjointC.
 Qed.
 
-Lemma focus_tensor (M : tsquare m) (M' : tsquare n) (v : tpower (m+n) T) :
-  focus (lens_left m n) (tsendo M) _ (focus (lens_right m n) (tsendo M') _ v) =
-  tsendo (tensor_tsquare M M') _ v.
+Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
+  focus (lens_left m n) (tsendo M) \v focus (lens_right m n) (tsendo M') =e
+  tsendo (tensor_tsquare M M').
 Proof.
-apply/ffunP => /= vi.
+move=> T v; apply/ffunP => /= vi.
 rewrite /focus_fun !ffunE !sum_ffunE.
 under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
 rewrite pair_bigA /=.
@@ -224,24 +245,11 @@ rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
 by rewrite scalerA inject_all // lens_left_right_disjoint.
 Qed.
 
-(* vertical composition of endomorphisms *)
-Section comp_endo.
-Variables tr tr' : endo m.
-Definition comp_endo : endo m := fun A => GRing.comp_linear (tr A) (tr' A).
-
-Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
-Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
-
-Lemma focus_comp (v : tpower n T) :
-  focus l comp_endo _ v = focus l tr _ (focus l tr' _ v).
-Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
-End comp_endo.
-
-(* associativity of actions of lenses *)
-Lemma focusM (l' : lens m p) tr (v : tpower n T) : naturality tr ->
-  focus (lens_comp l l') tr _ v = focus l (focus l' tr) _ v.
+(* Associativity of actions of lenses *)
+Lemma focusM (l' : lens m p) tr : naturality tr ->
+  focus (lens_comp l l') tr =e focus l (focus l' tr).
 Proof.
-case/naturalityP => f Hf.
+case/naturalityP => f Hf T v.
 rewrite /focus /focus_fun /= !{}Hf {tr}.
 apply/ffunP => /= vi.
 rewrite !ffunE (extract_lothers_comp dI) -!extract_comp.
@@ -251,8 +259,22 @@ congr (_ *: v _)%R.
 exact: merge_indices_comp.
 Qed.
 End focus.
+Notation "f \v g" := (comp_endo f g).
+
+Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
+      (M : tsquare m) (M' : tsquare p) :
+  focus l (tsendo M) \v focus l' (tsendo M') =e
+  focus (lens_cat H) (tsendo (tensor_tsquare M M')).
+Proof.
+rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
+rewrite focusM; last by apply/naturalityP; eexists.
+rewrite (focusM _ _ (tr:=tsendo M')); last by apply/naturalityP; eexists.
+rewrite -focus_comp.
+move: T v; exact/focus_eq/focus_tensor.
+Qed.
 End tensor_space.
 
+Notation "f1 =e f2" := (eq_endo f1 f2).
 Notation "f \v g" := (comp_endo f g).
 
 (* Conversion between tpower and vector space *)
