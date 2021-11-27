@@ -232,16 +232,10 @@ rewrite pair_bigA /=.
 rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
          (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
   exists (fun v : m.-tuple I * n.-tuple I => [tuple of v.1 ++ v.2]) => /= vj _. 
-    apply eq_from_tnth => i /=.
-    rewrite (tnth_nth (tnth vj i)) /= -map_cat.
-    move: (lens_left_right m n) => /(f_equal val) /(f_equal val) /= ->.
-    by rewrite map_tnth_enum -tnth_nth.
-  case: vj => vl vr /=; congr pair; apply eq_from_tnth => i.
-    rewrite tnth_map tnth_mktuple.
-    by rewrite (tnth_nth (tnth vl i)) /= nth_cat size_tuple ltn_ord -tnth_nth.
-  rewrite tnth_map tnth_mktuple.
-  rewrite (tnth_nth (tnth vr i)) /= nth_cat size_tuple ltnNge leq_addr /=.
-  by rewrite addKn -tnth_nth.
+    rewrite -[RHS]extract_lens_id -(lens_left_right m n).
+    by apply/val_inj; rewrite /= map_cat.
+  case: vj => vl vr /=; congr pair; apply eq_from_tnth => i;
+    by rewrite tnth_map tnth_mktuple (tnth_lshift,tnth_rshift).
 apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
 by rewrite scalerA inject_all // lens_left_right_disjoint.

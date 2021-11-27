@@ -13,10 +13,33 @@ Lemma ltn_ordK q (i : 'I_q) : Ordinal (ltn_ord i) = i.
 Proof. by apply val_inj. Qed.
 
 Section tnth.
-Lemma nth_tnth T (n i : nat) x0 (v : n.-tuple T) (H : i < n) :
-  nth x0 v i = tnth v (Ordinal H).
+Variables (T : Type) (m n : nat) (vl : m.-tuple T) (vr : n.-tuple T).
+
+Lemma nth_tnth i x0 (H : i < n) : nth x0 vr i = tnth vr (Ordinal H).
 Proof. by rewrite (tnth_nth x0). Qed.
 
+Lemma tnth_lshift i : tnth [tuple of vl ++ vr] (lshift n i) = tnth vl i.
+Proof.
+by rewrite (tnth_nth (tnth vl i)) /= nth_cat size_tuple ltn_ord -tnth_nth.
+Qed.
+
+Lemma tnth_rshift i : tnth [tuple of vl ++ vr] (rshift m i) = tnth vr i.
+Proof.
+rewrite (tnth_nth (tnth vr i)) /= nth_cat size_tuple ltnNge leq_addr /=.
+by rewrite addKn -tnth_nth.
+Qed.
+
+Lemma eq_from_nth' (s1 s2 : seq T) :
+  size s1 = size s2 -> (forall a i, i < size s1 -> nth a s1 i = nth a s2 i) ->
+  s1 = s2.
+Proof.
+case: s1 => [|a s1 Hsz Heq].
+   by move/esym/eqP/nilP ->.
+exact (eq_from_nth Hsz (Heq a)).
+Qed.
+End tnth.
+
+Section tnth_eq.
 Variables (A : eqType) (n : nat).
 Lemma tnth_inj (t : n.-tuple A) : reflect (injective (tnth t)) (uniq t).
 Proof.
@@ -32,16 +55,7 @@ Qed.
 
 Lemma index_tuple (t : n.-tuple A) i : (index i t < n) <-> (i \in t).
 Proof. by rewrite -index_mem size_tuple. Qed.
-
-Lemma eq_from_nth' (s1 s2 : seq A) :
-  size s1 = size s2 -> (forall a i, i < size s1 -> nth a s1 i = nth a s2 i) ->
-  s1 = s2.
-Proof.
-case: s1 => [|a s1 Hsz Heq].
-   by move/esym/eqP/nilP ->.
-exact (eq_from_nth Hsz (Heq a)).
-Qed.
-End tnth.
+End tnth_eq.
 
 Section sorted.
 Definition ord_ltn {r} : rel 'I_r := relpre val ltn.
@@ -402,15 +416,13 @@ Variables (p : nat) (l : lens p m) (l' : lens p n) (H : [disjoint l & l']).
 Lemma lens_comp_left : l = lens_comp (lens_cat H) lens_left.
 Proof.
 apply/val_inj/eq_from_tnth => i /=.
-rewrite !tnth_map tnth_ord_tuple [RHS](tnth_nth (tnth l i)) /=.
-by rewrite nth_cat size_tuple ltn_ord -tnth_nth.
+by rewrite !tnth_map tnth_ord_tuple tnth_lshift.
 Qed.
 
 Lemma lens_comp_right : l' = lens_comp (lens_cat H) lens_right.
 Proof.
 apply/val_inj/eq_from_tnth => i /=.
-rewrite !tnth_map tnth_ord_tuple [RHS](tnth_nth (tnth l' i)) /=.
-by rewrite nth_cat size_tuple ltnNge leq_addr /= addKn -tnth_nth.
+by rewrite !tnth_map tnth_ord_tuple tnth_rshift.
 Qed.
 End lens_left_right.
 
