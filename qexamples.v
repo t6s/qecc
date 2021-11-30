@@ -244,25 +244,36 @@ rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /= !enum_ordinalE /=.
 rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite !(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite !(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
 rewrite -!scalerA !linE.
 rewrite !(scalerA,addrA,scalerDr).
-have Hmin1 : ((1 *- 1) = -1 :> R)%R by rewrite -mulNrn.
-rewrite !Hmin1 !(mulrN,mulNr,mulr1,scaleNr,opprK).
-rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr.
+(* have Hmin1 : ((1 *- 1) = -1 :> R)%R by rewrite -mulNrn. *)
+rewrite !(mulrN,mulNr,mulr1,scaleNr,opprK).
+rewrite -!rmorphM /= -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr.
+rewrite !(addrAC _ _ (_ *: v [tuple 0%:O; 0%:O])).
+rewrite -!scalerDl.
+rewrite -mulr2n -!mulrSr -mulr_natl.
 Abort.
 
 (* Use linearity to extra the global factor first *)
 Lemma cnotH_ok' : tsendo cnotH Co =1 cnotHe Co.
 Proof.
 move=> v /=.
-rewrite /hadamart2 /hadamart.
+rewrite /hadamard2 /hadamard.
 set hadam := (_ *: (_ + _ + _ - _))%R.
 rewrite (_ : tensor_tsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
 rewrite linearZ_LR.
 set hadam' := (_ + _ + _ - _)%R.
 rewrite (_ : Linear _ _ = Linear (tensor_linearr hadam') hadam) //.
 rewrite linearZ_LR scalerA.
+rewrite -!rmorphM.
 rewrite !mul1r -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //=.
 Abort.
 
