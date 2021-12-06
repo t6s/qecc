@@ -47,8 +47,8 @@ Notation "¦ x1 , .. , xn ⟩" :=
 Notation focus := (focus 0%:O).
 Notation tsapp := (tsapp 0%:O).
 Notation tpower := (tpower I).
-Notation tsquare := (tsquare I C).
-Notation endo := (endo I C).
+Notation tsquare n := (tmatrix I C n n).
+Notation endo n := (mor I C n n).
 
 Definition qnot : tsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
@@ -107,7 +107,7 @@ Definition cnotH : tsquare 2 :=
   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
 
 Definition cnotHe :=
-  tsendo hadamard2 \v tsendo cnot \v tsendo hadamard2.
+  tsmor hadamard2 \v tsmor cnot \v tsmor hadamard2.
 
 Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
   match n as n return seq (n.-tuple 'I_2) with
@@ -165,14 +165,14 @@ move -> ; by apply/allP.
 Qed.
 
 (* Checking equality of functions (sum of tensors) *)
-Lemma cnotK : involutive (tsendo cnot Co).
+Lemma cnotK : involutive (tsmor cnot Co).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: time (by rewrite !(linE,sum_tpbasisK,ffunE)).
 (* 2.8s *)
 Qed.
 
-Lemma qnotK : involutive (tsendo qnot Co).
+Lemma qnotK : involutive (tsmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_tpbasisK,ffunE).
@@ -184,7 +184,7 @@ Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
-Lemma hadamardK : involutive (tsendo hadamard Co).
+Lemma hadamardK : involutive (tsmor hadamard Co).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
@@ -226,9 +226,9 @@ elim: n => //= n IH.
 rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
 by rewrite map_comp -IH (iotaDl 1 0 n).
 Qed.
-
+(*
 (* Trying to check the hadamart representation of cnot... *)
-Lemma cnotH_ok : tsendo cnotH Co =1 cnotHe Co.
+Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
 all: rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
@@ -261,9 +261,10 @@ rewrite !(addrAC _ _ (_ *: v [tuple 0%:O; 0%:O])).
 rewrite -!scalerDl.
 rewrite -mulr2n -!mulrSr -mulr_natl.
 Abort.
+*)
 
 (* Use linearity to extra the global factor first *)
-Lemma cnotH_ok' : tsendo cnotH Co =1 cnotHe Co.
+Lemma cnotH_ok' : tsmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v /=.
 rewrite /hadamard2 /hadamard.

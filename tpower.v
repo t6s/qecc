@@ -15,10 +15,13 @@ Variables (I : finType) (dI : I) (R : comRingType).
 Local Notation merge_indices := (merge_indices dI).
 
 Definition tpower n T := {ffun n.-tuple I -> T}.
-Definition endofun m := forall T : lmodType R, tpower m T -> tpower m T.
-Definition endo m :=
-  forall T : lmodType R, {linear tpower m T -> tpower m T}%R.
-Definition tsquare m := tpower m (tpower m R^o).
+Definition morfun m n := forall T : lmodType R, tpower m T -> tpower n T.
+Definition mor m n :=
+  forall T : lmodType R, {linear tpower m T -> tpower n T}%R.
+Definition tmatrix m n := tpower m (tpower n R^o).
+Notation tsquare n := (tmatrix n n).
+Notation endo n := (mor n n).
+Notation endofun n := (morfun n n).
 
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
@@ -28,31 +31,31 @@ which is equivalent to the fact f = nvendo M for a square matrix M : tsquare m.
 Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : tpower m T1)
   : tpower m T2 := [ffun v : m.-tuple I => f (nv v)].
 
-Definition naturality m (f : endo m) :=
+Definition naturality m n (f : mor m n) :=
   forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : tpower m T1),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
 
-Definition eq_endo m (f1 f2 : endo m) := forall T : lmodType R, f1 T =1 f2 T.
-Notation "f1 =e f2" := (eq_endo f1 f2).
+Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
+Notation "f1 =e f2" := (eq_mor f1 f2).
 
-Definition tsendo_fun m (M : tsquare m) : endofun m :=
+Definition tsmor_fun m n (M : tmatrix n m) : morfun m n :=
   fun T v =>
-    [ffun vi : m.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj]%R.
+    [ffun vi : n.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj]%R.
 
-Lemma tsendo_is_linear m M T : linear (@tsendo_fun m M T).
+Lemma tsmor_is_linear m n M T : linear (@tsmor_fun m n M T).
 Proof.
 move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
 rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
-Definition tsendo m (M : tsquare m) : endo m :=
-  fun T => Linear (@tsendo_is_linear m M T).
+Definition tsmor m n (M : tmatrix n m) : mor m n :=
+  fun T => Linear (@tsmor_is_linear m n M T).
 
 Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
   [ffun vj => (vi == vj)%:R]%R.
 
-Definition endots m (f : endo m) : tsquare m :=
+Definition morts m n (f : mor m n) : tmatrix n m :=
   [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
 
 Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
@@ -72,11 +75,11 @@ apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
 
-Lemma naturalityP m (f : endo m) :
-  naturality f <-> exists M, f =e tsendo M.
+Lemma naturalityP m n (f : mor m n) :
+  naturality f <-> exists M, f =e tsmor M.
 Proof.
 split => [Hf | [M] HM].
-- exists (endots f) => T /= v.
+- exists (morts f) => T /= v.
   rewrite [in LHS](decompose_tpower v) linear_sum.
   apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
   apply eq_bigr => /= vj _; rewrite !ffunE.
@@ -159,12 +162,12 @@ Qed.
 Canonical focus n m l tr : endo n :=
   fun T => Linear (@focus_is_linear n m l tr T).
 
-Definition tsapp n m l M := @focus n m l (tsendo M).
+Definition tsapp n m l M := @focus n m l (tsmor M).
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
-exists (endots (focus l (tsendo M))).
+exists (morts (focus l (tsmor M))).
 move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
@@ -189,19 +192,19 @@ Qed.
 Lemma focus_eq (f1 f2 : endo m) : f1 =e f2 -> focus l f1 =e focus l f2.
 Proof. move=> Heq T v /=; by rewrite /focus_fun Heq. Qed.
 
-(* Vertical composition of endomorphisms *)
-Section comp_endo.
-Variables (r q : nat) (tr tr' : endo q).
-Definition comp_endo : endo q := fun A => GRing.comp_linear (tr A) (tr' A).
+(* Vertical composition of morphisms *)
+Section comp_mor.
+Variables (r q s : nat) (tr : mor q s) (tr' : mor r q).
+Definition comp_mor : mor r s := fun A => GRing.comp_linear (tr A) (tr' A).
 
-Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_endo.
+Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_mor.
 Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
+End comp_mor.
+Notation "f \v g" := (comp_mor f g).
 
-Lemma focus_comp (T : lmodType R) (lq : lens r q) (v : tpower r T) :
-  focus lq comp_endo _ v = focus lq tr _ (focus lq tr' _ v).
-Proof. apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
-End comp_endo.
-Notation "f \v g" := (comp_endo f g).
+Lemma focus_comp r q (tr tr' : endo q) (lq : lens r q) :
+  focus lq (tr \v tr') =e focus lq tr \v focus lq tr'.
+Proof. move=> T v; apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
 
 (* Horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) tr tr' :
@@ -223,7 +226,7 @@ Qed.
 
 Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
   tsapp (lens_left m n) M \v tsapp (lens_right m n) M' =e
-  tsendo (tensor_tsquare M M').
+  tsmor (tensor_tsquare M M').
 Proof.
 move=> T v; apply/ffunP => /= vi.
 rewrite /focus_fun !ffunE !sum_ffunE.
@@ -255,7 +258,7 @@ congr (_ *: v _)%R.
 exact: merge_indices_comp.
 Qed.
 End focus.
-Notation "f \v g" := (comp_endo f g).
+Notation "f \v g" := (comp_mor f g).
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
       (M : tsquare m) (M' : tsquare p) :
@@ -263,14 +266,14 @@ Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
 rewrite focusM; last by apply/naturalityP; eexists.
-rewrite (focusM _ _ (tr:=tsendo M')); last by apply/naturalityP; eexists.
-rewrite -focus_comp.
+rewrite (focusM _ _ (tr:=tsmor M')); last by apply/naturalityP; eexists.
+have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.
 End tensor_space.
 
-Notation "f1 =e f2" := (eq_endo f1 f2).
-Notation "f \v g" := (comp_endo f g).
+Notation "f1 =e f2" := (eq_mor f1 f2).
+Notation "f \v g" := (comp_mor f g).
 
 (* Conversion between tpower and vector space *)
 
@@ -361,12 +364,12 @@ End index_of_vec_bij.
 Section vector.
 Variable (I : finType) (R : comRingType).
 Let vsz m := #|I| ^ m.
-Let tsquare := tsquare I R.
+Let tsquare n := tmatrix I R n n.
 
 Definition mxtsquare m (M : 'M[R]_(vsz m,vsz m)) : tsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
-Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := tsendo (mxtsquare M).
+Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := tsmor (mxtsquare M).
 
 Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
