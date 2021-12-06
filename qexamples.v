@@ -10,25 +10,6 @@ Import GRing.Theory.
 (* Reduce a linear form *)
 Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
 
-(* Computable Ordinal constants *)
-Definition succO {n} := lift (@ord0 n).
-Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
-  match m as x return 'I_(x+n) with
-  | 0 => p
-  | m.+1 => cast_ord (esym (addSnnS m n)) (addnO m (succO p))
-  end.
-Definition INO {n} m := addnO m (@ord0 n).
-Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
-
-Notation "[ 'lens' x1 ; .. ; xn ]" :=
-  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
-
-Section ordinal_examples.
-Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
-
-Let lens3_23 : lens 3 2 := [lens 1; 2].
-End ordinal_examples.
-
 Section gate_examples.
 Require Reals.
 From mathcomp Require Import Rstruct complex.
