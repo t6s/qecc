@@ -145,6 +145,9 @@ Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
 
 Lemma uncurry_is_linear : linear uncurry.
 Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
+
+Definition curry_mor := Linear curry_is_linear.
+Definition uncurry_mor := Linear uncurry_is_linear.
 End curry.
 
 Section focus.
