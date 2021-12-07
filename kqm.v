@@ -74,6 +74,12 @@ Qed.
 Definition lens_empty n : lens n 0 :=
   {| lens_t := [tuple of [::]]; lens_uniq := erefl |}.
 
+Lemma extract_lens_empty n T v : extract (T:=T) (lens_empty n) v = [tuple].
+Proof. rewrite /extract; exact/val_inj. Qed.
+
+Ltac eq_lens :=
+  apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
+
 Lemma transpose_cup (M : tsquare 1) :
   focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
   focus [lens 1] (tsmor (transpose M)) \v cup [lens 0; 1].
@@ -82,27 +88,21 @@ move=> T v /=.
 apply/ffunP => vi /=.
 rewrite /cup_fun !focusE /=.
 do! rewrite !(ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
-have -> : [lens 0; 1] = lens_id 2.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
+have -> : [lens 0; 1] = lens_id 2 by eq_lens.
 rewrite !extract_lens_id.
-have -> : lens_left 1 1 = [lens 0].
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
+have -> : lens_left 1 1 = [lens 0] by eq_lens.
 rewrite !extract_merge !extract_lothers_merge.
-have -> : lothers [lens 0] = [lens 1].
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
+have -> : lothers [lens 0] = [lens 1] by eq_lens.
 rewrite !extract_merge.
-have l10 : lothers [lens 1] = [lens 0].
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
+have l10 : lothers [lens 1] = [lens 0] by eq_lens.
 rewrite -l10 !(extract_lothers_merge _ [lens 1]) l10.
 have -> : lothers (lens_id 2) = lens_empty 2.
-  apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE /=.
-  by rewrite !ifF //; apply/negbTE; rewrite negbK -topredE /= enum_ordinalE.
-rewrite [extract (lens_empty _)]/extract /=.
+  by eq_lens; rewrite /= !ifF // -topredE /= enum_ordinalE.
+rewrite !extract_lens_empty.
 have := mem_enum_indices (extract [lens 0] vi).
 have := mem_enum_indices (extract [lens 1] vi).
 rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
-rewrite !(scale0r,scaler0,scale1r,add0r,addr0);
-congr (_ _ (v _)); exact/val_inj.
+by rewrite !(add0r,addr0,scale0r,scaler0,scale1r).
 Qed.
 
 Lemma transpose_focus (M : tsquare 1) :
