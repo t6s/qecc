@@ -101,9 +101,9 @@ rewrite (_ : lothers (lens_id 2) = @mkLens _ _ [tuple of [::]] erefl); last firs
   apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE /=.
   rewrite !ifF//.
     apply/negbTE; rewrite negbK.
-    admit.
+    by rewrite -topredE /= enum_ordinalE.
   apply/negbTE; rewrite negbK.
-  admit.
+  by rewrite -topredE /= enum_ordinalE.
 rewrite /=.
 rewrite (_ : lothers [lens 1] = [lens 0]); last first.
   by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
@@ -146,7 +146,7 @@ have [vi1|vi1] := eqVneq (extract [lens 1] vi) [tuple 1%:O].
 exfalso.
 move: vi0 vi1.
 by case: (extract _ vi) => -[//|] [] [|[|]]// h [|//] H.
-Admitted.
+Qed.
 
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose M) =e
