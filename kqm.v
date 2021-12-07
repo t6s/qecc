@@ -97,3 +97,5 @@ apply/ffunP => vi /=.
 rewrite !ffunE /= sum_ffunE.
 Abort.
 *)
+
+End transpose.
