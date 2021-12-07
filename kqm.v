@@ -71,81 +71,38 @@ rewrite big_mkcondr /=; apply eq_bigr => i _.
 case: ifP; by rewrite (scale1r,scale0r).
 Qed.
 
+Definition lens_empty n : lens n 0 :=
+  {| lens_t := [tuple of [::]]; lens_uniq := erefl |}.
+
 Lemma transpose_cup (M : tsquare 1) :
   focus ([lens 0] : lens 2 1) (tsmor M) \v cup [lens 0; 1] =e
   focus ([lens 1] : lens 2 1) (tsmor (transpose M)) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
-rewrite /cup_fun !focusE /= !ffunE.
-rewrite !sum_ffunE.
-do ! rewrite sum_enum_indices /= addr0.
-rewrite !ffunE.
-rewrite !sum_ffunE.
-do ! rewrite sum_enum_indices /= addr0.
-rewrite !ffunE.
-rewrite (_ : [lens 0; 1] = lens_id 2); last first.
+rewrite /cup_fun !focusE /=.
+do! rewrite !(ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
+have -> : [lens 0; 1] = lens_id 2.
   by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
 rewrite !extract_lens_id.
-rewrite (_ : lens_left 1 1 = [lens 0]); last first.
+have -> : lens_left 1 1 = [lens 0].
   by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
-rewrite !extract_merge.
-rewrite !extract_lothers_merge.
-rewrite [in X in extract X _ == _](_ : [lens 0] = lothers [lens 1]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
-rewrite !(extract_lothers_merge _ [lens 1]).
-rewrite (_ : lothers [lens 0] = [lens 1]); last first.
+rewrite !extract_merge !extract_lothers_merge.
+have -> : lothers [lens 0] = [lens 1].
   by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
 rewrite !extract_merge.
-rewrite (_ : lothers (lens_id 2) = @mkLens _ _ [tuple of [::]] erefl); last first.
+have l10 : lothers [lens 1] = [lens 0].
+  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
+rewrite -l10 !(extract_lothers_merge _ [lens 1]) l10.
+have -> : lothers (lens_id 2) = lens_empty 2.
   apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE /=.
-  rewrite !ifF//.
-    apply/negbTE; rewrite negbK.
-    by rewrite -topredE /= enum_ordinalE.
-  apply/negbTE; rewrite negbK.
-  by rewrite -topredE /= enum_ordinalE.
-rewrite /=.
-rewrite (_ : lothers [lens 1] = [lens 0]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
-rewrite (_ : [lens 0] = lothers [lens 1]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
-rewrite !(extract_lothers_merge _ [lens 1]).
-rewrite {3}/extract /=.
-rewrite {6}/extract /=.
-rewrite {9}/extract /=.
-rewrite {12}/extract /=.
-rewrite (_ : lothers [lens 1] = [lens 0]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
-have [vi0|vi0] := eqVneq (extract [lens 1] vi) [tuple 0%O].
-  rewrite scale1r vi0 /= scale0r /= scaler0 addr0 /=.
-  have [vi1|vi1] := eqVneq (extract [lens 0] vi) [tuple 0%O].
-    rewrite scale1r vi1 /= scale0r scaler0 addr0.
-    by congr (_ _ (v _)); exact/val_inj.
-  rewrite scale0r scaler0 add0r.
-  have [vi2|vi2] := eqVneq (extract [lens 0] vi) [tuple 1%:O].
-    rewrite /= vi2 scale1r.
-    by congr (_ _ (v _)); exact/val_inj.
-  rewrite scale0r scaler0.
-  exfalso.
-  move: vi1 vi2.
-  by case: (extract _ vi) => -[//|] [] [|[|]]// h [|//] H.
-rewrite scale0r scaler0 add0r.
-have [vi1|vi1] := eqVneq (extract [lens 1] vi) [tuple 1%:O].
-  rewrite scale1r vi1 /=.
-  have [vi2|vi2] := eqVneq (extract [lens 0] vi) [tuple 0%:O].
-    rewrite scale1r vi2 /= scale0r scaler0 addr0.
-    by congr (_ _ (v _)); exact/val_inj.
-  rewrite !linE. (* TODO: add scaler0 to linE *)
-  rewrite scaler0 add0r.
-  have [vi3|vi3] := eqVneq (extract [lens 0] vi) [tuple 1%:O].
-    rewrite /= scale1r vi3.
-    by congr (_ _ (v _)); exact/val_inj.
-  exfalso.
-  move: vi2 vi3.
-  by case: (extract _ vi) => -[//|] [] [|[|]]// h [|//] H.
-exfalso.
-move: vi0 vi1.
-by case: (extract _ vi) => -[//|] [] [|[|]]// h [|//] H.
+  by rewrite !ifF //; apply/negbTE; rewrite negbK -topredE /= enum_ordinalE.
+rewrite [extract (lens_empty _)]/extract /=.
+have := mem_enum_indices (extract [lens 0] vi).
+have := mem_enum_indices (extract [lens 1] vi).
+rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
+rewrite !(scale0r,scaler0,scale1r,add0r,addr0);
+congr (_ _ (v _)); exact/val_inj.
 Qed.
 
 Lemma transpose_focus (M : tsquare 1) :
