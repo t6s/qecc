@@ -75,8 +75,8 @@ Definition lens_empty n : lens n 0 :=
   {| lens_t := [tuple of [::]]; lens_uniq := erefl |}.
 
 Lemma transpose_cup (M : tsquare 1) :
-  focus ([lens 0] : lens 2 1) (tsmor M) \v cup [lens 0; 1] =e
-  focus ([lens 1] : lens 2 1) (tsmor (transpose M)) \v cup [lens 0; 1].
+  focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
+  focus [lens 1] (tsmor (transpose M)) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
