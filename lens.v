@@ -4,6 +4,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Reserved Notation "[ 'lens' x1 ; .. ; xn ]"
+  (format "[ 'lens'  x1 ;  .. ;  xn ]").
+
 (* Utility lemmas *)
 
 Lemma addnLR m n p : m + n = p -> n = p - m.
@@ -603,8 +606,7 @@ Definition INO {n} m := addnO m (@ord0 n).
 Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
 
 Notation "[ 'lens' x1 ; .. ; xn ]" :=
-  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl)
-    (format "[ 'lens' x1 ; .. ; xn ]").
+  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
 
 Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
