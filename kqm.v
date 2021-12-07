@@ -102,6 +102,8 @@ apply eq_big => vj.
   - apply/eqP/eq_from_tnth => j.
     by rewrite !ord1 (tnth_nth (tnth vj ord0)) /= (tnth_nth (tnth vj ord0)).
 move=> _.
+rewrite focusE /=.
+rewrite !ffunE.
 rewrite sum_enum_indices /=.
 have {1 3}-> : [lens 1] = lens_comp [lens 1;2] [lens 0].
   move=> n. apply/val_inj/eq_from_tnth => i /=.

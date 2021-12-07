@@ -162,8 +162,12 @@ have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
 
-Canonical focus n m l tr : endo n :=
-  fun T => Linear (@focus_is_linear n m l tr T).
+Definition focus n m l tr : endo n :=
+  locked (fun T => Linear (@focus_is_linear n m l tr T)).
+
+Lemma focusE n m (l : lens n m) (tr : endo m) :
+  focus l tr = fun T => Linear (@focus_is_linear n m l tr T).
+Proof. by rewrite /focus; unlock. Qed.
 
 Definition tsapp n m l M := @focus n m l (tsmor M).
 
@@ -171,7 +175,7 @@ Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
 exists (morts (focus l (tsmor M))).
-move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
+move=> T /= v; apply/ffunP => /= vi; rewrite !focusE !ffunE NM !ffunE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
@@ -183,7 +187,7 @@ Variables (n m p : nat) (l : lens n m).
 (* Identity *)
 Lemma focusI tr : naturality tr -> focus (lens_id n) tr =e tr.
 Proof.
-rewrite /focus => /naturalityP [f Hf] /= T v.
+rewrite focusE => /naturalityP [f Hf] /= T v.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf {tr} !ffunE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
@@ -193,7 +197,7 @@ Qed.
 
 (* Equality *)
 Lemma focus_eq (f1 f2 : endo m) : f1 =e f2 -> focus l f1 =e focus l f2.
-Proof. move=> Heq T v /=; by rewrite /focus_fun Heq. Qed.
+Proof. move=> Heq T v /=; by rewrite 2!focusE /= /focus_fun Heq. Qed.
 
 (* Vertical composition of morphisms *)
 Section comp_mor.
@@ -207,14 +211,14 @@ Notation "f \v g" := (comp_mor f g).
 
 Lemma focus_comp r q (tr tr' : endo q) (lq : lens r q) :
   focus lq (tr \v tr') =e focus lq tr \v focus lq tr'.
-Proof. move=> T v; apply/ffunP => /= vi; by rewrite /focus_fun /= uncurryK. Qed.
+Proof. move=> T v; apply/ffunP => /= vi; by rewrite !focusE /focus_fun /= uncurryK. Qed.
 
 (* Horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) tr tr' :
   [disjoint l & l'] -> naturality tr -> naturality tr' ->
   focus l tr \v focus l' tr' =e focus l' tr' \v focus l tr.
 Proof.
-rewrite /focus => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'] T v /=.
+rewrite !focusE => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'] T v /=.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !sum_ffunE.
 under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
@@ -232,8 +236,8 @@ Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
   tsmor (tensor_tsquare M M').
 Proof.
 move=> T v; apply/ffunP => /= vi.
-rewrite /focus_fun !ffunE !sum_ffunE.
-under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
+rewrite /tsapp focusE !ffunE !sum_ffunE.
+under eq_bigr do rewrite !focusE !ffunE !sum_ffunE scaler_sumr.
 rewrite pair_bigA /=.
 rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
          (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
@@ -252,7 +256,7 @@ Lemma focusM (l' : lens m p) tr : naturality tr ->
   focus (lens_comp l l') tr =e focus l (focus l' tr).
 Proof.
 case/naturalityP => f Hf T v.
-rewrite /focus /focus_fun /= !{}Hf {tr}.
+rewrite !focusE /focus_fun /= !{}Hf {tr}.
 apply/ffunP => /= vi.
 rewrite !ffunE (extract_lothers_comp dI) -!extract_comp.
 rewrite -[in RHS]lothers_in_l_comp -(lothers_notin_l_comp l l') !sum_ffunE.
@@ -269,7 +273,9 @@ Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
 rewrite focusM; last by apply/naturalityP; eexists.
-rewrite (focusM _ _ (tr:=tsmor M')); last by apply/naturalityP; eexists.
+(* NB: turn tsapp into a notation? *)
+rewrite /tsapp.
+rewrite -> focusM; last by apply/naturalityP; eexists.
 have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.

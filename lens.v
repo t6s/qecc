@@ -182,7 +182,8 @@ Variables (n m p : nat) (l1 : lens n m) (l2 : lens m p).
 
 Definition lens_comp : lens n p.
 exists (extract l2 l1).
-by (rewrite map_inj_uniq ?lens_uniq // => i j /tnth_inj-> //; exact: lens_uniq).
+abstract (by (rewrite map_inj_uniq ?lens_uniq // => i j /tnth_inj-> //;
+          exact: lens_uniq)).
 Defined.
 
 Lemma tnth_comp i : tnth lens_comp i = tnth l1 (tnth l2 i).
@@ -602,7 +603,8 @@ Definition INO {n} m := addnO m (@ord0 n).
 Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
 
 Notation "[ 'lens' x1 ; .. ; xn ]" :=
-  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
+  (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl)
+    (format "[ 'lens' x1 ; .. ; xn ]").
 
 Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
