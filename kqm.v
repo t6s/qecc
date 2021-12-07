@@ -11,9 +11,12 @@ Import GRing.Theory.
 
 Section transpose.
 
-Variables (R : comRingType) (L : lmodType R) (I : finType) (dI : I).
+Variables (R : comRingType) (L : lmodType R).
+Let I := [finType of 'I_2].
+Let dI : I := ord0.
 
 Notation tsquare m := (tmatrix I R m m).
+Notation endo n := (mor I R n n).
 
 Definition transpose m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
@@ -27,26 +30,50 @@ Definition curryn0 n (L : lmodType R) (v : tpower I n L)
 Definition uncurry0 (L : lmodType R) (v : tpower I 0 L) : L :=
   v [tuple of nil].
 
-Definition cap n (l : lens n 2) : morfun I R n (n-2) :=
+Lemma curry0_is_linear T : linear (@curry0 T).
+Proof. move=> x y z. apply/ffunP => vi. by rewrite !ffunE. Qed.
+Lemma uncurry0_is_linear T : linear (@uncurry0 T).
+Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
+
+Definition cap_fun n (l : lens n 2) : morfun I R n (n-2) :=
   fun T : lmodType R =>
     uncurry0 (L:=_) \o
     tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
     curry l (T:=T).
 
-Definition cup n (l : lens n 2) : morfun I R (n-2) n :=
+Definition cup_fun n (l : lens n 2) : morfun I R (n-2) n :=
   fun T : lmodType R =>
     uncurry l \o
     tsmor (curryn0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
     curry0 (L:=_).
 
-Lemma transpose_focus (M : tsquare 1) T :
-  tsmor (transpose M) T =1
-  cap [lens 1; 2] (T:=_) \o
-  focus [lens 1] (tsmor M) _ \o
-  cup [lens 0; 1] (T:=_).
+Lemma cap_is_linear n l T : linear (@cap_fun n l T).
 Proof.
-move=> v /=.
+move=> x y z.
+by rewrite /cap_fun /= curry_is_linear tsmor_is_linear uncurry0_is_linear.
+Qed.
+
+Lemma cup_is_linear n l T : linear (@cup_fun n l T).
+Proof.
+move=> x y z.
+by rewrite /cup_fun /= curry0_is_linear tsmor_is_linear uncurry_is_linear.
+Qed.
+
+Definition cap n l : mor I R n (n-2) :=
+  fun T : lmodType R => Linear (@cap_is_linear n l T).
+Definition cup n l : mor I R (n-2) n :=
+  fun T : lmodType R => Linear (@cup_is_linear n l T).
+
+Lemma transpose_focus (M : tsquare 1) :
+  tsmor (transpose M) =e
+  cap [lens 1; 2] \v focus [lens 1] (tsmor M) \v cup [lens 0; 1].
+Proof.
+move=> T v /=.
 apply/ffunP => vi /=.
+rewrite /cap_fun /cup_fun !ffunE /uncurry0 /curry0 /= !ffunE sum_ffunE.
+under eq_bigr do rewrite ffunE.
+symmetry.
+under eq_bigr do rewrite !ffunE.
 Abort.
 
 Definition id_tsquare' n : tpower I n (tpower I (n + n - n) R^o).
