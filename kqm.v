@@ -1,7 +1,7 @@
 (* Kindergarten quantum mechanics *)
 
 From mathcomp Require Import all_ssreflect all_algebra.
-Require Import lens tpower.
+Require Import lens tpower qexamples.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -11,7 +11,7 @@ Import GRing.Theory.
 
 Section transpose.
 
-Variables (R : comRingType) (L : lmodType R).
+Variables (R : comRingType).
 Let I := [finType of 'I_2].
 Let dI : I := ord0.
 
@@ -64,6 +64,13 @@ Definition cap n l : mor I R n (n-2) :=
 Definition cup n l : mor I R (n-2) n :=
   fun T : lmodType R => Linear (@cup_is_linear n l T).
 
+Lemma sum_scaler_cond A (L : lmodType R)(r : seq A)(P Q : pred A)(F : A -> L) :
+  (\sum_(i <- r | P i) (Q i)%:R *: F i = \sum_(i <- r | P i && Q i) F i)%R.
+Proof.
+rewrite big_mkcondr /=; apply eq_bigr => i _.
+case: ifP; by rewrite (scale1r,scale0r).
+Qed.
+
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose M) =e
   cap [lens 1; 2] \v focus [lens 1] (tsmor M) \v cup [lens 0; 1].
@@ -74,6 +81,32 @@ rewrite /cap_fun /cup_fun !ffunE /uncurry0 /curry0 /= !ffunE sum_ffunE.
 under eq_bigr do rewrite ffunE.
 symmetry.
 under eq_bigr do rewrite !ffunE.
+rewrite sum_scaler_cond /=.
+rewrite
+  (reindex_onto (fun v => [tuple tnth v ord0; tnth v ord0]) (fun v : 2.-tuple _ => [tuple tnth v ord0])) /=;
+  last first.
+  move=> vj.
+  rewrite eq_tuple /= => /eqP.
+  rewrite /others /lens_left !enum_ordinalE /= -!topredE /= !enum_ordinalE /=.
+  case => H1.
+  apply eq_from_tnth => -[] [|[]] // Hi; rewrite (tnth_nth (tnth vj ord0)) /=;
+    rewrite (tnth_nth (tnth vj ord0)) /=.
+  - rewrite /=. congr tnth. exact: val_inj.
+  - have {1}-> : ord0 = lshift 1 ord0 :> 'I_(1+1) by apply: val_inj.
+    rewrite H1; congr tnth; exact: val_inj.
+apply eq_big => vj.
+  apply/andP; split.
+  - rewrite eq_tuple; apply/eqP.
+    rewrite /= /others /lens_left !enum_ordinalE /=.
+    by rewrite -!topredE /= !enum_ordinalE.
+  - apply/eqP/eq_from_tnth => j.
+    by rewrite !ord1 (tnth_nth (tnth vj ord0)) /= (tnth_nth (tnth vj ord0)).
+move=> _.
+rewrite sum_enum_indices /=.
+have {1 3}-> : [lens 1] = lens_comp [lens 1;2] [lens 0].
+  move=> n. apply/val_inj/eq_from_tnth => i /=.
+  by rewrite ord1 (tnth_nth ord0) ![RHS](tnth_nth ord0).
+rewrite extract_comp extract_merge addr0.
 Abort.
 
 Definition id_tsquare' n : tpower I n (tpower I (n + n - n) R^o).

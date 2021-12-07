@@ -128,7 +128,7 @@ apply eq_uniq.
 move=> t. by rewrite mem_enum_indices mem_enum.
 Qed.
 
-Lemma sum_enum_indices (CR : comRingType) n (F : n.-tuple 'I_2 -> CR^o) :
+Lemma sum_enum_indices (CR : comRingType) (L : lmodType CR) n (F : n.-tuple 'I_2 -> L) :
   \sum_vi F vi = foldr +%R 0 (map F (enum_indices n)).
 Proof.
 rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
