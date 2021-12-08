@@ -8,6 +8,7 @@
 lens.v
 tpower.v
 qexamples.v
+kqm.v
 fdhilb.v
 
 -R . qecc

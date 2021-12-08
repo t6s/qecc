@@ -1,4 +1,6 @@
+Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra.
+From mathcomp Require Import Rstruct complex.
 Require Import lens tpower.
 
 Set Implicit Arguments.
@@ -11,8 +13,6 @@ Import GRing.Theory.
 Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
 
 Section gate_examples.
-Require Reals.
-From mathcomp Require Import Rstruct complex.
 Import Num.Theory.
 Local Open Scope ring_scope.
 Local Open Scope complex_scope.
@@ -26,7 +26,7 @@ Notation "¦ x1 , .. , xn ⟩" :=
   (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 
 Notation focus := (focus 0%:O).
-Notation tsapp := (tsapp 0%:O).
+Notation tsapp l M := (focus l (tsmor M)).
 Notation tpower := (tpower I).
 Notation tsquare n := (tmatrix I C n n).
 Notation endo n := (mor I C n n).
@@ -260,6 +260,7 @@ rewrite !mul1r -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //=.
 Abort.
 
 (* Checking equality of matrices *)
+(*
 Lemma cnotK' : mul_tsquare cnot cnot = id_tsquare _ _ _.
 Proof.
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
@@ -267,4 +268,5 @@ all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: time (apply/eqP; do! rewrite !(linE,ffunE,sum_enum_indices) => //=).
 (* 18s ! *)
 Qed.
+*)
 End gate_examples.

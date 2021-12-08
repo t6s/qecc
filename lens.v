@@ -179,6 +179,15 @@ Lemma index_lens_id i : index i lens_id = i.
 Proof. by rewrite {1}(_ : i = tnth lens_id i) (tnth_ord_tuple,tnth_lensK). Qed.
 End lens_id.
 
+(* Empty lens *)
+Section lens_empty.
+Variable n : nat.
+Definition lens_empty : lens n 0 := {|lens_t := [tuple]; lens_uniq := erefl|}.
+
+Lemma extract_lens_empty T v : extract (T:=T) lens_empty v = [tuple].
+Proof. rewrite /extract; exact/val_inj. Qed.
+End lens_empty.
+
 (* Composition of lenses *)
 Section lens_comp.
 Variables (n m p : nat) (l1 : lens n m) (l2 : lens m p).

@@ -18,51 +18,41 @@ Let dI : I := ord0.
 Notation tsquare m := (tmatrix I R m m).
 Notation endo n := (mor I R n n).
 
-Definition transpose m (M : tsquare m) : tsquare m :=
-  [ffun vi => [ffun vj => M vj vi]].
-
 Notation focus := (focus dI).
 Notation curry := (curry dI).
 
-Definition curry0 (L : lmodType R) (v : L) : tpower I 0 L := [ffun _ => v].
-Definition curryn0 n (L : lmodType R) (v : tpower I n L)
-  : tpower I n (tpower I 0 L) := [ffun vi => [ffun _ => v vi]].
-Definition uncurry0 (L : lmodType R) (v : tpower I 0 L) : L :=
-  v [tuple of nil].
+Section cap_cup.
+Variables (n : nat) (l : lens n 2).
 
-Lemma curry0_is_linear T : linear (@curry0 T).
-Proof. move=> x y z. apply/ffunP => vi. by rewrite !ffunE. Qed.
-Lemma uncurry0_is_linear T : linear (@uncurry0 T).
-Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
-
-Definition cap_fun n (l : lens n 2) : morfun I R n (n-2) :=
+Definition cap_fun : morfun I R n (n-2) :=
   fun T : lmodType R =>
-    uncurry0 (L:=_) \o
-    tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
+    uncurry0 (T:=_) \o
+    tsmor (curry0 _ (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
     curry l (T:=T).
 
-Definition cup_fun n (l : lens n 2) : morfun I R (n-2) n :=
+Definition cup_fun : morfun I R (n-2) n :=
   fun T : lmodType R =>
     uncurry l \o
     tsmor (curryn0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
-    curry0 (L:=_).
+    curry0 _ (T:=_).
 
-Lemma cap_is_linear n l T : linear (@cap_fun n l T).
+Lemma cap_is_linear T : linear (@cap_fun T).
 Proof.
 move=> x y z.
 by rewrite /cap_fun /= curry_is_linear tsmor_is_linear uncurry0_is_linear.
 Qed.
 
-Lemma cup_is_linear n l T : linear (@cup_fun n l T).
+Lemma cup_is_linear T : linear (@cup_fun T).
 Proof.
 move=> x y z.
 by rewrite /cup_fun /= curry0_is_linear tsmor_is_linear uncurry_is_linear.
 Qed.
 
-Definition cap n l : mor I R n (n-2) :=
-  fun T : lmodType R => Linear (@cap_is_linear n l T).
-Definition cup n l : mor I R (n-2) n :=
-  fun T : lmodType R => Linear (@cup_is_linear n l T).
+Definition cap : mor I R n (n-2) :=
+  fun T : lmodType R => Linear (@cap_is_linear T).
+Definition cup : mor I R (n-2) n :=
+  fun T : lmodType R => Linear (@cup_is_linear T).
+End cap_cup.
 
 Lemma sum_scaler_cond A (L : lmodType R)(r : seq A)(P Q : pred A)(F : A -> L) :
   (\sum_(i <- r | P i) (Q i)%:R *: F i = \sum_(i <- r | P i && Q i) F i)%R.
@@ -71,18 +61,12 @@ rewrite big_mkcondr /=; apply eq_bigr => i _.
 case: ifP; by rewrite (scale1r,scale0r).
 Qed.
 
-Definition lens_empty n : lens n 0 :=
-  {| lens_t := [tuple of [::]]; lens_uniq := erefl |}.
-
-Lemma extract_lens_empty n T v : extract (T:=T) (lens_empty n) v = [tuple].
-Proof. rewrite /extract; exact/val_inj. Qed.
-
 Ltac eq_lens :=
   apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
 
 Lemma transpose_cup (M : tsquare 1) :
   focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
-  focus [lens 1] (tsmor (transpose M)) \v cup [lens 0; 1].
+  focus [lens 1] (tsmor (transpose_tsquare M)) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
@@ -106,7 +90,7 @@ by rewrite !(add0r,addr0,scale0r,scaler0,scale1r).
 Qed.
 
 Lemma transpose_focus (M : tsquare 1) :
-  tsmor (transpose M) =e
+  tsmor (transpose_tsquare M) =e
   cap [lens 1; 2] \v focus [lens 1] (tsmor M) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.

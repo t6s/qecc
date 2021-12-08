@@ -99,6 +99,9 @@ Definition mul_tsquare m (M1 M2 : tsquare m) : tsquare m :=
 
 Definition id_tsquare m : tsquare m := [ffun vi => tpbasis vi].
 
+Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
+  [ffun vi => [ffun vj => M vj vi]].
+
 (* Tensor product of tsquare matrices *)
 Section tensor_tsquare.
 Variables m n : nat.
@@ -146,8 +149,18 @@ Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
 Lemma uncurry_is_linear : linear uncurry.
 Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
 
-Definition curry_mor := Linear curry_is_linear.
-Definition uncurry_mor := Linear uncurry_is_linear.
+(* Special cases of curry/uncurry *)
+Definition curry0 (v : T) : tpower 0 T := [ffun _ => v].
+Definition curryn0 (v : tpower n T) : tpower n (tpower 0 T) :=
+  [ffun vi => [ffun _ => v vi]].
+Definition uncurry0 (v : tpower 0 T) : T := v [tuple].
+
+Lemma curry0_is_linear : linear curry0.
+Proof. move=> x y z. apply/ffunP => vi. by rewrite !ffunE. Qed.
+Lemma curryn0_is_linear : linear curryn0.
+Proof. move=> x y z. apply/ffunP=> vi. apply/ffunP=> vj. by rewrite !ffunE. Qed.
+Lemma uncurry0_is_linear : linear uncurry0.
+Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
 End curry.
 
 Section focus.
@@ -168,8 +181,6 @@ Definition focus n m l tr : endo n :=
 Lemma focusE n m (l : lens n m) (tr : endo m) :
   focus l tr = fun T => Linear (@focus_is_linear n m l tr T).
 Proof. by rewrite /focus; unlock. Qed.
-
-Definition tsapp n m l M := @focus n m l (tsmor M).
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
@@ -232,11 +243,11 @@ congr (f _ vk * f' _ vj *: v _)%R.
 Qed.
 
 Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
-  tsapp (lens_left m n) M \v tsapp (lens_right m n) M' =e
+  focus (lens_left m n) (tsmor M) \v focus (lens_right m n) (tsmor M') =e
   tsmor (tensor_tsquare M M').
 Proof.
 move=> T v; apply/ffunP => /= vi.
-rewrite /tsapp focusE !ffunE !sum_ffunE.
+rewrite focusE !ffunE !sum_ffunE.
 under eq_bigr do rewrite !focusE !ffunE !sum_ffunE scaler_sumr.
 rewrite pair_bigA /=.
 rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
@@ -266,6 +277,7 @@ exact: merge_indices_comp.
 Qed.
 End focus.
 Notation "f \v g" := (comp_mor f g).
+Notation tsapp l M := (focus l (tsmor M)).
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
       (M : tsquare m) (M' : tsquare p) :
@@ -273,8 +285,6 @@ Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
 rewrite focusM; last by apply/naturalityP; eexists.
-(* NB: turn tsapp into a notation? *)
-rewrite /tsapp.
 rewrite -> focusM; last by apply/naturalityP; eexists.
 have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
@@ -283,6 +293,7 @@ End tensor_space.
 
 Notation "f1 =e f2" := (eq_mor f1 f2).
 Notation "f \v g" := (comp_mor f g).
+Notation tsapp l M := (focus l (tsmor M)).
 
 (* Conversion between tpower and vector space *)
 
