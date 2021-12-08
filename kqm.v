@@ -9,12 +9,39 @@ Unset Printing Implicit Defensive.
 
 Import GRing.Theory.
 
+Section move_to_somewhere.
+Variables (I : finType) (dI : I) (R : comRingType).
+
+Definition idmorfun n : morfun I R n n := fun _ x => x.
+Lemma idmor_linear n T : linear (@idmorfun n T).
+Proof. by []. Qed.
+Definition idmor n : mor I R n n := fun T => Linear (@idmor_linear n T).
+
+Lemma congr_comp_mor r q s (phi phi' : mor I R q s) (psi psi' : mor I R r q) :
+  phi =e phi' -> psi =e psi' -> phi \v psi =e phi' \v psi'.
+Proof.
+move=> Hphi Hpsi T x /=.
+move: (Hpsi T x) ->.
+by move: (Hphi T (psi' T x)).
+Qed.
+
+Lemma uncurry_inj (T : lmodType R) n m (l : lens n m)
+      (x y : tpower I m (tpower I (n - m) T)) :
+  uncurry l x = uncurry l y -> x = y.
+Proof. by move/(congr1 (curry dI l)); rewrite !uncurryK. Qed.
+
+Lemma curry_inj (T : lmodType R) n m (l : lens n m) (x y : tpower I n T) :
+  curry dI l x = curry dI l y -> x = y.
+Proof. by move/(congr1 (uncurry l)); rewrite !curryK. Qed.
+End move_to_somewhere.
+
 Section transpose.
 
 Variables (R : comRingType).
 Let I := [finType of 'I_2].
 Let dI : I := ord0.
 
+Notation idmor n := (idmor I n).
 Notation tsquare m := (tmatrix I R m m).
 Notation endo n := (mor I R n n).
 
@@ -23,18 +50,47 @@ Notation curry := (curry dI).
 
 Section cap_cup.
 Variables (n : nat) (l : lens n 2).
+Definition curry0 (L : lmodType R) (v : L) : tpower I 0 L := [ffun _ => v].
+Definition curryn0 n (L : lmodType R) (v : tpower I n L)
+  : tpower I n (tpower I 0 L) := [ffun vi => [ffun _ => v vi]].
+Definition uncurry0 (L : lmodType R) (v : tpower I 0 L) : L :=
+  v [tuple of nil].
+
+Section renaming.
+Local Notation pv_of_coef := curry0.
+Local Notation coef_of_pv := uncurry0.
+Local Notation lift_pv_of_coef := curryn0.
+Lemma lift_pv_of_coefE  L :
+  @lift_pv_of_coef n L = @map_tpower I n _ _ (@pv_of_coef L).
+Proof.
+rewrite /lift_pv_of_coef /map_tpower.
+rewrite boolp.funeqE=> v.
+apply ffunP=> i.
+by rewrite !ffunE.
+Qed.
+End renaming.
+
+Lemma curry0_is_linear T : linear (@curry0 T).
+Proof. move=> x y z. apply/ffunP => vi. by rewrite !ffunE. Qed.
+Lemma uncurry0_is_linear T : linear (@uncurry0 T).
+Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
 
 Definition cap_fun : morfun I R n (n-2) :=
   fun T : lmodType R =>
-    uncurry0 (T:=_) \o
-    tsmor (curry0 _ (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
+    uncurry0 (L:=_) \o
+    tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
     curry l (T:=T).
 
 Definition cup_fun : morfun I R (n-2) n :=
   fun T : lmodType R =>
     uncurry l \o
     tsmor (curryn0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
-    curry0 _ (T:=_).
+    curry0 (L:=_).
+
+Definition cap_fun2 (M : tsquare 1) T :=
+ tsmor (curry0 (uncurry (lens_left 1 1) M)) T.
+
+Definition inner_prod T := uncurry0 (L:= _) \o cap_fun2 (id_tsquare _ _ _) T.
 
 Lemma cap_is_linear T : linear (@cap_fun T).
 Proof.
@@ -88,6 +144,28 @@ have := mem_enum_indices (extract [lens 1] vi).
 rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
 by rewrite !(add0r,addr0,scale0r,scaler0,scale1r).
 Qed.
+
+Lemma straighten : cap [lens 1; 2] \v cup [lens 0; 1] =e idmor 1.
+Proof.
+move=> T /= v.
+rewrite /cap_fun /cup_fun.
+(*
+Check (uncurry0 (L:=ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) \o
+       tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1)))
+         (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T)).
+
+rewrite (lock tsmor).
+rewrite /curry0 /uncurry0 /=.
+rewrite -lock.
+Check tsmor [ffun=> uncurry (lens_left 1 1) (id_tsquare I R 1)] (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) = uncurry_mor _ _ (lens_left 1 1).
+
+rewrite /uncurry0 /curry /uncurry /curry0 /idmorfun /=.
+rewrite /tsmor_fun /=.
+apply ffunP=> /= vi.
+rewrite 2!ffunE.
+rewrite sum_enum_indices /= !ffunE.
+*)
+Abort.
 
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose_tsquare M) =e
