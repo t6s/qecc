@@ -28,11 +28,11 @@ Qed.
 Lemma uncurry_inj (T : lmodType R) n m (l : lens n m)
       (x y : tpower I m (tpower I (n - m) T)) :
   uncurry l x = uncurry l y -> x = y.
-Proof. by move/(congr1 (curry dI l)); rewrite !uncurryK. Qed.
+Proof. by apply/can_inj/uncurryK. Qed.
 
 Lemma curry_inj (T : lmodType R) n m (l : lens n m) (x y : tpower I n T) :
   curry dI l x = curry dI l y -> x = y.
-Proof. by move/(congr1 (uncurry l)); rewrite !curryK. Qed.
+Proof. by apply/can_inj/curryK. Qed.
 End move_to_somewhere.
 
 Section transpose.
