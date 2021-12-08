@@ -50,49 +50,32 @@ Notation curry := (curry dI).
 
 Section cap_cup.
 Variables (n : nat) (l : lens n 2).
-Definition curry0 (L : lmodType R) (v : L) : tpower I 0 L := [ffun _ => v].
-Definition curryn0 n (L : lmodType R) (v : tpower I n L)
-  : tpower I n (tpower I 0 L) := [ffun vi => [ffun _ => v vi]].
-Definition uncurry0 (L : lmodType R) (v : tpower I 0 L) : L :=
-  v [tuple of nil].
 
-Section renaming.
-Local Notation pv_of_coef := curry0.
-Local Notation coef_of_pv := uncurry0.
-Local Notation lift_pv_of_coef := curryn0.
-Lemma lift_pv_of_coefE  L :
-  @lift_pv_of_coef n L = @map_tpower I n _ _ (@pv_of_coef L).
-Proof.
-rewrite /lift_pv_of_coef /map_tpower.
-rewrite boolp.funeqE=> v.
-apply ffunP=> i.
-by rewrite !ffunE.
-Qed.
-End renaming.
-
-Lemma curry0_is_linear T : linear (@curry0 T).
-Proof. move=> x y z. apply/ffunP => vi. by rewrite !ffunE. Qed.
-Lemma uncurry0_is_linear T : linear (@uncurry0 T).
-Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
-
-Definition cap_fun : morfun I R n (n-2) :=
-  fun T : lmodType R =>
-    uncurry0 (L:=_) \o
-    tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
-    curry l (T:=T).
-
-Definition cup_fun : morfun I R (n-2) n :=
-  fun T : lmodType R =>
-    uncurry l \o
-    tsmor (curryn0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
-    curry0 (L:=_).
-
+(*
 Definition M_inner_prod (M : tsquare 1) T :=
   tsmor (curry0 (uncurry (lens_left 1 1) M)) T.
 Definition M_inner_coprod (M : tsquare 1) T :=
   tsmor (curryn0 (uncurry (lens_left 1 1) M)) T.
 Definition inner_prod T := uncurry0 (L:= _) \o M_inner_prod (id_tsquare _ _ _) T.
 Definition inner_coprod T := M_inner_coprod (id_tsquare _ _ _) T \o curry0 (L:= _).
+*)
+
+Definition cap_fun : morfun I R n (n-2) :=
+  fun T : lmodType R =>
+    inner_prod T \o curry l (T:=T).
+(*
+    uncurry0 (L:=_) \o
+    tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
+    curry l (T:=T).
+*)
+
+Definition cup_fun : morfun I R (n-2) n :=
+  fun T : lmodType R =>
+    uncurry l \o inner_coprod T.
+(*
+    tsmor (curryn0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
+    curry0 (L:=_).
+*)
 
 Lemma cap_is_linear T : linear (@cap_fun T).
 Proof.

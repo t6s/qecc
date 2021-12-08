@@ -151,9 +151,13 @@ Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
 
 (* Special cases of curry/uncurry *)
 Definition curry0 (v : T) : tpower 0 T := [ffun _ => v].
-Definition curryn0 (v : tpower n T) : tpower n (tpower 0 T) :=
-  [ffun vi => [ffun _ => v vi]].
+Definition curryn0 : tpower n T -> tpower n (tpower 0 T) :=
+  map_tpower curry0.
 Definition uncurry0 (v : tpower 0 T) : T := v [tuple].
+
+Lemma curryn0E :
+  curryn0 = fun v => [ffun vi => [ffun _ => v vi]].
+Proof. reflexivity. Qed.
 
 Lemma curry0_is_linear : linear curry0.
 Proof. move=> x y z. apply/ffunP => vi. by rewrite !ffunE. Qed.
@@ -162,6 +166,16 @@ Proof. move=> x y z. apply/ffunP=> vi. apply/ffunP=> vj. by rewrite !ffunE. Qed.
 Lemma uncurry0_is_linear : linear uncurry0.
 Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
 End curry.
+
+Section inner_prod_coprod.
+Let n := 1. (* TODO: Variable n : nat *)
+Definition M_inner_prod (M : tsquare n) T :=
+  tsmor (curry0 (uncurry (lens_left n n) M)) T.
+Definition M_inner_coprod (M : tsquare n) T :=
+  tsmor (curryn0 (uncurry (lens_left n n) M)) T.
+Definition inner_prod T := M_inner_prod (id_tsquare _) T.
+Definition inner_coprod T := M_inner_coprod (id_tsquare _) T.
+End inner_prod_coprod.
 
 Section focus.
 Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
