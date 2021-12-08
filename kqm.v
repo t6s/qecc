@@ -87,10 +87,12 @@ Definition cup_fun : morfun I R (n-2) n :=
     tsmor (curryn0 (uncurry (lens_left 1 1) (id_tsquare I R 1))) _ \o
     curry0 (L:=_).
 
-Definition cap_fun2 (M : tsquare 1) T :=
- tsmor (curry0 (uncurry (lens_left 1 1) M)) T.
-
-Definition inner_prod T := uncurry0 (L:= _) \o cap_fun2 (id_tsquare _ _ _) T.
+Definition M_inner_prod (M : tsquare 1) T :=
+  tsmor (curry0 (uncurry (lens_left 1 1) M)) T.
+Definition M_inner_coprod (M : tsquare 1) T :=
+  tsmor (curryn0 (uncurry (lens_left 1 1) M)) T.
+Definition inner_prod T := uncurry0 (L:= _) \o M_inner_prod (id_tsquare _ _ _) T.
+Definition inner_coprod T := M_inner_coprod (id_tsquare _ _ _) T \o curry0 (L:= _).
 
 Lemma cap_is_linear T : linear (@cap_fun T).
 Proof.
