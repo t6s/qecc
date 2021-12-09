@@ -23,11 +23,8 @@ Notation tsquare n := (tmatrix n n).
 Notation endo n := (mor n n).
 Notation endofun n := (morfun n n).
 
-Lemma tpcast_proof n m (vi : m.-tuple I) : n = m -> size vi == n.
-Proof. by rewrite size_tuple => ->. Qed.
-
 Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
-  [ffun vi => v (Tuple (tpcast_proof vi H))].
+  [ffun vi => v (cast_tuple vi (esym H))].
 
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),

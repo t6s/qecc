@@ -18,6 +18,11 @@ Proof. by apply val_inj. Qed.
 Section tnth.
 Variables (T : Type) (m n : nat) (vl : m.-tuple T) (vr : n.-tuple T).
 
+Lemma cast_tuple_proof : m = n -> size vl == n.
+Proof. by rewrite size_tuple => ->. Qed.
+
+Definition cast_tuple (H : m = n) : n.-tuple T := Tuple (cast_tuple_proof H).
+
 Lemma nth_tnth i x0 (H : i < n) : nth x0 vr i = tnth vr (Ordinal H).
 Proof. by rewrite (tnth_nth x0). Qed.
 
@@ -170,6 +175,11 @@ End lens.
 Definition cast_lens n n' m (H : n = n') (l : lens n m) : lens n' m.
 exists (map_tuple (cast_ord H) l).  
 abstract (by rewrite map_inj_uniq ?lens_uniq // => i j /cast_ord_inj).
+Defined.
+
+Definition cast_lens_len n m m' (H : m = m') (l : lens n m) : lens n m'.
+exists (cast_tuple l H).
+apply lens_uniq.
 Defined.
 
 (* Identity *)
