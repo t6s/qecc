@@ -53,11 +53,11 @@ Variables (n : nat) (l : lens n 2).
 
 Definition cap_fun : morfun I R n (n-2) :=
   fun T : lmodType R =>
-    uncurry0 (T:=_) \o inner_prod I _ \o curry l (T:=T).
+    uncurry0 (T:=_) \o inner_prod I 1 _ \o curry l (T:=T).
 
 Definition cup_fun : morfun I R (n-2) n :=
   fun T : lmodType R =>
-    uncurry l \o inner_coprod I _ \o curry0 I (T:=_).
+    uncurry l \o inner_coprod I 1 _ \o curry0 I (T:=_).
 
 Lemma cap_is_linear T : linear (@cap_fun T).
 Proof.

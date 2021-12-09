@@ -174,13 +174,14 @@ Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
 End curry.
 
 Section inner_prod_coprod.
-Let n := 1. (* TODO: Variable n : nat *)
-Definition M_inner_prod (M : tsquare n) T :=
-  tsmor (curry0 (uncurry (lens_left n n) M)) T.
-Definition M_inner_coprod (M : tsquare n) T :=
-  tsmor (curryn0 (uncurry (lens_left n n) M)) T.
-Definition inner_prod T := M_inner_prod (id_tsquare _) T.
-Definition inner_coprod T := M_inner_coprod (id_tsquare _) T.
+Variable n : nat.
+Let cast_uncurry T := map_tpower (m:=n) (tpcast (T:=T) (esym (addKn n n))).
+Definition M_inner_prod (M : tsquare n) :=
+  tsmor (curry0 (uncurry (lens_left n n) (cast_uncurry M))).
+Definition M_inner_coprod (M : tsquare n) :=
+  tsmor (curryn0 (uncurry (lens_left n n) (cast_uncurry M))).
+Definition inner_prod : mor (n+n) 0 := M_inner_prod (id_tsquare _).
+Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (id_tsquare _).
 End inner_prod_coprod.
 
 Section focus.
