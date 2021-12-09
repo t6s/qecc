@@ -77,6 +77,16 @@ Definition cup : mor I R (n-2) n :=
   fun T : lmodType R => Linear (@cup_is_linear T).
 End cap_cup.
 
+Lemma cup_sym n (l1 l2 : lens n 2) :
+  rev l1 = l2 -> cup l1 =e cup l2.
+Proof.
+move=> Hrev T v.
+apply/ffunP => vi.
+rewrite !ffunE.
+rewrite /cup /= /cup_fun /= /curry0 /tsmor_fun.
+rewrite /uncurry.
+Abort.
+
 Lemma sum_scaler_cond A (L : lmodType R)(r : seq A)(P Q : pred A)(F : A -> L) :
   (\sum_(i <- r | P i) (Q i)%:R *: F i = \sum_(i <- r | P i && Q i) F i)%R.
 Proof.
@@ -85,7 +95,7 @@ case: ifP; by rewrite (scale1r,scale0r).
 Qed.
 
 Ltac eq_lens :=
-  apply/val_inj/eqP; rewrite eq_ord_tuple /= /others /= enum_ordinalE.
+  apply/val_inj/eqP; rewrite ?eq_ord_tuple /= /others /= ?enum_ordinalE.
 
 Lemma transpose_cup (M : tsquare 1) :
   focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
@@ -134,44 +144,41 @@ rewrite sum_enum_indices /= !ffunE.
 *)
 Abort.
 
+Lemma cap_focusC n p (l1 : lens n 2) (l2 : lens (n-2) p) (tr : endo p) :
+  naturality tr ->
+  cap l1 \v focus (lens_comp (lothers l1) l2) tr =e
+  focus l2 tr \v cap l1.
+Proof.
+move=> /naturalityP [M HM] T v /=.
+rewrite !focusE /= /focus_fun /cap_fun !HM.
+apply/ffunP => vi.
+rewrite !(ffunE,sum_ffunE) /=.
+rewrite /uncurry0 /=.
+rewrite !(ffunE,sum_ffunE) /=.
+Abort.
+
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose_tsquare M) =e
   cap [lens 1; 2] \v focus [lens 1] (tsmor M) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
-rewrite /cap_fun /cup_fun !ffunE /uncurry0 /curry0 /= !ffunE sum_ffunE.
-under eq_bigr do rewrite ffunE.
-symmetry.
-under eq_bigr do rewrite !ffunE.
-rewrite sum_scaler_cond /=.
-rewrite
-  (reindex_onto (fun v => [tuple tnth v ord0; tnth v ord0]) (fun v : 2.-tuple _ => [tuple tnth v ord0])) /=;
-  last first.
-  move=> vj.
-  rewrite eq_tuple /= => /eqP.
-  rewrite /others /lens_left !enum_ordinalE /= -!topredE /= !enum_ordinalE /=.
-  case => H1.
-  apply eq_from_tnth => -[] [|[]] // Hi; rewrite (tnth_nth (tnth vj ord0)) /=;
-    rewrite (tnth_nth (tnth vj ord0)) /=.
-  - rewrite /=. congr tnth. exact: val_inj.
-  - have {1}-> : ord0 = lshift 1 ord0 :> 'I_(1+1) by apply: val_inj.
-    rewrite H1; congr tnth; exact: val_inj.
-apply eq_big => vj.
-  apply/andP; split.
-  - rewrite eq_tuple; apply/eqP.
-    rewrite /= /others /lens_left !enum_ordinalE /=.
-    by rewrite -!topredE /= !enum_ordinalE.
-  - apply/eqP/eq_from_tnth => j.
-    by rewrite !ord1 (tnth_nth (tnth vj ord0)) /= (tnth_nth (tnth vj ord0)).
-move=> _.
-rewrite focusE /=.
-rewrite !ffunE.
-rewrite sum_enum_indices /=.
-have {1 3}-> : [lens 1] = lens_comp [lens 1;2] [lens 0].
-  move=> n. apply/val_inj/eq_from_tnth => i /=.
-  by rewrite ord1 (tnth_nth ord0) ![RHS](tnth_nth ord0).
-rewrite extract_comp extract_merge addr0.
+have -> : [lens 1] = lens_comp (lens_left 2 1) [lens 1].
+  by eq_lens; rewrite tnth_mktuple.
+rewrite focusM; last by apply/naturalityP; eexists.
+rewrite [in RHS]focusE /= /focus_fun.
+have -> : cup_fun (n:=3) [lens 0; 1] v =
+  uncurry (lens_left 2 1) (cup_fun (n:=2) [lens 0; 1] (curry0 _ v)).
+  admit.
+rewrite uncurryK.
+have /= := transpose_cup (transpose_tsquare M) (curry0 I v).
+rewrite transpose_tsquare_involutive => <-.
+have<- := uncurryK dI (lens_left 2 1) (cup_fun (n:=2) [lens 0; 1] (curry0 _ v)).
+set mycup := uncurry _ (cup_fun _ _).
+have := focusM dI (lens_left 2 1) [lens 0] (tr:=tsmor (transpose_tsquare M)) _ mycup.
+rewrite [in focus (lens_left 2 1) _ _ _]focusE /= /focus_fun => <-.
+have <- : [lens 0] = lens_comp (lens_left 2 1) [lens 0]
+  by eq_lens; rewrite tnth_mktuple.
 Abort.
 
 Definition id_tsquare' n : tpower I n (tpower I (n + n - n) R^o).

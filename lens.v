@@ -166,6 +166,12 @@ case/boolP: (i \in l) => [/nth_extract_index | /nth_lens_out]; exact.
 Qed.
 End lens.
 
+(* Cast *)
+Definition cast_lens n n' m (H : n = n') (l : lens n m) : lens n' m.
+exists (map_tuple (cast_ord H) l).  
+abstract (by rewrite map_inj_uniq ?lens_uniq // => i j /cast_ord_inj).
+Defined.
+
 (* Identity *)
 Section lens_id.
 Variable n : nat.

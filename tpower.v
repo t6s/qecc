@@ -23,6 +23,12 @@ Notation tsquare n := (tmatrix n n).
 Notation endo n := (mor n n).
 Notation endofun n := (morfun n n).
 
+Lemma tpcast_proof n m (vi : m.-tuple I) : n = m -> size vi == n.
+Proof. by rewrite size_tuple => ->. Qed.
+
+Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
+  [ffun vi => v (Tuple (tpcast_proof vi H))].
+
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
    map h \o f T1 = f T2 \o map h
@@ -101,6 +107,9 @@ Definition id_tsquare m : tsquare m := [ffun vi => tpbasis vi].
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
+
+Lemma transpose_tsquare_involutive m : involutive (@transpose_tsquare m).
+Proof. move=> M. apply/ffunP => vi. apply/ffunP => vj. by rewrite !ffunE. Qed.
 
 (* Tensor product of tsquare matrices *)
 Section tensor_tsquare.
@@ -191,6 +200,23 @@ Qed.
 
 Definition focus n m l tr : endo n :=
   locked (fun T => Linear (@focus_is_linear n m l tr T)).
+
+Lemma addKn_any n m p : m + n - m = p + n - p.
+Proof. by rewrite !addKn. Qed.
+
+Definition asym_focus_fun n m p (l : lens (m + n) m) (l' : lens (p + n) p)
+           (tr : mor m p) : morfun (m + n) (p + n) :=
+  fun T (v : tpower (m + n) T) =>
+    uncurry l' (map_tpower (tpcast (addKn_any n m p)) (tr _ (curry l v))).
+
+Lemma asym_focus_is_linear n m p l l' tr T :
+  linear (@asym_focus_fun n m p l l' tr T).
+Proof.
+move=> x y z.
+apply/ffunP => vi. rewrite !ffunE.
+have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
+by rewrite !linearP !ffunE.
+Qed.
 
 Lemma focusE n m (l : lens n m) (tr : endo m) :
   focus l tr = fun T => Linear (@focus_is_linear n m l tr T).
