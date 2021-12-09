@@ -172,15 +172,36 @@ Qed.
 End lens.
 
 (* Cast *)
-Definition cast_lens n n' m (H : n = n') (l : lens n m) : lens n' m.
+Section cast_lens.
+Variables (n n' m m' : nat) (l : lens n m) (l' : lens n m').
+
+Definition cast_lens_ord (H : n = n') : lens n' m.
 exists (map_tuple (cast_ord H) l).  
 abstract (by rewrite map_inj_uniq ?lens_uniq // => i j /cast_ord_inj).
 Defined.
 
-Definition cast_lens_len n m m' (H : m = m') (l : lens n m) : lens n m'.
-exists (cast_tuple l H).
+Definition cast_lens (H : m' = m) : lens n m.
+exists (cast_tuple l' H).
 apply lens_uniq.
 Defined.
+
+Hypothesis H : l = l' :> seq _.
+
+Lemma lens_size_eq : m' = m.
+Proof. by rewrite -(size_tuple l') -H size_tuple. Qed.
+
+Lemma lens_eq_cast : l = cast_lens lens_size_eq.
+Proof. exact/val_inj/val_inj. Qed.
+End cast_lens.
+
+Lemma cast_lens_ordE n m (l : lens n m) H : cast_lens_ord (n':=n) l H = l.
+Proof.
+apply/val_inj/val_inj/eq_from_nth' => //=. by rewrite size_map.
+move=> a i; rewrite size_map => Hsz; apply/val_inj; by rewrite (nth_map a).
+Qed.
+
+Lemma cast_lensE n m (l : lens n m) H : cast_lens (m':=m) l H = l.
+Proof. exact/val_inj/val_inj. Qed.
 
 (* Identity *)
 Section lens_id.

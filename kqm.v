@@ -97,6 +97,12 @@ Qed.
 Ltac eq_lens :=
   apply/val_inj/eqP; rewrite ?eq_ord_tuple /= /others /= ?enum_ordinalE.
 
+Lemma lens_left_1 n : lens_left 1 n = [lens 0].
+Proof. by eq_lens. Qed.
+
+Lemma lothers_id n : lothers (lens_id n) = lens_empty n :> seq _.
+Proof. apply/nilP. by rewrite /nilp size_tuple subnn. Qed.
+
 Lemma transpose_cup (M : tsquare 1) :
   focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
   focus [lens 1] (tsmor (transpose_tsquare M)) \v cup [lens 0; 1].
@@ -107,15 +113,12 @@ rewrite /cup_fun !focusE /=.
 do! rewrite !(ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
 have -> : [lens 0; 1] = lens_id 2 by eq_lens.
 rewrite !extract_lens_id.
-have -> : lens_left 1 1 = [lens 0] by eq_lens.
-rewrite !extract_merge !extract_lothers_merge.
+rewrite lens_left_1 !extract_merge !extract_lothers_merge.
 have -> : lothers [lens 0] = [lens 1] by eq_lens.
 rewrite !extract_merge.
 have l10 : lothers [lens 1] = [lens 0] by eq_lens.
 rewrite -l10 !(extract_lothers_merge _ [lens 1]) l10.
-have -> : lothers (lens_id 2) = lens_empty 2.
-  by eq_lens; rewrite /= !ifF // -topredE /= enum_ordinalE.
-rewrite !extract_lens_empty.
+rewrite (lens_eq_cast (lothers_id 2)) cast_lensE !extract_lens_empty.
 have := mem_enum_indices (extract [lens 0] vi).
 have := mem_enum_indices (extract [lens 1] vi).
 rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
