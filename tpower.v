@@ -185,10 +185,11 @@ Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (id_tsquare _).
 End inner_prod_coprod.
 
 Section focus.
-Definition focus_fun n m (l : lens n m) (tr : endo m) : endofun n :=
+Variables (n m : nat) (l : lens n m) (tr : endo m).
+Definition focus_fun : endofun n :=
   fun T (v : tpower n T) => uncurry l (tr _ (curry l v)).
 
-Lemma focus_is_linear n m l tr T : linear (@focus_fun n m l tr T).
+Lemma focus_is_linear T : linear (@focus_fun T).
 Proof.
 move=> x y z.
 apply/ffunP => vi; rewrite !ffunE.
@@ -196,29 +197,11 @@ have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
 
-Definition focus n m l tr : endo n :=
-  locked (fun T => Linear (@focus_is_linear n m l tr T)).
+Definition focus : endo n := locked (fun T => Linear (@focus_is_linear T)).
 
-Lemma addKn_any n m p : m + n - m = p + n - p.
-Proof. by rewrite !addKn. Qed.
-
-Definition asym_focus_fun n m p (l : lens (m + n) m) (l' : lens (p + n) p)
-           (tr : mor m p) : morfun (m + n) (p + n) :=
-  fun T (v : tpower (m + n) T) =>
-    uncurry l' (map_tpower (tpcast (addKn_any n m p)) (tr _ (curry l v))).
-
-Lemma asym_focus_is_linear n m p l l' tr T :
-  linear (@asym_focus_fun n m p l l' tr T).
-Proof.
-move=> x y z.
-apply/ffunP => vi. rewrite !ffunE.
-have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
-by rewrite !linearP !ffunE.
-Qed.
-
-Lemma focusE n m (l : lens n m) (tr : endo m) :
-  focus l tr = fun T => Linear (@focus_is_linear n m l tr T).
+Lemma focusE : focus = fun T => Linear (@focus_is_linear T).
 Proof. by rewrite /focus; unlock. Qed.
+End focus.
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
@@ -231,6 +214,41 @@ rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
+Section asym_focus.
+Variables (n m p : nat) (l : lens (m+n) m) (l' : lens (p+n) p) (tr : mor m p).
+
+Lemma addKn_any : m + n - m = p + n - p.
+Proof. by rewrite !addKn. Qed.
+
+Definition asym_focus_fun : morfun (m + n) (p + n) :=
+  fun T (v : tpower (m + n) T) =>
+    uncurry l' (map_tpower (tpcast addKn_any) (tr _ (curry l v))).
+
+Lemma asym_focus_is_linear T : linear (@asym_focus_fun T).
+Proof.
+move=> x y z.
+apply/ffunP => vi. rewrite !ffunE.
+have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
+by rewrite !linearP !ffunE.
+Qed.
+
+Definition asym_focus : mor (m + n) (p + n) :=
+  fun T => Linear (@asym_focus_is_linear T).
+End asym_focus.
+
+Lemma asym_focus_naturality n m p l l' tr :
+  naturality tr -> naturality (@asym_focus n m p l l' tr).
+Proof.
+case/naturalityP => M /= NM; apply/naturalityP.
+exists (morts (asym_focus l l' (tsmor M))).
+move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
+under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
+rewrite exchange_big /=; apply eq_bigr => vj _.
+rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
+by apply eq_bigr => i _; rewrite !ffunE !scalerA.
+Qed.
+
+Section focus_props.
 Variables (n m p : nat) (l : lens n m).
 
 (* Identity *)
@@ -313,7 +331,7 @@ apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _)%R.
 exact: merge_indices_comp.
 Qed.
-End focus.
+End focus_props.
 Notation "f \v g" := (comp_mor f g).
 Notation tsapp l M := (focus l (tsmor M)).
 

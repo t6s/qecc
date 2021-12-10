@@ -10,29 +10,16 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 
 Section move_to_somewhere.
-Variables (I : finType) (dI : I) (R : comRingType).
-
-Definition idmorfun n : morfun I R n n := fun _ x => x.
-Lemma idmor_linear n T : linear (@idmorfun n T).
-Proof. by []. Qed.
-Definition idmor n : mor I R n n := fun T => Linear (@idmor_linear n T).
+Variables (I : finType) (R : comRingType).
+Definition idmor n : mor I R n n := fun T => GRing.idfun_linear _.
 
 Lemma congr_comp_mor r q s (phi phi' : mor I R q s) (psi psi' : mor I R r q) :
   phi =e phi' -> psi =e psi' -> phi \v psi =e phi' \v psi'.
-Proof.
-move=> Hphi Hpsi T x /=.
-move: (Hpsi T x) ->.
-by move: (Hphi T (psi' T x)).
-Qed.
+Proof. by move=> Hphi Hpsi T x /=; rewrite Hpsi Hphi. Qed.
 
-Lemma uncurry_inj (T : lmodType R) n m (l : lens n m)
-      (x y : tpower I m (tpower I (n - m) T)) :
-  uncurry l x = uncurry l y -> x = y.
-Proof. by apply/can_inj/uncurryK. Qed.
-
-Lemma curry_inj (T : lmodType R) n m (l : lens n m) (x y : tpower I n T) :
-  curry dI l x = curry dI l y -> x = y.
-Proof. by apply/can_inj/curryK. Qed.
+Variables (dI : I) (T : lmodType R) (n m : nat) (l : lens n m).
+Definition uncurry_inj := can_inj (uncurryK dI l (T:=T)).
+Definition curry_inj := can_inj (curryK dI l (T:=T)).
 End move_to_somewhere.
 
 Section transpose.
