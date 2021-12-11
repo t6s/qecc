@@ -648,6 +648,9 @@ Fixpoint addnO {n} m (p : 'I_n) : 'I_(m+n) :=
   | 0 => p
   | m.+1 => cast_ord (esym (addSnnS m n)) (addnO m (succO p))
   end.
+Lemma addnOK n m p : @addnO n m p = m + p :> nat.
+Proof. elim: m n p => //= m IH n p. by rewrite IH /= addnS. Qed.
+
 Definition INO {n} m := addnO m (@ord0 n).
 Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
 

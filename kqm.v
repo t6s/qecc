@@ -87,6 +87,9 @@ Ltac eq_lens :=
 Lemma lens_left_1 n : lens_left 1 n = [lens 0].
 Proof. by eq_lens. Qed.
 
+Lemma lens_right_1 n : lens_right n 1 = [lens n].
+Proof. by eq_lens; rewrite /= addnOK. Qed.
+
 Lemma lothers_id n : lothers (lens_id n) = lens_empty n :> seq _.
 Proof. apply/nilP. by rewrite /nilp size_tuple subnn. Qed.
 
