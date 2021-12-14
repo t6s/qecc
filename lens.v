@@ -47,6 +47,9 @@ exact (eq_from_nth Hsz (Heq a)).
 Qed.
 End tnth.
 
+Lemma cast_tupleE n T (v : n.-tuple T) (H : n = n) : cast_tuple v H = v.
+Proof. exact/val_inj. Qed.
+
 Section tnth_eq.
 Variables (A : eqType) (n : nat).
 Lemma tnth_inj (t : n.-tuple A) : reflect (injective (tnth t)) (uniq t).
@@ -104,13 +107,16 @@ Variables (T : Type) (n m : nat).
 
 Record lens := mkLens {lens_t :> m.-tuple 'I_n ; lens_uniq : uniq lens_t}.
 Canonical lens_subType := Eval hnf in [subType for lens_t].
-Canonical lens_predType := PredType (fun x : lens => pred_of_seq x).
+Canonical lens_predType := PredType (pred_of_seq : lens -> pred 'I_n).
 
 Definition endo1 := m.-tuple T -> m.-tuple T.
 
 Variables (l : lens) (f : endo1).
 
 Definition extract (t : n.-tuple T) := [tuple of map (tnth t) l].
+
+Lemma mem_lensE : l =i lens_t l.
+Proof. done. Qed.
 
 Lemma lens_leq : m <= n.
 Proof.
@@ -192,6 +198,10 @@ Proof. by rewrite -(size_tuple l') -H size_tuple. Qed.
 
 Lemma lens_eq_cast : l = cast_lens lens_size_eq.
 Proof. exact/val_inj/val_inj. Qed.
+
+Lemma extract_eq_cast A (v : n.-tuple A) :
+ extract l v = cast_tuple (extract l' v) lens_size_eq.
+Proof. apply val_inj => /=. by rewrite H. Qed.
 End cast_lens.
 
 Lemma cast_lens_ordE n m (l : lens n m) H : cast_lens_ord (n':=n) l H = l.
@@ -215,15 +225,6 @@ Proof. apply eq_from_tnth => i; by rewrite tnth_map tnth_ord_tuple. Qed.
 Lemma index_lens_id i : index i lens_id = i.
 Proof. by rewrite {1}(_ : i = tnth lens_id i) (tnth_ord_tuple,tnth_lensK). Qed.
 End lens_id.
-
-(* Empty lens *)
-Section lens_empty.
-Variable n : nat.
-Definition lens_empty : lens n 0 := {|lens_t := [tuple]; lens_uniq := erefl|}.
-
-Lemma extract_lens_empty T v : extract (T:=T) lens_empty v = [tuple].
-Proof. rewrite /extract; exact/val_inj. Qed.
-End lens_empty.
 
 (* Composition of lenses *)
 Section lens_comp.
@@ -408,6 +409,19 @@ by rewrite nth_lens_out ?nth_lens_index // tnth_map lens_indexK.
 Qed.
 End merge_lens.
 
+(* Empty lens *)
+Section lens_empty.
+Variable n : nat.
+Definition lens_empty : lens n 0 := {|lens_t := [tuple]; lens_uniq := erefl|}.
+
+Lemma extract_lens_empty T (l : lens n 0) v : extract (T:=T) l v = [tuple].
+Proof. apply eq_from_tnth => x. have := ltn_ord x. by rewrite ltn0. Qed.
+
+Lemma lothers_id : lothers (lens_id n) = lens_empty :> seq _.
+Proof. apply/nilP. by rewrite /nilp size_tuple subnn. Qed.
+End lens_empty.
+
+(* Ordered lenses *)
 Section lens_left_right.
 Variables m n : nat.
 
@@ -459,6 +473,31 @@ Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
 Proof.
 apply/val_inj/val_inj => /=.
 by rewrite -[RHS](cat_take_drop m) take_enum_lshift drop_enum_rshift.
+Qed.
+
+Lemma lothers_left : lothers lens_left = lens_right :> seq _.
+Proof.
+rewrite /lothers /others /=.
+have /= := f_equal val lens_left_right.
+rewrite -(val_ord_tuple (m+n)) => <-.
+rewrite filter_cat filter_map -(eq_filter (a1:=pred0)); last first.
+  move=> i /=; rewrite mem_lensE mem_map ?mem_enum //; exact/lshift_inj.
+rewrite filter_pred0 filter_map -(eq_filter (a1:=predT)) ?filter_predT //.
+move=> i /=. rewrite mem_lensE /=.
+by apply/esym/mapP => -[x _] /eqP; rewrite eq_shift.
+Qed.
+
+Lemma lothers_right : lothers lens_right = lens_left :> seq _.
+Proof.
+rewrite /lothers /others /=.
+have /= := f_equal val lens_left_right.
+rewrite -(val_ord_tuple (m+n)) => <-.
+rewrite filter_cat filter_map -(eq_filter (a1:=predT)); last first.
+  move=> i /=. rewrite mem_lensE /=.
+  by apply/esym/mapP => -[x _] /eqP; rewrite eq_shift.
+rewrite filter_predT filter_map -(eq_filter (a1:=pred0)).
+  by rewrite filter_pred0 cats0.
+move=> i /=; rewrite mem_lensE mem_map ?mem_enum //; exact/rshift_inj.
 Qed.
 
 Variables (p : nat) (l : lens p m) (l' : lens p n) (H : [disjoint l & l']).

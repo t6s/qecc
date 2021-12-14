@@ -64,21 +64,21 @@ Definition cup : mor I R (n-2) n :=
   fun T : lmodType R => Linear (@cup_is_linear T).
 End cap_cup.
 
-Lemma cup_sym n (l1 l2 : lens n 2) :
-  rev l1 = l2 -> cup l1 =e cup l2.
+Lemma extract_rev A n m (l1 l2 : lens n m) (v : n.-tuple A) :
+  rev l1 = l2 -> [tuple of rev (extract l1 v)] = extract l2 v.
 Proof.
-move=> Hrev T v.
-apply/ffunP => vi.
-rewrite !ffunE.
-rewrite /cup /= /cup_fun /= /curry0 /tsmor_fun.
-rewrite /uncurry.
-Abort.
-
-Lemma sum_scaler_cond A (L : lmodType R)(r : seq A)(P Q : pred A)(F : A -> L) :
-  (\sum_(i <- r | P i) (Q i)%:R *: F i = \sum_(i <- r | P i && Q i) F i)%R.
-Proof.
-rewrite big_mkcondr /=; apply eq_bigr => i _.
-case: ifP; by rewrite (scale1r,scale0r).
+case: m l1 l2 => [|m] l1 l2 Hrev.
+  rewrite !extract_lens_empty; exact/val_inj.
+apply/val_inj/eq_from_nth' => /=.
+  by rewrite size_rev !size_tuple.
+move=> a i.
+rewrite size_rev => Hi.
+rewrite nth_rev //= size_map size_tuple -Hrev.
+rewrite (nth_map (tnth l1 ord0)).
+  rewrite size_map in Hi.
+  rewrite -[X in X - i.+1](size_tuple l1) -nth_rev //.
+  by rewrite -(nth_map _ a) // size_rev.
+by rewrite size_tuple ltn_subrL.
 Qed.
 
 Ltac eq_lens :=
@@ -90,8 +90,29 @@ Proof. by eq_lens. Qed.
 Lemma lens_right_1 n : lens_right n 1 = [lens n].
 Proof. by eq_lens; rewrite /= addnOK. Qed.
 
-Lemma lothers_id n : lothers (lens_id n) = lens_empty n :> seq _.
-Proof. apply/nilP. by rewrite /nilp size_tuple subnn. Qed.
+Lemma cup_sym n (l1 l2 : lens n 2) :
+  rev l1 = l2 -> cup l1 =e cup l2.
+Proof.
+move=> Hrev T v.
+apply/ffunP => vi.
+rewrite !ffunE !cast_tupleE !(big_pred1 [tuple]); try by case => -[].
+rewrite !ffunE.
+congr (_ *: v (extract _ vi))%R.
+- rewrite -(extract_rev _ Hrev) => {l2 Hrev}.
+  case: (extract l1 vi) => -[|a [|b []]] //= Hl1.
+  rewrite (lens_eq_cast (lothers_left 1 1)) cast_lensE.
+  rewrite lens_left_1 lens_right_1.
+  by rewrite !eq_ord_tuple /= !(tnth_nth a) /= eq_sym.
+- apply/val_inj/val_inj/eq_filter => i.
+  by rewrite !mem_lensE !memtE /= -Hrev mem_rev.
+Qed.
+
+Lemma sum_scaler_cond A (L : lmodType R)(r : seq A)(P Q : pred A)(F : A -> L) :
+  (\sum_(i <- r | P i) (Q i)%:R *: F i = \sum_(i <- r | P i && Q i) F i)%R.
+Proof.
+rewrite big_mkcondr /=; apply eq_bigr => i _.
+case: ifP; by rewrite (scale1r,scale0r).
+Qed.
 
 Lemma transpose_cup (M : tsquare 1) :
   focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
