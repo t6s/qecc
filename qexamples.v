@@ -1,6 +1,5 @@
 Require Reals.
-From mathcomp Require Import all_ssreflect all_algebra.
-From mathcomp Require Import Rstruct complex.
+From mathcomp Require Import all_ssreflect all_algebra complex.
 Require Import lens tpower.
 
 Set Implicit Arguments.
@@ -17,7 +16,8 @@ Import Num.Theory.
 Local Open Scope ring_scope.
 Local Open Scope complex_scope.
 
-Let R := Reals.Rdefinitions.R.
+(* Let R := [rcfType of Reals.Rdefinitions.R]. *)
+Variable R : rcfType.
 Let C := [comRingType of R[i]].
 Let Co := [lmodType C of C^o].
 Let I := [finType of 'I_2].
