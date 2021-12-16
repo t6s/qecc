@@ -35,6 +35,9 @@ Notation endo n := (mor I R n n).
 Notation focus := (focus dI).
 Notation curry := (curry dI).
 
+Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
+Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
+
 Section cap_cup.
 Variables (n : nat) (l : lens n 2).
 

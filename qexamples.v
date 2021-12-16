@@ -90,60 +90,16 @@ Definition cnotH : tsquare 2 :=
 Definition cnotHe :=
   tsmor hadamard2 \v tsmor cnot \v tsmor hadamard2.
 
-Fixpoint enum_indices n : seq (n.-tuple 'I_2) :=
-  match n as n return seq (n.-tuple 'I_2) with
-  | 0 => [:: [tuple of [::]]]
-  | S m =>
-    let l := enum_indices m in
-    [seq [tuple of 0%:O :: val t] | t <- l] ++
-    [seq [tuple of 1%:O :: val t] | t <- l]
-  end.
+Definition enum2 : seq I := [:: 0%:O; 1%:O].
+Lemma uniq_enum2 : uniq enum2. Proof. by []. Qed.
+Lemma mem_enum2 i : i \in enum2.
+Proof. by rewrite !inE; case: i => -[|[]]. Qed.
 
-Lemma caseI2 (x : 'I_2) : x = 0%:O \/ x = 1%:O.
-Proof.
-case: x => -[]. by left; apply/val_inj.
-case => //. by right; apply/val_inj.
-Qed.
-
-Lemma mem_enum_indices n t : t \in enum_indices n.
-Proof.
-elim: n t => [|n IH] [[|i t] Hlen] //=.
-rewrite mem_cat; apply/orP.
-move/eqP: (Hlen) => [] /eqP Hlen'.
-case: (caseI2 i) => Hi; [left | right]; apply/mapP => /=;
-  exists (Tuple Hlen') => //; apply val_inj; by rewrite Hi.
-Qed.
-
-Lemma size_enum_indices n : size (enum_indices n) = (2 ^ n)%N.
-Proof.
-elim: n => //= n IH.
-by rewrite !size_cat !size_map !IH addnn -mul2n expnS.
-Qed.
-
-Lemma uniq_enum_indices n : uniq (enum_indices n).
-Proof.
-rewrite /is_true -(enum_uniq (tuple_finType n I)).
-apply eq_uniq.
-  by rewrite -cardT card_tuple card_ord size_enum_indices.
-move=> t. by rewrite mem_enum_indices mem_enum.
-Qed.
-
-Lemma sum_enum_indices (CR : comRingType) (L : lmodType CR) n (F : n.-tuple 'I_2 -> L) :
-  \sum_vi F vi = foldr +%R 0 (map F (enum_indices n)).
-Proof.
-rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
-apply/esym/eq_bigl => vi. exact/mem_enum_indices.
-Qed.
-
-Lemma eq_from_indicesP n (T : eqType) (v w : tpower n T) :
-  reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
-Proof.
-apply (iffP idP).
-  move=> H; apply/ffunP => vi; apply/eqP.
-  have : vi \in enum_indices _ by rewrite mem_enum_indices.
-  by apply/allP: vi.
-move -> ; by apply/allP.
-Qed.
+Notation enum_indices := (enum_indices enum2).
+Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
+Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
+Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
+Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 
 (* Checking equality of functions (sum of tensors) *)
 Lemma cnotK : involutive (tsmor cnot Co).
@@ -182,31 +138,6 @@ all: simpc.
 all: by rewrite Hnn mul0r scale1r.
 Qed.
 
-Lemma eq_tuple (T : eqType) n (t1 t2 : n.-tuple T) :
-  (t1 == t2) = (val t1 == val t2).
-Proof. by case: eqP => [-> // | H]; apply/esym/eqP => // /val_inj. Qed.
-
-Lemma eq_ord_tuple m n (t1 t2 : n.-tuple 'I_m) :
-  (t1 == t2) = (map val t1 == map val t2).
-Proof.
-case: eqP => [-> | H]; apply/esym/eqP => // /inj_map H'.
-by elim H; apply/val_inj/H'/val_inj.
-Qed.
-
-Fixpoint enum_ordinal n : seq 'I_n :=
-  match n as n return seq 'I_n with
-  | 0 => [::]
-  | m.+1 => ord0 :: map (lift ord0) (enum_ordinal m)
-  end.
-
-Lemma enum_ordinalE n : enum 'I_n = enum_ordinal n.
-Proof.
-apply/(@inj_map _ _ (val : 'I_n -> nat)). apply val_inj.
-rewrite val_enum_ord.
-elim: n => //= n IH.
-rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
-by rewrite map_comp -IH (iotaDl 1 0 n).
-Qed.
 (*
 (* Trying to check the hadamart representation of cnot... *)
 Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.

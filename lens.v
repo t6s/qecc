@@ -23,6 +23,13 @@ Proof. by rewrite size_tuple => ->. Qed.
 
 Definition cast_tuple (H : m = n) : n.-tuple T := Tuple (cast_tuple_proof H).
 
+Lemma eq_ord_tuple (t1 t2 : n.-tuple 'I_m) :
+  (t1 == t2) = (map val t1 == map val t2).
+Proof.
+case: eqP => [-> | H]; apply/esym/eqP => // /inj_map H'.
+by elim H; apply/val_inj/H'/val_inj.
+Qed.
+
 Lemma nth_tnth i x0 (H : i < n) : nth x0 vr i = tnth vr (Ordinal H).
 Proof. by rewrite (tnth_nth x0). Qed.
 
@@ -693,8 +700,29 @@ Proof. elim: m n p => //= m IH n p. by rewrite IH /= addnS. Qed.
 Definition INO {n} m := addnO m (@ord0 n).
 Notation "n '%:O'" := (INO n) (at level 2, left associativity, format "n %:O").
 
+Lemma succOS n m : succO m%:O = m.+1%:O :> 'I_(m.+1+n.+1).
+Proof. apply/val_inj => /=. by rewrite /bump leq0n !addnOK !(addnC m). Qed.
+Lemma succO0 n : succO ord0 = 1%:O :> 'I_n.+2.
+Proof. exact/val_inj. Qed.
+Definition succOE := (succO0,succOS).
+
 Notation "[ 'lens' x1 ; .. ; xn ]" :=
   (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
+
+Fixpoint enum_ordinal n : seq 'I_n :=
+  match n with
+  | 0 => [::]
+  | m.+1 => ord0 :: map succO (enum_ordinal m)
+  end.
+
+Lemma enum_ordinalE n : enum 'I_n = enum_ordinal n.
+Proof.
+apply/(@inj_map _ _ (val : 'I_n -> nat)). exact val_inj.
+rewrite val_enum_ord.
+elim: n => //= n IH.
+rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
+by rewrite map_comp -IH (iotaDl 1 0 n).
+Qed.
 
 Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)

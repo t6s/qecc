@@ -462,3 +462,59 @@ exists (@tpower_vec H n).
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.
 End vector.
+
+(* Helper lemmas for computation *)
+Section enum_indices.
+Variable I : finType.
+Variable enumI : seq I.
+Hypothesis uniq_enumI : uniq enumI.
+Hypothesis mem_enumI : forall i, i \in enumI.
+
+Fixpoint enum_indices m : seq (m.-tuple I) :=
+  match m with
+  | 0 => [:: [tuple of [::]]]
+  | S m =>
+    allpairs (fun x (t : m.-tuple _) => [tuple of x :: val t])
+             enumI (enum_indices m)
+  end.
+
+Lemma mem_enum_indices m t : t \in enum_indices m.
+Proof.
+elim: m t => [|m IH] [[|i t] Hlen] //=.
+apply/flatten_mapP.
+exists i => //.
+case/eqP: (Hlen) => /eqP Hlen'.
+apply/mapP; exists (Tuple Hlen') => //; exact/val_inj.
+Qed.
+
+Lemma size_enum_indices m : size (enum_indices m) = (size enumI ^ m)%N.
+Proof. elim: m => //= m IH; by rewrite size_allpairs IH expnS. Qed.
+
+Lemma uniq_enum_indices m : uniq (enum_indices m).
+Proof.
+rewrite /is_true -(enum_uniq (tuple_finType m I)).
+apply eq_uniq.
+  rewrite -cardT card_tuple size_enum_indices; congr expn.
+  move/card_uniqP: uniq_enumI => <-.
+  apply eq_card => i; by rewrite mem_enumI.
+move=> t. by rewrite mem_enum_indices mem_enum.
+Qed.
+
+Lemma eq_from_indicesP n (T : eqType) (v w : tpower I n T) :
+  reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
+Proof.
+apply (iffP idP).
+  move=> H; apply/ffunP => vi; apply/eqP.
+  have : vi \in enum_indices _ by rewrite mem_enum_indices.
+  by apply/allP: vi.
+move -> ; by apply/allP.
+Qed.
+
+Lemma sum_enum_indices (CR : comRingType) (L : lmodType CR)
+      m (F : m.-tuple I -> L) :
+  (\sum_vi F vi = foldr +%R 0 (map F (enum_indices m)))%R.
+Proof.
+rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
+apply/esym/eq_bigl => vi. exact/mem_enum_indices.
+Qed.
+End enum_indices.
