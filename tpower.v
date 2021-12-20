@@ -384,6 +384,7 @@ Notation tsapp l M := (focus l (tsmor M)).
 
 Section index_of_vec_bij.
 Variable I : finType.
+Variable dI : I.
 Let vsz m := #|I| ^ m.
 
 Fixpoint index_of_vec_rec (v : seq I) : nat :=
@@ -412,12 +413,14 @@ exists (index_of_vec_rec (rev v)).
 abstract (by rewrite index_of_vec_ltn // size_rev size_tuple).
 Defined.
 
-Hypothesis H : #|I| > 0.
+Lemma card_inh : #|I| > 0.
+Proof. by rewrite -cardsT card_gt0; apply/set0Pn; exists dI; rewrite inE. Qed.
+
 Fixpoint vec_of_index_rec (m i : nat) : seq I :=
   match m with
   | 0 => nil
   | m.+1 =>
-    enum_val (Ordinal (ltn_pmod i H)) :: vec_of_index_rec m (i %/ #|I|)
+    enum_val (Ordinal (ltn_pmod i card_inh)) :: vec_of_index_rec m (i %/ #|I|)
   end.
 
 Lemma vec_of_index_size m i : size (vec_of_index_rec m i) = m.
@@ -434,7 +437,8 @@ Proof.
 rewrite /vsz.
 elim: m i => [|m IH /= i Hi]; first by case; rewrite expn0 // ltnS.
 rewrite enum_valK IH /=; first by rewrite addnC mulnC -divn_eq.
-by rewrite -(ltn_pmul2r H) (leq_ltn_trans (leq_trunc_div _ _)) // mulnC -expnS.
+rewrite -(ltn_pmul2r card_inh) (leq_ltn_trans (leq_trunc_div _ _)) //.
+by rewrite mulnC -expnS.
 Qed.
 
 Lemma vec_of_indexK m : cancel (@vec_of_index m) (@index_of_vec m).
@@ -455,7 +459,7 @@ congr (_ :: _).
   apply val_inj => /=.
   by rewrite addnC mulnC modnMDl modn_small.
 rewrite divnDr.
-  by rewrite divn_small // add0n mulKn // IH.
+  by rewrite divn_small // add0n mulKn ?card_inh // IH.
 exact/dvdn_mulr/dvdnn.
 Qed.
 
@@ -472,8 +476,7 @@ End index_of_vec_bij.
 
 (* tpower n R^o forms a vector space of size #|I|^m *)
 Section vector.
-Variable (I : finType) (R : comRingType).
-Hypothesis H : #|I| > 0.
+Variable (I : finType) (R : comRingType) (dI : I).
 Variable m : nat.
 Let vsz := #|I| ^ m.
 Let tsquare n := tmatrix I R n n.
@@ -482,7 +485,7 @@ Definition mxtsquare (M : 'M[R]_vsz) : tsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
 Definition tsquaremx (M : tsquare m) : 'M[R]_vsz :=
-  \matrix_(i,j) M (vec_of_index H i) (vec_of_index H j).
+  \matrix_(i,j) M (vec_of_index dI i) (vec_of_index dI j).
 
 Lemma tsquaremxK : cancel tsquaremx mxtsquare.
 Proof.
@@ -500,7 +503,7 @@ Proof.
 move=> M1 M2; apply/matrixP => i j; rewrite !mxE !ffunE.
 rewrite (reindex (@index_of_vec I m)) /=.
   apply eq_bigr => vi _; by rewrite !mxE index_of_vecK.
-exists (@vec_of_index _ H m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
+exists (@vec_of_index _ dI m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
 Lemma mxtsquare_mul : {morph mxtsquare : M1 M2 / M1 *m M2 >-> mults M1 M2}%R.
@@ -508,26 +511,26 @@ Proof.
 move=> M1 M2; apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE !mxE.
 rewrite (reindex (@index_of_vec I m)) /=.
   apply eq_bigr => vk _; by rewrite !ffunE.
-exists (@vec_of_index _ H m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
+exists (@vec_of_index _ dI m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
 Lemma tsquaremx_id : tsquaremx (idts I R m) = (1%:M)%R.
 Proof.
 apply/matrixP => i j; rewrite !mxE !ffunE.
-by rewrite (inj_eq (bij_inj (vec_of_index_bij H m))).
+by rewrite (inj_eq (bij_inj (vec_of_index_bij dI m))).
 Qed.
 
 Lemma mxtsquare_id : mxtsquare (1%:M)%R = idts I R m.
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
-by rewrite (inj_eq (bij_inj (index_of_vec_bij H m))).
+by rewrite (inj_eq (bij_inj (index_of_vec_bij dI m))).
 Qed.
 
 Definition vec_tpower (X : 'rV[R]_vsz) : tpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
 
 Definition tpower_vec (X : tpower I m R^o) : 'rV[R]_vsz :=
-  \row_i X (vec_of_index H i).
+  \row_i X (vec_of_index dI i).
 
 Definition mxendo (M : 'M[R]_vsz) := tsmor (mxtsquare M).
 

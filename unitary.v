@@ -14,11 +14,10 @@ Variable R : rcfType.
 Let C := [comRingType of R[i]].
 Variable I : finType.
 Variable dI : I.
-Hypothesis HcardI : (#|I| > 0)%N.
 
 Notation tsquare n := (tmatrix I C n n).
 Notation idts := (idts I C).
-Notation tsquaremx := (tsquaremx HcardI).
+Notation tsquaremx := (tsquaremx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
