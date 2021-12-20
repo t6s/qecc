@@ -71,6 +71,13 @@ rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
+Lemma sum_tpbasisKo n (vi : n.-tuple I) (F : tpower n R) :
+  (\sum_vj (F vj *: tpbasis vi vj) = F vi)%R.
+Proof.
+rewrite (bigD1 vi) //= !ffunE eqxx big1 ?addr0 /GRing.scale /= ?mulr1 //.
+move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite mulr0.
+Qed.
+
 Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
   v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i))%R.
 Proof.
@@ -97,16 +104,26 @@ Qed.
 Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
   [ffun vi => ket vi *: bra]%R.
 
-Definition mul_tsquare m (M1 M2 : tsquare m) : tsquare m :=
+Definition mults m (M1 M2 : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]]%R.
 
-Definition id_tsquare m : tsquare m := [ffun vi => tpbasis vi].
+Definition idts m : tsquare m := [ffun vi => tpbasis vi].
+Definition idmor n : endo n := fun T => GRing.idfun_linear _.
+
+Lemma idmorE n : idmor n =e tsmor (idts n).
+Proof.
+move=> T v; apply/ffunP => vi.
+rewrite /idmor ffunE (bigD1 vi) //= big1 !ffunE ?(eqxx,scale1r,addr0) //.
+move=> i /negbTE Hi; by rewrite ffunE eq_sym Hi scale0r.
+Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
 
 Lemma transpose_tsquare_involutive m : involutive (@transpose_tsquare m).
 Proof. move=> M. apply/ffunP => vi. apply/ffunP => vj. by rewrite !ffunE. Qed.
+
+
 
 (* Tensor product of tsquare matrices *)
 Section tensor_tsquare.
@@ -180,8 +197,8 @@ Definition M_inner_prod (M : tsquare n) :=
   tsmor (curry0 (uncurry (lens_left n n) (cast_uncurry M))).
 Definition M_inner_coprod (M : tsquare n) :=
   tsmor (curryn0 (uncurry (lens_left n n) (cast_uncurry M))).
-Definition inner_prod : mor (n+n) 0 := M_inner_prod (id_tsquare _).
-Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (id_tsquare _).
+Definition inner_prod : mor (n+n) 0 := M_inner_prod (idts _).
+Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (idts _).
 End inner_prod_coprod.
 
 Section focus.
@@ -278,7 +295,19 @@ Notation "f \v g" := (comp_mor f g).
 
 Lemma focus_comp r q (tr tr' : endo q) (lq : lens r q) :
   focus lq (tr \v tr') =e focus lq tr \v focus lq tr'.
-Proof. move=> T v; apply/ffunP => /= vi; by rewrite !focusE /focus_fun /= uncurryK. Qed.
+Proof.
+move=> T v; apply/ffunP => /= vi.
+by rewrite !focusE /focus_fun /= uncurryK.
+Qed.
+
+Lemma tsmor_comp (M N : tsquare n) : tsmor (mults M N) =e tsmor M \v tsmor N.
+Proof.
+move=> T v; apply/ffunP => vi; rewrite !ffunE.
+under eq_bigr do rewrite !ffunE !scaler_suml.
+rewrite exchange_big /=.
+apply eq_bigr => vk _; rewrite !ffunE !(scaler_suml,scaler_sumr).
+by apply eq_bigr => vj _; rewrite scalerA.
+Qed.
 
 (* Horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) tr tr' :
@@ -434,30 +463,79 @@ Lemma index_of_vec_bij m : bijective (@index_of_vec m).
 Proof.
 exists (@vec_of_index m); [exact: index_of_vecK | exact: vec_of_indexK].
 Qed.
+
+Lemma vec_of_index_bij m : bijective (@vec_of_index m).
+Proof.
+exists (@index_of_vec m); [exact: vec_of_indexK | exact: index_of_vecK].
+Qed.
 End index_of_vec_bij.
 
 (* tpower n R^o forms a vector space of size #|I|^m *)
 Section vector.
 Variable (I : finType) (R : comRingType).
-Let vsz m := #|I| ^ m.
+Hypothesis H : #|I| > 0.
+Variable m : nat.
+Let vsz := #|I| ^ m.
 Let tsquare n := tmatrix I R n n.
 
-Definition mxtsquare m (M : 'M[R]_(vsz m,vsz m)) : tsquare m :=
+Definition mxtsquare (M : 'M[R]_vsz) : tsquare m :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
-Definition mxendo m (M : 'M[R]_(vsz m,vsz m)) := tsmor (mxtsquare M).
+Definition tsquaremx (M : tsquare m) : 'M[R]_vsz :=
+  \matrix_(i,j) M (vec_of_index H i) (vec_of_index H j).
 
-Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
+Lemma tsquaremxK : cancel tsquaremx mxtsquare.
+Proof.
+move=> v; apply/ffunP => vi; apply/ffunP => vj.
+by rewrite !ffunE mxE !index_of_vecK.
+Qed.
+
+Lemma mxtsquareK : cancel mxtsquare tsquaremx.
+Proof.
+move=> v; apply/matrixP => i j; by rewrite mxE !ffunE !vec_of_indexK.
+Qed.
+
+Lemma tsquaremx_mul : {morph tsquaremx : M1 M2 / mults M1 M2 >-> M1 *m M2}%R.
+Proof.
+move=> M1 M2; apply/matrixP => i j; rewrite !mxE !ffunE.
+rewrite (reindex (@index_of_vec I m)) /=.
+  apply eq_bigr => vi _; by rewrite !mxE index_of_vecK.
+exists (@vec_of_index _ H m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
+Qed.
+
+Lemma mxtsquare_mul : {morph mxtsquare : M1 M2 / M1 *m M2 >-> mults M1 M2}%R.
+Proof.
+move=> M1 M2; apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE !mxE.
+rewrite (reindex (@index_of_vec I m)) /=.
+  apply eq_bigr => vk _; by rewrite !ffunE.
+exists (@vec_of_index _ H m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
+Qed.
+
+Lemma tsquaremx_id : tsquaremx (idts I R m) = (1%:M)%R.
+Proof.
+apply/matrixP => i j; rewrite !mxE !ffunE.
+by rewrite (inj_eq (bij_inj (vec_of_index_bij H m))).
+Qed.
+
+Lemma mxtsquare_id : mxtsquare (1%:M)%R = idts I R m.
+Proof.
+apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
+by rewrite (inj_eq (bij_inj (index_of_vec_bij H m))).
+Qed.
+
+Definition vec_tpower (X : 'rV[R]_vsz) : tpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
 
-Definition tpower_vec H m (X : tpower I m R^o) : 'rV[R]_(vsz m) :=
+Definition tpower_vec (X : tpower I m R^o) : 'rV[R]_vsz :=
   \row_i X (vec_of_index H i).
 
-Lemma tpower_vector (H : #|I| > 0) n : Vector.axiom (vsz n) (tpower I n R^o).
+Definition mxendo (M : 'M[R]_vsz) := tsmor (mxtsquare M).
+
+Lemma tpower_vector : Vector.axiom vsz (tpower I m R^o).
 Proof.
-exists (@tpower_vec H n).
+exists tpower_vec.
 - move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
-- exists (@vec_tpower n).
+- exists vec_tpower.
   + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.

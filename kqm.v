@@ -145,13 +145,13 @@ move=> T /= v.
 rewrite /cap_fun /cup_fun.
 (*
 Check (uncurry0 (L:=ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) \o
-       tsmor (curry0 (uncurry (lens_left 1 1) (id_tsquare I R 1)))
+       tsmor (curry0 (uncurry (lens_left 1 1) (idts I R 1)))
          (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T)).
 
 rewrite (lock tsmor).
 rewrite /curry0 /uncurry0 /=.
 rewrite -lock.
-Check tsmor [ffun=> uncurry (lens_left 1 1) (id_tsquare I R 1)] (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) = uncurry_mor _ _ (lens_left 1 1).
+Check tsmor [ffun=> uncurry (lens_left 1 1) (idts I R 1)] (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) = uncurry_mor _ _ (lens_left 1 1).
 
 rewrite /uncurry0 /curry /uncurry /curry0 /idmorfun /=.
 rewrite /tsmor_fun /=.
@@ -198,20 +198,20 @@ have <- : [lens 0] = lens_comp (lens_left 2 1) [lens 0]
   by eq_lens; rewrite tnth_mktuple.
 Abort.
 
-Definition id_tsquare' n : tpower I n (tpower I (n + n - n) R^o).
+Definition idts' n : tpower I n (tpower I (n + n - n) R^o).
 rewrite addKn.
-exact (id_tsquare I R n).
+exact (idts I R n).
 Defined.
 
 (*
 Lemma transpose_focus n (M : tsquare n) T :
   tsmor (transpose M) T =1
   uncurry (lens_left 0 n) \o
-  tsmor (curry0 (uncurry (lens_left n n) (id_tsquare I R n))) _ \o
+  tsmor (curry0 (uncurry (lens_left n n) (idts I R n))) _ \o
   @curry0 _ \o
   focus (lens_right n (n+n)) (focus (lens_left n n) (tsmor M)) _ \o
   uncurry (lens_left (n+n) n) \o
-  tsmor (curry (lens_left (n+n) 0) (uncurry (lens_left n n) (id_tsquare I R n))) _ \o
+  tsmor (curry (lens_left (n+n) 0) (uncurry (lens_left n n) (idts I R n))) _ \o
   curry (lens_left 0 n).
 Proof.
 move=> v /=.

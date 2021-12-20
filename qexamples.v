@@ -1,6 +1,6 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
-Require Import lens tpower.
+Require Import lens tpower unitary.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -113,6 +113,16 @@ Lemma qnotK : involutive (tsmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_tpbasisK,ffunE).
+Qed.
+
+Lemma qnotU : unitaryts qnot.
+Proof.
+apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: rewrite !(linE,sum_tpbasisK,ffunE).
+all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: rewrite !(linE,sum_tpbasisK,ffunE).
+all: time (rewrite !sum_enum_indices /= !ffunE /=).
+all: by rewrite !(linE,subr0,oppr0).
 Qed.
 
 Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.

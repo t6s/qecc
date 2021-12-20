@@ -405,6 +405,12 @@ Lemma merge_indices_extract (v : n.-tuple I) :
   merge_indices (extract l v) (extract lothers v) = v.
 Proof. by rewrite merge_indices_extract_others inject_extract. Qed.
 
+Lemma merge_indices_inj vj : injective (fun vi => merge_indices vi vj).
+Proof.
+move=> vi vi' Hm.
+by rewrite -(extract_merge vi vj) -(extract_merge vi' vj) Hm.
+Qed.
+
 Lemma extract_merge_disjoint p (l' : lens n p) vi vj :
   [disjoint l & l'] ->
   extract l' (merge_indices vj (extract lothers vi)) = extract l' vi.
