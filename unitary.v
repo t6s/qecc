@@ -76,7 +76,7 @@ Section unitary_endo.
 Definition unitary_endo n (f : endo n) := unitaryts (morts f).
 
 Lemma scalerb_if (x : C) (b : bool) :
-  x *: b%:R = if b then x else 0 :> C^o.
+  x *: b%:R = if b then (x : C^o) else 0.
 Proof. rewrite /GRing.scale /=; by case: b; rewrite (mulr1, mulr0). Qed.
 
 Lemma morts_focus n m (l : lens n m) (M : tsquare m) vi vj :
