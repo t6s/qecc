@@ -76,29 +76,26 @@ Section unitary_endo.
 Definition unitary_endo n (f : endo n) := unitaryts (morts f).
 
 Lemma scalerb_if (x : C) (b : bool) :
-  x *: b%:R = if b then x%:A else 0 :> C^o.
-Proof. rewrite -mulr_algl; by case: b; rewrite (mulr1, mulr0). Qed.
+  x *: b%:R = if b then x else 0 :> C^o.
+Proof. rewrite /GRing.scale /=; by case: b; rewrite (mulr1, mulr0). Qed.
 
 Lemma morts_focus n m (l : lens n m) (M : tsquare m) vi vj :
   morts (focus l (tsmor M)) vi vj =
   if extract (lothers l) vi == extract (lothers l) vj
-  then (M (extract l vi) (extract l vj))%:A else 0.
+  then M (extract l vi) (extract l vj) else 0.
 Proof.
 rewrite !ffunE focusE !ffunE sum_ffunE.
 rewrite (bigD1 (extract l vj)) //= big1.
   rewrite !ffunE addr0 scalerb_if.
   symmetry.
-  case: ifP => [/eqP -> | /eqP Hm].
-     by rewrite merge_indices_extract eqxx.
+  case: ifP => /eqP Hm.
+     by rewrite Hm merge_indices_extract eqxx.
   case: ifP => // /eqP/(f_equal (extract (lothers l))).
   by rewrite extract_lothers_merge => /esym.
 move=> i Hi.
-rewrite !ffunE.
-case Hm: (_ == _).
-  move/eqP/(f_equal (extract l)): Hm.
-  rewrite extract_merge => Hm.
-  by rewrite Hm eqxx in Hi.
-by rewrite scaler0.
+rewrite !ffunE scalerb_if.
+case: ifP => // /eqP/(f_equal (extract l)).
+rewrite extract_merge => Hm; by rewrite Hm eqxx in Hi.
 Qed.
 
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
@@ -114,27 +111,25 @@ under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
 move => Uf.
 under eq_bigr do rewrite ffunE.
 rewrite (reindex_merge_indices _ dI l) /=.
-case/boolP: (extract (lothers l) vi == extract (lothers l) vj) => /eqP Hij;
+case/boolP: (extract (lothers l) vi == extract (lothers l) vj) => Hij;
   last first.
   case vij: (_ == _).
-    by elim Hij; rewrite (eqP vij).
+    by rewrite (eqP vij) eqxx in Hij.
   rewrite big1 // => i _.
   rewrite big1 // => j _.
   rewrite !morts_focus extract_lothers_merge extract_merge.
-  case: ifP => /eqP Hovi.
-    case: ifP => /eqP Hovj.
-      elim Hij; by rewrite -Hovi Hovj.
-    by rewrite mulr0.
-  by rewrite conjc0 mul0r.
+  case: ifP => /eqP Hovi; last by rewrite conjc0 mul0r.
+  case: ifP => /eqP Hovj; last by rewrite mulr0.
+  by rewrite -Hovi Hovj eqxx in Hij.
 transitivity (\sum_i ((M i (extract l vi))^*)%C * M i (extract l vj)).
   apply eq_bigr => i _.
   under eq_bigr do rewrite !morts_focus extract_lothers_merge extract_merge.
   rewrite (bigD1 (extract (lothers l) vi)) //= big1; last first.
-    by move=> j Hj; rewrite (negbTE Hj) conjc0 mul0r.
-  by rewrite Hij !eqxx addr0 /GRing.scale /= !mulr1.
+    by move=> j /negbTE -> ; rewrite conjc0 mul0r.
+  by rewrite Hij eqxx addr0.
 rewrite Uf.
 rewrite -[in RHS](merge_indices_extract dI l vi).
-rewrite -[in RHS](merge_indices_extract dI l vj) -Hij.
+rewrite -[in RHS](merge_indices_extract dI l vj) -(eqP Hij).
 by rewrite (inj_eq (@merge_indices_inj _ dI _ _ _ _)).
 Qed.
 End unitary_endo.  
