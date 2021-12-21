@@ -6,6 +6,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import GRing.Theory.
+Local Open Scope ring_scope.
 
 Reserved Notation "f \v g" (at level 50, format "f  \v  g").
 Reserved Notation "f =e g" (at level 70).
@@ -17,7 +18,7 @@ Local Notation merge_indices := (merge_indices dI).
 Definition tpower n T := {ffun n.-tuple I -> T}.
 Definition morfun m n := forall T : lmodType R, tpower m T -> tpower n T.
 Definition mor m n :=
-  forall T : lmodType R, {linear tpower m T -> tpower n T}%R.
+  forall T : lmodType R, {linear tpower m T -> tpower n T}.
 Definition tmatrix m n := tpower m (tpower n R^o).
 Notation tsquare n := (tmatrix n n).
 Notation endo n := (mor n n).
@@ -35,7 +36,7 @@ Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : tpower m T1)
   : tpower m T2 := [ffun v : m.-tuple I => f (nv v)].
 
 Definition naturality m n (f : mor m n) :=
-  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}%R) (v : tpower m T1),
+  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}) (v : tpower m T1),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
 
 Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
@@ -43,7 +44,7 @@ Notation "f1 =e f2" := (eq_mor f1 f2).
 
 Definition tsmor_fun m n (M : tmatrix n m) : morfun m n :=
   fun T v =>
-    [ffun vi : n.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj]%R.
+    [ffun vi : n.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj].
 
 Lemma tsmor_is_linear m n M T : linear (@tsmor_fun m n M T).
 Proof.
@@ -56,27 +57,27 @@ Definition tsmor m n (M : tmatrix n m) : mor m n :=
   fun T => Linear (@tsmor_is_linear m n M T).
 
 Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
-  [ffun vj => (vi == vj)%:R]%R.
+  [ffun vj => (vi == vj)%:R].
 
 Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
 Proof. by rewrite !ffunE eq_sym. Qed.
 
 Lemma sum_tpbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
-  (\sum_vj (tpbasis vi vj *: F vj) = F vi)%R.
+  (\sum_vj (tpbasis vi vj *: F vj) = F vi).
 Proof.
 rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
 Lemma sum_tpbasisKo n (vi : n.-tuple I) (F : tpower n R) :
-  (\sum_vj (F vj *: tpbasis vi vj) = F vi)%R.
+  (\sum_vj (F vj *: tpbasis vi vj) = F vi).
 Proof.
 rewrite (bigD1 vi) //= !ffunE eqxx big1 ?addr0 /GRing.scale /= ?mulr1 //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite mulr0.
 Qed.
 
 Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
-  v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i))%R.
+  v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i)).
 Proof.
 apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
@@ -105,10 +106,10 @@ split => [Hf | [M] HM].
 Qed.
 
 Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
-  [ffun vi => ket vi *: bra]%R.
+  [ffun vi => ket vi *: bra].
 
 Definition mults m (M1 M2 : tsquare m) : tsquare m :=
-  [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]]%R.
+  [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]].
 
 Definition idts m : tsquare m := [ffun vi => tpbasis vi].
 Definition idmor n : endo n := fun T => GRing.idfun_linear _.
@@ -135,7 +136,7 @@ Variables m n : nat.
 Definition tensor_tsquare (M1 : tsquare m) (M2 : tsquare n) : tsquare (m + n) :=
   [ffun vi => [ffun vj =>
      M1 (extract (lens_left m n) vi) (extract (lens_left m n) vj) *
-     M2 (extract (lens_right m n) vi) (extract (lens_right m n) vj)]]%R.
+     M2 (extract (lens_right m n) vi) (extract (lens_right m n) vj)]].
 
 Lemma tensor_linearl (M2 : tsquare n) : linear (tensor_tsquare ^~ M2).
 Proof.
@@ -237,7 +238,7 @@ Qed.
 Section asym_focus.
 Variables (n m p : nat) (l : lens (m+n) m) (l' : lens (p+n) p) (tr : mor m p).
 
-Lemma addKn_any : m + n - m = p + n - p.
+Lemma addKn_any : (m + n - m = p + n - p)%N.
 Proof. by rewrite !addKn. Qed.
 
 Definition asym_focus_fun : morfun (m + n) (p + n) :=
@@ -278,7 +279,7 @@ rewrite focusE => /naturalityP [f Hf] /= T v.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf {tr} !ffunE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
-congr (_ *: v _)%R.
+congr (_ *: v _).
 apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
 Qed.
 
@@ -324,7 +325,7 @@ under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
 rewrite exchange_big; apply eq_bigr => /= vj _.
 rewrite !ffunE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
-congr (f _ vk * f' _ vj *: v _)%R.
+congr (f _ vk * f' _ vj *: v _).
 - by rewrite extract_merge_disjoint // disjoint_sym.
 - by rewrite extract_merge_disjoint.
 - by rewrite !merge_indices_extract_others inject_disjointC.
@@ -353,7 +354,7 @@ apply/ffunP => /= vi.
 rewrite !ffunE (extract_lothers_comp dI) -!extract_comp.
 rewrite -[in RHS]lothers_in_l_comp -(lothers_notin_l_comp l l') !sum_ffunE.
 apply eq_bigr => /= vj _; rewrite !ffunE.
-congr (_ *: v _)%R.
+congr (_ *: v _).
 exact: merge_indices_comp.
 Qed.
 End focus_props.
@@ -379,6 +380,7 @@ Notation tsapp l M := (focus l (tsmor M)).
 (* Conversion between tpower and vector space *)
 
 Section index_of_vec_bij.
+Local Open Scope nat_scope.
 Variable I : finType.
 Variable dI : I.
 Let vsz m := #|I| ^ m.
@@ -474,7 +476,7 @@ End index_of_vec_bij.
 Section vector.
 Variable (I : finType) (R : comRingType) (dI : I).
 Variable m : nat.
-Let vsz := #|I| ^ m.
+Let vsz := (#|I| ^ m)%N.
 Let tsquare n := tmatrix I R n n.
 
 Definition mxtsquare (M : 'M[R]_vsz) : tsquare m :=
@@ -494,7 +496,7 @@ Proof.
 move=> v; apply/matrixP => i j; by rewrite mxE !ffunE !vec_of_indexK.
 Qed.
 
-Lemma tsquaremx_mul : {morph tsquaremx : M1 M2 / mults M1 M2 >-> M1 *m M2}%R.
+Lemma tsquaremx_mul : {morph tsquaremx : M1 M2 / mults M1 M2 >-> M1 *m M2}.
 Proof.
 move=> M1 M2; apply/matrixP => i j; rewrite !mxE !ffunE.
 rewrite (reindex (@index_of_vec I m)) /=.
@@ -502,7 +504,7 @@ rewrite (reindex (@index_of_vec I m)) /=.
 exists (@vec_of_index _ dI m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
-Lemma mxtsquare_mul : {morph mxtsquare : M1 M2 / M1 *m M2 >-> mults M1 M2}%R.
+Lemma mxtsquare_mul : {morph mxtsquare : M1 M2 / M1 *m M2 >-> mults M1 M2}.
 Proof.
 move=> M1 M2; apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE !mxE.
 rewrite (reindex (@index_of_vec I m)) /=.
@@ -510,13 +512,13 @@ rewrite (reindex (@index_of_vec I m)) /=.
 exists (@vec_of_index _ dI m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
-Lemma tsquaremx_id : tsquaremx (idts I R m) = (1%:M)%R.
+Lemma tsquaremx_id : tsquaremx (idts I R m) = (1%:M).
 Proof.
 apply/matrixP => i j; rewrite !mxE !ffunE.
 by rewrite (inj_eq (bij_inj (vec_of_index_bij dI m))).
 Qed.
 
-Lemma mxtsquare_id : mxtsquare (1%:M)%R = idts I R m.
+Lemma mxtsquare_id : mxtsquare (1%:M) = idts I R m.
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
 by rewrite (inj_eq (bij_inj (index_of_vec_bij dI m))).
@@ -589,7 +591,7 @@ Qed.
 
 Lemma sum_enum_indices (CR : comRingType) (L : lmodType CR)
       m (F : m.-tuple I -> L) :
-  (\sum_vi F vi = foldr +%R 0 (map F (enum_indices m)))%R.
+  (\sum_vi F vi = foldr +%R 0 (map F (enum_indices m))).
 Proof.
 rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
 apply/esym/eq_bigl => vi. exact/mem_enum_indices.
