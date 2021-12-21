@@ -58,9 +58,6 @@ Definition tsmor m n (M : tmatrix n m) : mor m n :=
 Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
   [ffun vj => (vi == vj)%:R]%R.
 
-Definition morts m n (f : mor m n) : tmatrix n m :=
-  [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
-
 Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
 Proof. by rewrite !ffunE eq_sym. Qed.
 
@@ -84,6 +81,12 @@ Proof.
 apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
+
+Definition morts m n (f : mor m n) : tmatrix n m :=
+  [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
+
+Lemma morts_eq m n (f g : mor m n) : f =e g -> morts f = morts g.
+Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
 Lemma naturalityP m n (f : mor m n) :
   naturality f <-> exists M, f =e tsmor M.
@@ -334,14 +337,7 @@ Proof.
 move=> T v; apply/ffunP => /= vi.
 rewrite focusE !ffunE !sum_ffunE.
 under eq_bigr do rewrite !focusE !ffunE !sum_ffunE scaler_sumr.
-rewrite pair_bigA /=.
-rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
-         (extract (lens_left m n) v, extract (lens_right m n) v))); last first.
-  exists (fun v : m.-tuple I * n.-tuple I => [tuple of v.1 ++ v.2]) => /= vj _. 
-    rewrite -[RHS]extract_lens_id -(lens_left_right m n).
-    by apply/val_inj; rewrite /= map_cat.
-  case: vj => vl vr /=; congr pair; apply eq_from_tnth => i;
-    by rewrite tnth_map tnth_mktuple (tnth_lshift,tnth_rshift).
+rewrite reindex_left_right.
 apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
 by rewrite scalerA inject_all // lens_left_right_disjoint.

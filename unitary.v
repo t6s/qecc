@@ -104,35 +104,23 @@ Qed.
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
   naturality f -> unitary_endo f -> unitary_endo (focus l f).
 Proof.
-rewrite /unitary_endo /unitaryts => /naturalityP [M] Nf /eqP Uf.
+rewrite /unitary_endo /unitaryts => /naturalityP [M] Nf /eqP.
+rewrite (morts_eq Nf) (morts_eq (focus_eq dI l Nf)) => Uf {Nf f}.
 apply/eqP/ffunP => vi; apply/ffunP => vj.
 move: Uf => /(f_equal (fun f : tsquare m => f (extract l vi))).
-move/(f_equal (fun f : tpower I m C^o => f (extract l vj))) => Uf.
+move/(f_equal (fun f : tpower I m C^o => f (extract l vj))).
 rewrite !ffunE.
+under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
+move => Uf.
 under eq_bigr do rewrite ffunE.
-rewrite (reindex (fun v : m.-tuple I * (n-m).-tuple I =>
-                    merge_indices dI l (fst v) (snd v))) /=; last first.
-  exists (fun v => (extract l v, extract (lothers l) v)) => // v _.
-    by rewrite extract_merge extract_lothers_merge; case: v.
-  by rewrite /= merge_indices_extract.
-rewrite -[LHS](pair_bigA _
-    (fun i j => ((morts (focus l f) (merge_indices dI l i j) vi)^*)%C *
-                  morts (focus l f) (merge_indices dI l i j) vj)) /=.
-move: Uf.
-rewrite !ffunE.
-under eq_bigr do rewrite !ffunE !Nf !ffunE !sum_tpbasisKo.
-move=> Uf.
+rewrite (reindex_merge_indices _ dI l) /=.
 case/boolP: (extract (lothers l) vi == extract (lothers l) vj) => /eqP Hij;
   last first.
   case vij: (_ == _).
     by elim Hij; rewrite (eqP vij).
   rewrite big1 // => i _.
   rewrite big1 // => j _.
-  rewrite !ffunE !(focus_eq dI l Nf).
-  have := morts_focus l M (merge_indices dI l i j) vi.
-  have := morts_focus l M (merge_indices dI l i j) vj.
-  rewrite !ffunE => -> ->.
-  rewrite extract_lothers_merge extract_merge.
+  rewrite !morts_focus extract_lothers_merge extract_merge.
   case: ifP => /eqP Hovi.
     case: ifP => /eqP Hovj.
       elim Hij; by rewrite -Hovi Hovj.
@@ -140,19 +128,10 @@ case/boolP: (extract (lothers l) vi == extract (lothers l) vj) => /eqP Hij;
   by rewrite conjc0 mul0r.
 transitivity (\sum_i ((M i (extract l vi))^*)%C * M i (extract l vj)).
   apply eq_bigr => i _.
-  under eq_bigr => vk _.
-    rewrite !ffunE !(focus_eq dI l Nf).
-    have := morts_focus l M (merge_indices dI l i vk) vi.
-    have := morts_focus l M (merge_indices dI l i vk) vj.
-    rewrite !ffunE => -> ->.
-    rewrite extract_lothers_merge extract_merge.
-    over.
-  rewrite /=.
+  under eq_bigr do rewrite !morts_focus extract_lothers_merge extract_merge.
   rewrite (bigD1 (extract (lothers l) vi)) //= big1; last first.
-    move=> j Hj.
-    by rewrite (negbTE Hj) conjc0 mul0r.
-  rewrite Hij !eqxx addr0.
-  by rewrite /GRing.scale /= !mulr1.
+    by move=> j Hj; rewrite (negbTE Hj) conjc0 mul0r.
+  by rewrite Hij !eqxx addr0 /GRing.scale /= !mulr1.
 rewrite Uf.
 rewrite -[in RHS](merge_indices_extract dI l vi).
 rewrite -[in RHS](merge_indices_extract dI l vj) -Hij.

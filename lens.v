@@ -528,6 +528,36 @@ by rewrite !tnth_map tnth_ord_tuple tnth_rshift.
 Qed.
 End lens_left_right.
 
+(* reindexing *)
+Section reindex.
+Variables (R : Type) (idx : R) (op : Monoid.com_law idx) (I : finType) (dI : I).
+
+Lemma reindex_merge_indices n m (l : lens n m) F :
+  \big[op/idx]_i F i = \big[op/idx]_i \big[op/idx]_j F (merge_indices dI l i j).
+Proof.
+rewrite [RHS](pair_bigA _ (fun i j => F (merge_indices dI l i j))).
+rewrite (reindex (fun v : m.-tuple I * (n-m).-tuple I =>
+                    merge_indices dI l (fst v) (snd v))) //=.
+exists (fun v => (extract l v, extract (lothers l) v)) => // v _.
+  by rewrite extract_merge extract_lothers_merge; case: v.
+by rewrite /= merge_indices_extract.
+Qed.
+
+Lemma reindex_left_right m n (F : m.-tuple I -> n.-tuple I -> R) :
+  \big[op/idx]_i \big[op/idx]_j F i j =
+  \big[op/idx]_v F (extract (lens_left m n) v) (extract (lens_right m n) v).
+Proof.
+rewrite pair_bigA /=.
+rewrite [LHS](reindex (fun v : (m+n).-tuple I =>
+         (extract (lens_left m n) v, extract (lens_right m n) v))) //.
+exists (fun v : m.-tuple I * n.-tuple I => [tuple of v.1 ++ v.2]) => /= vj _.
+  rewrite -[RHS]extract_lens_id -(lens_left_right m n).
+  by apply/val_inj; rewrite /= map_cat.
+case: vj => vl vr /=; congr pair; apply eq_from_tnth => i;
+by rewrite tnth_map tnth_mktuple (tnth_lshift,tnth_rshift).
+Qed.
+End reindex.
+
 Section inject_all.
 Variables (I : Type) (m n : nat) (lm : lens (m+n) m) (ln : lens (m+n) n).
 Hypothesis Hdisj : [disjoint lm & ln].
