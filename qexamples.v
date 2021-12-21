@@ -9,7 +9,8 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 
 (* Reduce a linear form *)
-Definition linE := (mulr0,mul0r,mulr1,mul1r,addr0,add0r,scale0r,scale1r).
+Definition linE :=
+  (mulr0,mul0r,mulr1,mul1r,addr0,add0r,subr0,oppr0,scale0r,scale1r).
 
 Section gate_examples.
 Import Num.Theory.
@@ -122,7 +123,7 @@ all: rewrite !(linE,sum_tpbasisK,ffunE).
 all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: rewrite !(linE,sum_tpbasisK,ffunE).
 all: time (rewrite !sum_enum_indices /= !ffunE /=).
-all: by rewrite !(linE,subr0,oppr0).
+all: by rewrite !linE.
 Qed.
 
 Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
@@ -135,11 +136,11 @@ Lemma hadamardK : involutive (tsmor hadamard Co).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: do! rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
+all: do! rewrite !(linE,ffunE,scalerDl,sum_enum_indices) /=.
 all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
 all: rewrite !scalerA.
 all: simpc.
-all: rewrite !(linE,subr0).
+all: rewrite !linE.
 all: rewrite -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
 1: rewrite addrCA -addrA subrr linE -scalerDl.
 2: rewrite opprK addrAC !addrA subrr linE -scalerDl.
@@ -148,32 +149,44 @@ all: simpc.
 all: by rewrite Hnn mul0r scale1r.
 Qed.
 
+Lemma hadamardU : unitaryts hadamard.
+Proof.
+apply/eqP/eq_from_indicesP; do !(apply/andP; split) => //=;
+  apply/eqP/eq_from_indicesP; do !(apply/andP; split); apply /eqP => //=.
+all: rewrite !ffunE.
+all: time (rewrite sum_enum_indices /= !ffunE !eq_ord_tuple /= !linE).
+(* 16s *)
+all: simpc => //.
+all: rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //.
+all: by rewrite -mulr2n -mulr_natl divrr // nat_unit.
+Qed.
+
 (*
 (* Trying to check the hadamart representation of cnot... *)
 Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
-all: rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
-rewrite 50!(eq_ord_tuple,linE,subr0,ffunE,scalerDl) /=.
+all: rewrite !(linE,ffunE,scalerDl,sum_enum_indices) /=.
+rewrite 50!(eq_ord_tuple,linE,ffunE,scalerDl) /=.
 rewrite !enum_ordinalE /=.
-rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /=.
 rewrite !enum_ordinalE /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite !(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
-rewrite !(linE,subr0,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /= !enum_ordinalE /= !(linE,subr0) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
 rewrite -!scalerA !linE.
 rewrite !(scalerA,addrA,scalerDr).
 (* have Hmin1 : ((1 *- 1) = -1 :> R)%R by rewrite -mulNrn. *)
