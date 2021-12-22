@@ -149,6 +149,8 @@ all: simpc.
 all: by rewrite Hnn mul0r scale1r.
 Qed.
 
+(* Try on a fast machine ... *)
+(*
 Lemma hadamardU : unitaryts hadamard.
 Proof.
 apply/eqP/eq_from_indicesP; do !(apply/andP; split) => //=;
@@ -160,6 +162,7 @@ all: simpc => //.
 all: rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //.
 all: by rewrite -mulr2n -mulr_natl divrr // nat_unit.
 Qed.
+*)
 
 (*
 (* Trying to check the hadamart representation of cnot... *)

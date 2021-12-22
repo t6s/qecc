@@ -150,7 +150,7 @@ End lens_index.
 (* Focusing on subvector *)
 Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
-Definition focus1 (t : n.-tuple T) := inject t (f (extract t)).
+Definition focus1 t := inject t (f (extract t)).
 
 Lemma focus1_out t i : i \notin l -> tnth (focus1 t) i = tnth t i.
 Proof.

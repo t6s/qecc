@@ -10,6 +10,7 @@ Local Open Scope ring_scope.
 
 Reserved Notation "f \v g" (at level 50, format "f  \v  g").
 Reserved Notation "f =e g" (at level 70).
+Reserved Notation "M1 '*t' M2" (at level 50).
 
 Section tensor_space.
 Variables (I : finType) (dI : I) (R : comRingType).
@@ -89,17 +90,28 @@ Definition morts m n (f : mor m n) : tmatrix n m :=
 Lemma morts_eq m n (f g : mor m n) : f =e g -> morts f = morts g.
 Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
+Lemma tsmorK m n : cancel (@tsmor m n) (@morts m n).
+Proof.
+by move=> M; apply/ffunP => vi; apply/ffunP=> vj; rewrite !ffunE sum_tpbasisKo.
+Qed.
+
+Lemma mortsK n m (f : mor m n) :
+  naturality f -> tsmor (morts f) =e f.
+Proof.
+move=> Hf T v.
+rewrite [in RHS](decompose_tpower v) linear_sum.
+apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
+apply eq_bigr => /= vj _; rewrite !ffunE.
+set h : R^o -> T := *:%R^~ _.
+have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
+by rewrite -(Hf _ _ (Linear hlin) (tpbasis vj)) ffunE.
+Qed.
+
 Lemma naturalityP m n (f : mor m n) :
   naturality f <-> exists M, f =e tsmor M.
 Proof.
 split => [Hf | [M] HM].
-- exists (morts f) => T /= v.
-  rewrite [in LHS](decompose_tpower v) linear_sum.
-  apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
-  apply eq_bigr => /= vj _; rewrite !ffunE.
-  set h : R^o -> T := *:%R^~ _.
-  have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-  by rewrite -(Hf _ _ (Linear hlin) (tpbasis vj)) ffunE.
+- by exists (morts f) => v T; rewrite mortsK.
 - move=> T1 T2 h /= v; apply/ffunP => /= vi.
   rewrite !HM !ffunE linear_sum; apply eq_bigr => vj _.
   by rewrite linearZ_LR !ffunE.
@@ -108,8 +120,19 @@ Qed.
 Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
   [ffun vi => ket vi *: bra].
 
-Definition mults m (M1 M2 : tsquare m) : tsquare m :=
+Definition mults m n p (M1 : tmatrix n m) (M2 : tmatrix m p) : tmatrix n p :=
   [ffun vi => [ffun vj => \sum_vk M1 vi vk * M2 vk vj]].
+
+Notation "M1 '*t' M2" := (mults M1 M2).
+
+Lemma multsA m n p q (M1 : tmatrix n m) (M2 : tmatrix m p) (M3 : tmatrix p q) :
+  (M1 *t M2) *t M3 = M1 *t (M2 *t M3).
+Proof.
+apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE.
+under eq_bigr do rewrite !ffunE big_distrl /=.
+rewrite exchange_big /=; apply eq_bigr => vk _.
+by rewrite !ffunE big_distrr /=; apply eq_bigr => vl _; rewrite mulrA.
+Qed.
 
 Definition idts m : tsquare m := [ffun vi => tpbasis vi].
 Definition idmor n : endo n := fun T => GRing.idfun_linear _.
@@ -304,7 +327,8 @@ move=> T v; apply/ffunP => /= vi.
 by rewrite !focusE /focus_fun /= uncurryK.
 Qed.
 
-Lemma tsmor_comp (M N : tsquare n) : tsmor (mults M N) =e tsmor M \v tsmor N.
+Lemma tsmor_comp (M : tmatrix n m)  (N : tmatrix m p) :
+  tsmor (mults M N) =e tsmor M \v tsmor N.
 Proof.
 move=> T v; apply/ffunP => vi; rewrite !ffunE.
 under eq_bigr do rewrite !ffunE !scaler_suml.
@@ -375,6 +399,7 @@ End tensor_space.
 
 Notation "f1 =e f2" := (eq_mor f1 f2).
 Notation "f \v g" := (comp_mor f g).
+Notation "M1 '*t' M2" := (mults M1 M2).
 Notation tsapp l M := (focus l (tsmor M)).
 
 (* Conversion between tpower and vector space *)
@@ -475,68 +500,72 @@ End index_of_vec_bij.
 (* tpower n R^o forms a vector space of size #|I|^m *)
 Section vector.
 Variable (I : finType) (R : comRingType) (dI : I).
-Variable m : nat.
-Let vsz := (#|I| ^ m)%N.
-Let tsquare n := tmatrix I R n n.
+Let vsz m := (#|I| ^ m)%N.
+Let tmatrix := tmatrix I R.
 
-Definition mxtsquare (M : 'M[R]_vsz) : tsquare m :=
+Section mxtmatrix.
+Variables m n : nat.
+Definition mxtmatrix (M : 'M[R]_(vsz m,vsz n)) : tmatrix m n :=
   [ffun vi => [ffun vj => M (index_of_vec vi) (index_of_vec vj)]].
 
-Definition tsquaremx (M : tsquare m) : 'M[R]_vsz :=
+Definition tmatrixmx (M : tmatrix m n) : 'M[R]_(vsz m,vsz n) :=
   \matrix_(i,j) M (vec_of_index dI i) (vec_of_index dI j).
 
-Lemma tsquaremxK : cancel tsquaremx mxtsquare.
+Lemma tmatrixmxK : cancel tmatrixmx mxtmatrix.
 Proof.
 move=> v; apply/ffunP => vi; apply/ffunP => vj.
 by rewrite !ffunE mxE !index_of_vecK.
 Qed.
 
-Lemma mxtsquareK : cancel mxtsquare tsquaremx.
+Lemma mxtmatrixK : cancel mxtmatrix tmatrixmx.
 Proof.
 move=> v; apply/matrixP => i j; by rewrite mxE !ffunE !vec_of_indexK.
 Qed.
+End mxtmatrix.
 
-Lemma tsquaremx_mul : {morph tsquaremx : M1 M2 / mults M1 M2 >-> M1 *m M2}.
+Lemma tmatrixmx_mul m n p (M1 : tmatrix m n) (M2 : tmatrix n p) :
+  tmatrixmx (M1 *t M2) = tmatrixmx M1 *m tmatrixmx M2.
 Proof.
-move=> M1 M2; apply/matrixP => i j; rewrite !mxE !ffunE.
-rewrite (reindex (@index_of_vec I m)) /=.
+apply/matrixP => i j; rewrite !mxE !ffunE.
+rewrite (reindex (@index_of_vec I n)) /=.
   apply eq_bigr => vi _; by rewrite !mxE index_of_vecK.
-exists (@vec_of_index _ dI m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
+exists (@vec_of_index _ dI n) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
-Lemma mxtsquare_mul : {morph mxtsquare : M1 M2 / M1 *m M2 >-> mults M1 M2}.
+Lemma mxtmatrix_mul m n p (M1 : 'M_(vsz m,vsz n)) (M2 : 'M_(vsz n,vsz p)) :
+  mxtmatrix (M1 *m M2) = mxtmatrix M1 *t mxtmatrix M2.
 Proof.
-move=> M1 M2; apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE !mxE.
-rewrite (reindex (@index_of_vec I m)) /=.
+apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE !mxE.
+rewrite (reindex (@index_of_vec I n)) /=.
   apply eq_bigr => vk _; by rewrite !ffunE.
-exists (@vec_of_index _ dI m) => x y; by rewrite (vec_of_indexK,index_of_vecK).
+exists (@vec_of_index _ dI n) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
-Lemma tsquaremx_id : tsquaremx (idts I R m) = (1%:M).
+Lemma tmatrixmx_id m : tmatrixmx (idts I R m) = (1%:M).
 Proof.
 apply/matrixP => i j; rewrite !mxE !ffunE.
 by rewrite (inj_eq (bij_inj (vec_of_index_bij dI m))).
 Qed.
 
-Lemma mxtsquare_id : mxtsquare (1%:M) = idts I R m.
+Lemma mxtmatrix_id m : mxtmatrix (1%:M) = idts I R m.
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
 by rewrite (inj_eq (bij_inj (index_of_vec_bij dI m))).
 Qed.
 
-Definition vec_tpower (X : 'rV[R]_vsz) : tpower I m R^o :=
+Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
 
-Definition tpower_vec (X : tpower I m R^o) : 'rV[R]_vsz :=
+Definition tpower_vec m (X : tpower I m R^o) : 'rV[R]_(vsz m) :=
   \row_i X (vec_of_index dI i).
 
-Definition mxendo (M : 'M[R]_vsz) := tsmor (mxtsquare M).
+Definition mxmor m n (M : 'M_(vsz m,vsz n)) := tsmor (mxtmatrix M).
 
-Lemma tpower_vector : Vector.axiom vsz (tpower I m R^o).
+Lemma tpower_vector m : Vector.axiom (vsz m) (tpower I m R^o).
 Proof.
-exists tpower_vec.
+exists (@tpower_vec m).
 - move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
-- exists vec_tpower.
+- exists (@vec_tpower m).
   + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.

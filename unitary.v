@@ -12,28 +12,25 @@ Local Open Scope complex_scope.
 Section unitary.
 Variable R : rcfType.
 Let C := [comRingType of R[i]].
+Let Co := [lmodType C of C^o].
 Variable I : finType.
 Variable dI : I.
 
 Notation tsquare n := (tmatrix I C n n).
 Notation idts := (idts I C).
-Notation tsquaremx := (tsquaremx dI).
+Notation tmatrixmx := (tmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
 
-Section unitary_def.
-Variable n : nat.
-Variable M : 'M[C]_n.
+Definition hadjmx n m (M : 'M[C]_(n,m)) := \matrix_(i,j) (M j i)^*.
 
-Definition hadjmx : 'M[C]_n := \matrix_(i,j) (M j i)^*.
+Definition unitarymx n M := @hadjmx n n M *m M == 1%:M.
 
-Definition unitarymx := hadjmx *m M == 1%:M.
-End unitary_def.
-
-Lemma hadjmx_mul n : {morph @hadjmx n : M N / M *m N >-> N *m M}.
+Lemma hadjmx_mul n m p (M : 'M[C]_(n,m)) (N : 'M[C]_(m,p)) :
+  hadjmx (M *m N) = hadjmx N *m hadjmx M.
 Proof.
-move=> M N; apply/matrixP => i j; rewrite !mxE.
+apply/matrixP => i j; rewrite !mxE.
 rewrite rmorph_sum; apply eq_bigr => /= k _.
 by rewrite !mxE -rmorphM /= mulrC.
 Qed.
@@ -45,35 +42,81 @@ move => /eqP UM /eqP UN; apply/eqP.
 by rewrite hadjmx_mul mulmxA -(mulmxA (hadjmx N)) UM mulmx1.
 Qed.
 
-Section unitary_tsquare.
+Section unitary_tmatrix.
 Variable n : nat.
 Variable M : tsquare n.
 
-Definition hadjts : tsquare n := [ffun vi => [ffun vj => (M vj vi)^*]].
+Definition hadjts m (N : tmatrix I C m n) : tmatrix I C n m :=
+  [ffun vi => [ffun vj => (N vj vi)^*]].
 
-Definition unitaryts := mults hadjts M == idts n.
+Definition unitaryts := mults (hadjts M) M == idts n.
 
-Lemma hadjtsE : tsquaremx hadjts = hadjmx (tsquaremx M).
+Lemma hadjtsE m (N : tmatrix I C m n) :
+  tmatrixmx (hadjts N) = hadjmx (tmatrixmx N).
 Proof. apply/matrixP => i j; by rewrite !mxE !ffunE. Qed.
 
-Lemma unitarytsE : unitaryts = unitarymx (tsquaremx M).
+Lemma unitarytsE : unitaryts = unitarymx (tmatrixmx M).
 Proof.
 case/boolP: unitaryts => /eqP Hts; apply/esym/eqP.
-- by rewrite -hadjtsE -tsquaremx_mul Hts tsquaremx_id.
+- by rewrite -hadjtsE -tmatrixmx_mul Hts tmatrixmx_id.
 - move=> Hmx; elim Hts.
-  by rewrite -mxtsquare_id // -Hmx mxtsquare_mul // -hadjtsE !tsquaremxK.
+  by rewrite -mxtmatrix_id // -Hmx mxtmatrix_mul // -hadjtsE !tmatrixmxK.
 Qed.
-End unitary_tsquare.
+End unitary_tmatrix.
+
+Lemma hadjts_mul n m p M N : hadjts (M *t N) = @hadjts p m N *t @hadjts m n M.
+Proof.
+rewrite -[LHS](tmatrixmxK dI) hadjtsE tmatrixmx_mul.
+by rewrite hadjmx_mul -!hadjtsE -tmatrixmx_mul tmatrixmxK.
+Qed.
 
 Lemma unitaryts_mul n (M N : tsquare n) :
   unitaryts M -> unitaryts N -> unitaryts (mults M N).
-Proof. rewrite !unitarytsE tsquaremx_mul; exact/unitarymx_mul. Qed.
+Proof. rewrite !unitarytsE tmatrixmx_mul; exact/unitarymx_mul. Qed.
 
-Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtsquare M).
-Proof. by rewrite unitarytsE mxtsquareK. Qed.
+Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtmatrix M).
+Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
 Section unitary_endo.
-Definition unitary_endo n (f : endo n) := unitaryts (morts f).
+Definition tpinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
+Definition unitary_endo n (f : endo n) :=
+  forall s t, tpinner (f Co s) (f Co t) = tpinner s t.
+
+Lemma unitary_endoP n f :
+  naturality f -> reflect (@unitary_endo n f) (unitaryts (morts f)).
+Proof.
+rewrite /unitaryts /unitary_endo => Nf.
+apply/(iffP idP) => Uf.
+- case/naturalityP: Nf => M Nf s t.
+  move/eqP: Uf; rewrite (morts_eq Nf) tsmorK.
+  move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
+  rewrite !multsA -multsA -hadjts_mul.
+  rewrite (_ : idts _ *t curryn0 t = curryn0 t); last by
+    rewrite -[LHS](tmatrixmxK dI) tmatrixmx_mul tmatrixmx_id mul1mx tmatrixmxK.
+  move/(f_equal (fun M : tsquare 0 => M [tuple] [tuple])).
+  rewrite !ffunE. under eq_bigr do rewrite !ffunE.
+  under [RHS]eq_bigr do (rewrite !ffunE; simpc).
+  move=> Uf.
+  transitivity (\sum_i ((s i)^*)%C * t i) => //.
+  rewrite -Uf.
+  apply eq_bigr => vi _; rewrite !Nf !ffunE.
+  rewrite /GRing.scale /=.
+  by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
+- case/naturalityP: Nf => M Nf.
+  rewrite (morts_eq Nf) tsmorK.
+  apply/eqP/ffunP => vi; apply/ffunP => vj.
+  rewrite !ffunE.
+  under eq_bigr do rewrite !ffunE.
+  move: Uf.
+  move/(_ (tpbasis C vi) (tpbasis C vj)).
+  rewrite !Nf /tpinner.
+  under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
+  move ->.
+  under eq_bigr do rewrite !ffunE.
+  rewrite (bigD1 vi) //= big1 ?addr0.
+    rewrite eqxx /=. simpc. by rewrite eq_sym.
+  move=> i Hi. by rewrite eq_sym (negbTE Hi) conjc0 mul0r.
+Qed.
 
 Lemma scalerb_if (x : C) (b : bool) :
   x *: b%:R = if b then (x : C^o) else 0.
@@ -101,13 +144,15 @@ Qed.
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
   naturality f -> unitary_endo f -> unitary_endo (focus l f).
 Proof.
-rewrite /unitary_endo /unitaryts => /naturalityP [M] Nf /eqP.
-rewrite (morts_eq Nf) (morts_eq (focus_eq dI l Nf)) => Uf {Nf f}.
+move=> Nf /(unitary_endoP Nf) => Uf.
+apply/unitary_endoP; first exact: focus_naturality.
+move: Nf Uf; rewrite /unitaryts => /naturalityP [M] Nf /eqP.
+rewrite (morts_eq Nf) (morts_eq (focus_eq dI l Nf)) tsmorK => Uf {Nf f}.
 apply/eqP/ffunP => vi; apply/ffunP => vj.
 move: Uf => /(f_equal (fun f : tsquare m => f (extract l vi))).
 move/(f_equal (fun f : tpower I m C^o => f (extract l vj))).
 rewrite !ffunE.
-under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
+under eq_bigr do rewrite !ffunE.
 move => Uf.
 under eq_bigr do rewrite ffunE.
 rewrite (reindex_merge_indices _ dI l) /=.
