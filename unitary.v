@@ -78,9 +78,9 @@ Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtmatrix M).
 Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
 Section unitary_endo.
-Definition tpinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
+Definition tinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
 Definition unitary_endo n (f : endo n) :=
-  forall s t, tpinner (f Co s) (f Co t) = tpinner s t.
+  forall s t, tinner (f Co s) (f Co t) = tinner s t.
 
 Lemma unitary_endoP n f :
   naturality f -> reflect (@unitary_endo n f) (unitaryts (morts f)).
@@ -109,7 +109,7 @@ apply/(iffP idP) => Uf.
   under eq_bigr do rewrite !ffunE.
   move: Uf.
   move/(_ (tpbasis C vi) (tpbasis C vj)).
-  rewrite !Nf /tpinner.
+  rewrite !Nf /tinner.
   under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
