@@ -553,6 +553,15 @@ apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
 by rewrite (inj_eq (bij_inj (index_of_vec_bij dI m))).
 Qed.
 
+Lemma mul1ts m n (M : tmatrix  m n) : idts I R m *t M = M.
+Proof.
+by rewrite -[LHS]tmatrixmxK tmatrixmx_mul tmatrixmx_id mul1mx tmatrixmxK.
+Qed.
+Lemma mults1 m n (M : tmatrix  m n) : M *t idts I R n = M.
+Proof.
+by rewrite -[LHS]tmatrixmxK tmatrixmx_mul tmatrixmx_id mulmx1 tmatrixmxK.
+Qed.
+
 Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
 

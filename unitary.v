@@ -86,96 +86,47 @@ Lemma unitary_endoP n f :
   naturality f -> reflect (@unitary_endo n f) (unitaryts (morts f)).
 Proof.
 rewrite /unitaryts /unitary_endo => Nf.
-apply/(iffP idP) => Uf.
-- case/naturalityP: Nf => M Nf s t.
-  move/eqP: Uf; rewrite (morts_eq Nf) tsmorK.
+apply/(iffP idP); case/naturalityP: Nf => M Nf; rewrite (morts_eq Nf) tsmorK.
+- move=> Uf s t; move/eqP: Uf.
   move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
-  rewrite !multsA -multsA -hadjts_mul.
-  rewrite (_ : idts _ *t curryn0 t = curryn0 t); last by
-    rewrite -[LHS](tmatrixmxK dI) tmatrixmx_mul tmatrixmx_id mul1mx tmatrixmxK.
+  rewrite !multsA -multsA -hadjts_mul mul1ts //.
   move/(f_equal (fun M : tsquare 0 => M [tuple] [tuple])).
   rewrite !ffunE. under eq_bigr do rewrite !ffunE.
   under [RHS]eq_bigr do (rewrite !ffunE; simpc).
-  move=> Uf.
-  transitivity (\sum_i ((s i)^*)%C * t i) => //.
-  rewrite -Uf.
+  move=> Uf; rewrite -[RHS]Uf.
   apply eq_bigr => vi _; rewrite !Nf !ffunE.
   rewrite /GRing.scale /=.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
-- case/naturalityP: Nf => M Nf.
-  rewrite (morts_eq Nf) tsmorK.
-  apply/eqP/ffunP => vi; apply/ffunP => vj.
-  rewrite !ffunE.
-  under eq_bigr do rewrite !ffunE.
-  move: Uf.
-  move/(_ (tpbasis C vi) (tpbasis C vj)).
+- move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
+  rewrite !ffunE; under eq_bigr do rewrite !ffunE.
+  have := Uf (tpbasis C vi) (tpbasis C vj).
   rewrite !Nf /tinner.
   under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
   rewrite (bigD1 vi) //= big1 ?addr0.
-    rewrite eqxx /=. simpc. by rewrite eq_sym.
-  move=> i Hi. by rewrite eq_sym (negbTE Hi) conjc0 mul0r.
-Qed.
-
-Lemma scalerb_if (x : C) (b : bool) :
-  x *: b%:R = if b then (x : C^o) else 0.
-Proof. rewrite /GRing.scale /=; by case: b; rewrite (mulr1, mulr0). Qed.
-
-Lemma morts_focus n m (l : lens n m) (M : tsquare m) vi vj :
-  morts (focus l (tsmor M)) vi vj =
-  if extract (lothers l) vi == extract (lothers l) vj
-  then M (extract l vi) (extract l vj) else 0.
-Proof.
-rewrite !ffunE focusE !ffunE sum_ffunE.
-rewrite (bigD1 (extract l vj)) //= big1.
-  rewrite !ffunE addr0 scalerb_if.
-  symmetry.
-  case: ifP => /eqP Hm.
-     by rewrite Hm merge_indices_extract eqxx.
-  case: ifP => // /eqP/(f_equal (extract (lothers l))).
-  by rewrite extract_lothers_merge => /esym.
-move=> i Hi.
-rewrite !ffunE scalerb_if.
-case: ifP => // /eqP/(f_equal (extract l)).
-rewrite extract_merge => Hm; by rewrite Hm eqxx in Hi.
+    by rewrite eqxx eq_sym /=; simpc.
+  by move=> i Hi; rewrite eq_sym (negbTE Hi) conjc0 mul0r.
 Qed.
 
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
   naturality f -> unitary_endo f -> unitary_endo (focus l f).
 Proof.
-move=> Nf /(unitary_endoP Nf) => Uf.
-apply/unitary_endoP; first exact: focus_naturality.
-move: Nf Uf; rewrite /unitaryts => /naturalityP [M] Nf /eqP.
-rewrite (morts_eq Nf) (morts_eq (focus_eq dI l Nf)) tsmorK => Uf {Nf f}.
-apply/eqP/ffunP => vi; apply/ffunP => vj.
-move: Uf => /(f_equal (fun f : tsquare m => f (extract l vi))).
-move/(f_equal (fun f : tpower I m C^o => f (extract l vj))).
-rewrite !ffunE.
-under eq_bigr do rewrite !ffunE.
-move => Uf.
-under eq_bigr do rewrite ffunE.
-rewrite (reindex_merge_indices _ dI l) /=.
-case/boolP: (extract (lothers l) vi == extract (lothers l) vj) => Hij;
-  last first.
-  case vij: (_ == _).
-    by rewrite (eqP vij) eqxx in Hij.
-  rewrite big1 // => i _.
-  rewrite big1 // => j _.
-  rewrite !morts_focus extract_lothers_merge extract_merge.
-  case: ifP => /eqP Hovi; last by rewrite conjc0 mul0r.
-  case: ifP => /eqP Hovj; last by rewrite mulr0.
-  by rewrite -Hovi Hovj eqxx in Hij.
-transitivity (\sum_i ((M i (extract l vi))^*)%C * M i (extract l vj)).
-  apply eq_bigr => i _.
-  under eq_bigr do rewrite !morts_focus extract_lothers_merge extract_merge.
-  rewrite (bigD1 (extract (lothers l) vi)) //= big1; last first.
-    by move=> j /negbTE -> ; rewrite conjc0 mul0r.
-  by rewrite Hij eqxx addr0.
-rewrite Uf.
-rewrite -[in RHS](merge_indices_extract dI l vi).
-rewrite -[in RHS](merge_indices_extract dI l vj) -(eqP Hij).
-by rewrite (inj_eq (@merge_indices_inj _ dI _ _ _ _)).
+rewrite /unitary_endo /tinner => /= Nf Uf s t.
+rewrite 2!(reindex_merge_indices _ dI l) /=.
+rewrite [LHS]exchange_big [RHS]exchange_big /=.
+apply eq_bigr => vj _.
+pose h := fun v : tpower I (n-m) Co => (v vj : Co).
+have lh : linear h by move=> x y z; rewrite /h !ffunE.
+set s' : tpower I m Co := map_tpower (Linear lh) (curry dI l s).
+set t' : tpower I m Co := map_tpower (Linear lh) (curry dI l t).
+move/(_ s' t') in Uf.
+transitivity (\sum_i ((s' i)^*)%C * t' i); last first.
+  by apply eq_bigr => vi _; rewrite !ffunE /= /h !ffunE.
+rewrite -Uf; apply eq_bigr => vi _.
+rewrite focusE /= /focus_fun.
+rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.
+by rewrite /s' /t' -!Nf !ffunE.
 Qed.
 End unitary_endo.  
 End unitary.
