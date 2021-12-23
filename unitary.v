@@ -82,11 +82,10 @@ Definition tinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
 Definition unitary_endo n (f : endo n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 
-Lemma unitary_endoP n f :
-  naturality f -> reflect (@unitary_endo n f) (unitaryts (morts f)).
+Lemma unitary_endoP n M : reflect (@unitary_endo n (tsmor M)) (unitaryts M).
 Proof.
-rewrite /unitaryts /unitary_endo => Nf.
-apply/(iffP idP); case/naturalityP: Nf => M Nf; rewrite (morts_eq Nf) tsmorK.
+rewrite /unitaryts /unitary_endo.
+apply/(iffP idP).
 - move=> Uf s t; move/eqP: Uf.
   move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
   rewrite !multsA -multsA -hadjts_mul mul1ts //.
@@ -94,13 +93,13 @@ apply/(iffP idP); case/naturalityP: Nf => M Nf; rewrite (morts_eq Nf) tsmorK.
   rewrite !ffunE. under eq_bigr do rewrite !ffunE.
   under [RHS]eq_bigr do (rewrite !ffunE; simpc).
   move=> Uf; rewrite -[RHS]Uf.
-  apply eq_bigr => vi _; rewrite !Nf !ffunE.
+  apply eq_bigr => vi _; rewrite !ffunE.
   rewrite /GRing.scale /=.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
 - move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
   have := Uf (tpbasis C vi) (tpbasis C vj).
-  rewrite !Nf /tinner.
+  rewrite /tinner.
   under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
@@ -121,7 +120,7 @@ have lh : linear h by move=> x y z; rewrite /h !ffunE.
 set s' : tpower I m Co := map_tpower (Linear lh) (curry dI l s).
 set t' : tpower I m Co := map_tpower (Linear lh) (curry dI l t).
 move/(_ s' t') in Uf.
-transitivity (\sum_i ((s' i)^*)%C * t' i); last first.
+transitivity (\sum_i (s' i)^* * t' i); last first.
   by apply eq_bigr => vi _; rewrite !ffunE /= /h !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
 rewrite focusE /= /focus_fun.
