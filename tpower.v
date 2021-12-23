@@ -43,6 +43,11 @@ Definition naturality m n (f : mor m n) :=
 Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
 
+Lemma tpsel_is_linear m vi : linear (fun v : tpower m R^o => v vi).
+Proof. by move=> x y z; rewrite !ffunE. Qed.
+Definition tpsel m vi : {linear tpower m R^o -> R^o} :=
+  Linear (@tpsel_is_linear m vi).
+
 Definition tsmor_fun m n (M : tmatrix n m) : morfun m n :=
   fun T v =>
     [ffun vi : n.-tuple I => \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj].
@@ -146,11 +151,8 @@ Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
-
 Lemma transpose_tsquare_involutive m : involutive (@transpose_tsquare m).
 Proof. move=> M. apply/ffunP => vi. apply/ffunP => vj. by rewrite !ffunE. Qed.
-
-
 
 (* Tensor product of tsquare matrices *)
 Section tensor_tsquare.

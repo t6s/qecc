@@ -115,17 +115,14 @@ rewrite /unitary_endo /tinner => /= Nf Uf s t.
 rewrite 2!(reindex_merge_indices _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
-pose h := fun v : tpower I (n-m) Co => (v vj : Co).
-have lh : linear h by move=> x y z; rewrite /h !ffunE.
-set s' : tpower I m Co := map_tpower (Linear lh) (curry dI l s).
-set t' : tpower I m Co := map_tpower (Linear lh) (curry dI l t).
-move/(_ s' t') in Uf.
-transitivity (\sum_i (s' i)^* * t' i); last first.
-  by apply eq_bigr => vi _; rewrite !ffunE /= /h !ffunE.
+pose sel s : tpower I m Co := map_tpower (tpsel C vj) (curry dI l s).
+move/(_ (sel s) (sel t)) in Uf.
+transitivity (\sum_i (sel s i)^* * sel t i); last first.
+  by apply eq_bigr => vi _; rewrite !ffunE /= !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
 rewrite focusE /= /focus_fun.
 rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.
-by rewrite /s' /t' -!Nf !ffunE.
+by rewrite -!Nf !ffunE.
 Qed.
 End unitary_endo.  
 End unitary.
