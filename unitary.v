@@ -92,9 +92,8 @@ apply/(iffP idP).
   move/(f_equal (fun M : tsquare 0 => M [tuple] [tuple])).
   rewrite !ffunE. under eq_bigr do rewrite !ffunE.
   under [RHS]eq_bigr do (rewrite !ffunE; simpc).
-  move=> Uf; rewrite -[RHS]Uf.
+  move=> Uf; rewrite -{}[RHS]Uf.
   apply eq_bigr => vi _; rewrite !ffunE.
-  rewrite /GRing.scale /=.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
 - move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
@@ -103,9 +102,7 @@ apply/(iffP idP).
   under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
-  rewrite (bigD1 vi) //= big1 ?addr0.
-    by rewrite eqxx eq_sym /=; simpc.
-  by move=> i Hi; rewrite eq_sym (negbTE Hi) conjc0 mul0r.
+  by rewrite sum_muleqr; case: (_ == _) => /=; simpc.
 Qed.
 
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :

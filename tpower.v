@@ -75,12 +75,16 @@ rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
+Lemma sum_muleqr (A : finType) (S : comRingType) (F : A -> S) (v : A) :
+  \sum_a F a * (v == a)%:R = F v.
+Proof.
+rewrite (bigD1 v) //= big1 ?(addr0,eqxx,mulr1) // => a av.
+by rewrite eq_sym (negbTE av) mulr0.
+Qed.
+
 Lemma sum_tpbasisKo n (vi : n.-tuple I) (F : tpower n R) :
   (\sum_vj (F vj *: tpbasis vi vj) = F vi).
-Proof.
-rewrite (bigD1 vi) //= !ffunE eqxx big1 ?addr0 /GRing.scale /= ?mulr1 //.
-move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite mulr0.
-Qed.
+Proof. under eq_bigr do rewrite !ffunE. by rewrite sum_muleqr. Qed.
 
 Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
   v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i)).
