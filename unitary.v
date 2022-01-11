@@ -90,8 +90,7 @@ apply/(iffP idP).
   move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
   rewrite !multsA -multsA -hadjts_mul mul1ts //.
   move/(f_equal (fun M : tsquare 0 => M [tuple] [tuple])).
-  rewrite !ffunE. under eq_bigr do rewrite !ffunE.
-  under [RHS]eq_bigr do (rewrite !ffunE; simpc).
+  rewrite !ffunE. under [RHS]eq_bigr do rewrite !ffunE.
   move=> Uf; rewrite -{}[RHS]Uf.
   apply eq_bigr => vi _; rewrite !ffunE.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
@@ -102,7 +101,7 @@ apply/(iffP idP).
   under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
-  by rewrite sum_muleqr; case: (_ == _) => /=; simpc.
+  by rewrite sum_muleqr [LHS]conjc_nat.
 Qed.
 
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
@@ -113,7 +112,6 @@ rewrite 2!(reindex_merge_indices _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
 pose sel s : tpower I m Co := map_tpower (tpsel C vj) (curry dI l s).
-move/(_ (sel s) (sel t)) in Uf.
 transitivity (\sum_i (sel s i)^* * sel t i); last first.
   by apply eq_bigr => vi _; rewrite !ffunE /= !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
