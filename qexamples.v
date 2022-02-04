@@ -106,14 +106,14 @@ Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 Lemma cnotK : involutive (tsmor cnot Co).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(linE,sum_tpbasisK,ffunE)).
+all: time (by rewrite !(tsmorE,linE,sum_tpbasisK,ffunE)).
 (* 2.8s *)
 Qed.
 
 Lemma qnotK : involutive (tsmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(linE,sum_tpbasisK,ffunE).
+all: by rewrite !(tsmorE,linE,sum_tpbasisK,ffunE).
 Qed.
 
 Lemma qnotU : unitaryts qnot.
@@ -126,6 +126,16 @@ all: time (rewrite !sum_enum_indices /= !ffunE /=).
 all: by rewrite !linE.
 Qed.
 
+Lemma cnotU : unitary_endo (tsmor cnot).
+Proof.
+rewrite /unitary_endo /tinner /= => s t.
+rewrite !sum_enum_indices /=.
+rewrite !tsmorE.
+time (rewrite !ffunE /= !linE).
+rewrite !sum_tpbasisK.
+by rewrite (addrC _ (_ * _)).
+Qed.
+
 Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 
@@ -136,7 +146,7 @@ Lemma hadamardK (T : lmodType C) : involutive (tsmor hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (do! rewrite !(linE,ffunE,scalerDl,sum_enum_indices) /=).
+all: time (do! rewrite !(linE,ffunE,tsmorE,scalerDl,sum_enum_indices) /=).
 all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
 all: rewrite !scalerA.
 all: simpc.
@@ -160,44 +170,36 @@ by simpc.
 Qed.
 
 (* Try on a fast machine ... *)
-(*
-Lemma hadamardU : unitaryts hadamard.
+Lemma hadamardU' : unitaryts hadamard.
 Proof.
 apply/eqP/eq_from_indicesP; do !(apply/andP; split) => //=;
   apply/eqP/eq_from_indicesP; do !(apply/andP; split); apply /eqP => //=.
-all: rewrite !ffunE.
-all: time (rewrite sum_enum_indices /= !ffunE !eq_ord_tuple /= !linE).
-(* 16s *)
-all: simpc => //.
-all: rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //.
-all: by rewrite -mulr2n -mulr_natl divrr // nat_unit.
+par: time (rewrite !ffunE;
+     rewrite sum_enum_indices /= !ffunE !eq_ord_tuple /= !linE;
+     simpc => //;
+     rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //;
+     by rewrite -mulr2n -mulr_natl divrr // nat_unit).
 Qed.
-*)
 
 (*
 (* Trying to check the hadamart representation of cnot... *)
 Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
-all: rewrite !(linE,ffunE,scalerDl,sum_enum_indices) /=.
+all: rewrite !(linE,tsmorE,ffunE,scalerDl,sum_enum_indices) /=.
 rewrite 50!(eq_ord_tuple,linE,ffunE,scalerDl) /=.
 rewrite !enum_ordinalE /=.
 rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /=.
-rewrite !enum_ordinalE /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /= !enum_ordinalE /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !enum_ordinalE /= !tsmorE.
+rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite !sum_tpbasisK !tsmorE.
+rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
 rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
 rewrite -!scalerA !linE.
@@ -226,13 +228,13 @@ rewrite -!rmorphM.
 rewrite !mul1r -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //=.
 Abort.
 
-(* Checking equality of matrices *)
 (*
-Lemma cnotK' : mul_tsquare cnot cnot = id_tsquare _ _ _.
+(* Checking equality of matrices *)
+Lemma cnotK' : mults cnot cnot = idts _ _ _.
 Proof.
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (apply/eqP; do! rewrite !(linE,ffunE,sum_enum_indices) => //=).
+par: time (apply/eqP; do! rewrite !(linE,ffunE,sum_enum_indices) => //=).
 (* 18s ! *)
 Qed.
 *)

@@ -52,13 +52,13 @@ Definition cup_fun : morfun I R (n-2) n :=
 Lemma cap_is_linear T : linear (@cap_fun T).
 Proof.
 move=> x y z.
-by rewrite /cap_fun /= curry_is_linear tsmor_is_linear uncurry0_is_linear.
+by rewrite /cap_fun /= curry_is_linear linearPZ uncurry0_is_linear.
 Qed.
 
 Lemma cup_is_linear T : linear (@cup_fun T).
 Proof.
 move=> x y z.
-by rewrite /cup_fun /= curry0_is_linear tsmor_is_linear uncurry_is_linear.
+by rewrite /cup_fun /= curry0_is_linear linearPZ uncurry_is_linear.
 Qed.
 
 Definition cap : mor I R n (n-2) :=
@@ -98,7 +98,7 @@ Lemma cup_sym n (l1 l2 : lens n 2) :
 Proof.
 move=> Hrev T v.
 apply/ffunP => vi.
-rewrite !ffunE !cast_tupleE !(big_pred1 [tuple]); try by case => -[].
+rewrite !(ffunE,tsmorE) !cast_tupleE !(big_pred1 [tuple]); try by case => -[].
 rewrite !ffunE.
 congr (_ *: v (extract _ vi))%R.
 - rewrite -(extract_rev _ Hrev) => {l2 Hrev}.
@@ -124,7 +124,7 @@ Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
 rewrite /cup_fun !focusE /=.
-do! rewrite !(ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
+do! rewrite !(tsmorE,ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
 have -> : [lens 0; 1] = lens_id 2 by eq_lens.
 rewrite !extract_lens_id.
 rewrite lens_left_1 !extract_merge !extract_lothers_merge.
@@ -171,7 +171,7 @@ rewrite !focusE /= /focus_fun /cap_fun !HM.
 apply/ffunP => vi.
 rewrite !(ffunE,sum_ffunE) /=.
 rewrite /uncurry0 /=.
-rewrite !(ffunE,sum_ffunE) /=.
+rewrite !(tsmorE,ffunE,sum_ffunE) /=.
 Abort.
 
 Lemma transpose_focus (M : tsquare 1) :

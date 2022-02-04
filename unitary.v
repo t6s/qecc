@@ -107,13 +107,13 @@ apply/(iffP idP).
   move/(f_equal (fun M : tsquare 0 => M [tuple] [tuple])).
   rewrite !ffunE. under [RHS]eq_bigr do rewrite !ffunE.
   move=> Uf; rewrite -{}[RHS]Uf.
-  apply eq_bigr => vi _; rewrite !ffunE.
+  apply eq_bigr => vi _; rewrite !ffunE !tsmorE.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
 - move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
   have := Uf (tpbasis C vi) (tpbasis C vj).
   rewrite /tinner.
-  under eq_bigr do rewrite !ffunE !sum_tpbasisKo.
+  under eq_bigr do rewrite !tsmorE !sum_tpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
   by rewrite sum_muleqr [LHS]conjc_nat.

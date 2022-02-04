@@ -4,6 +4,7 @@
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -notation-incompatible-format
 -arg -w -arg -elpi.add-const-for-axiom-or-sectionvar
+-arg -async-proofs-tac-j -arg 16
 
 lens.v
 tpower.v

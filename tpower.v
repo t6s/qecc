@@ -60,7 +60,11 @@ by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
 Definition tsmor m n (M : tmatrix n m) : mor m n :=
-  fun T => Linear (@tsmor_is_linear m n M T).
+  locked (fun T => Linear (@tsmor_is_linear m n M T)).
+
+Lemma tsmorE m n (M : tmatrix n m) T v vi :
+  tsmor M T v vi = \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj.
+Proof. by rewrite /tsmor -lock !ffunE. Qed.
 
 Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
   [ffun vj => (vi == vj)%:R].
@@ -101,7 +105,8 @@ Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
 Lemma tsmorK m n : cancel (@tsmor m n) (@morts m n).
 Proof.
-by move=> M; apply/ffunP => vi; apply/ffunP=> vj; rewrite !ffunE sum_tpbasisKo.
+move=> M; apply/ffunP => vi; apply/ffunP=> vj.
+by rewrite !ffunE !tsmorE sum_tpbasisKo.
 Qed.
 
 Lemma mortsK n m (f : mor m n) :
@@ -109,7 +114,7 @@ Lemma mortsK n m (f : mor m n) :
 Proof.
 move=> Hf T v.
 rewrite [in RHS](decompose_tpower v) linear_sum.
-apply/ffunP => /= vi; rewrite !ffunE sum_ffunE /=.
+apply/ffunP => /= vi; rewrite tsmorE !ffunE sum_ffunE /=.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 set h : R^o -> T := *:%R^~ _.
 have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
@@ -122,7 +127,7 @@ Proof.
 split => [Hf | [M] HM].
 - by exists (morts f) => v T; rewrite mortsK.
 - move=> T1 T2 h /= v; apply/ffunP => /= vi.
-  rewrite !HM !ffunE linear_sum; apply eq_bigr => vj _.
+  rewrite !HM !(tsmorE,ffunE) linear_sum; apply eq_bigr => vj _.
   by rewrite linearZ_LR !ffunE.
 Qed.
 
@@ -149,7 +154,8 @@ Definition idmor n : endo n := fun T => GRing.idfun_linear _.
 Lemma idmorE n : idmor n =e tsmor (idts n).
 Proof.
 move=> T v; apply/ffunP => vi.
-rewrite /idmor ffunE; under eq_bigr do rewrite ffunE; by rewrite sum_tpbasisK.
+rewrite /idmor tsmorE.
+under eq_bigr do rewrite ffunE; by rewrite sum_tpbasisK.
 Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
@@ -256,8 +262,9 @@ Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
 exists (morts (focus l (tsmor M))).
-move=> T /= v; apply/ffunP => /= vi; rewrite !focusE !ffunE NM !ffunE sum_ffunE.
-under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
+move=> T /= v; apply/ffunP => /= vi.
+rewrite tsmorE !focusE !ffunE NM tsmorE sum_ffunE.
+under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
@@ -290,8 +297,8 @@ Lemma asym_focus_naturality n m p l l' tr :
 Proof.
 case/naturalityP => M /= NM; apply/naturalityP.
 exists (morts (asym_focus l l' (tsmor M))).
-move=> T /= v; apply/ffunP => /= vi; rewrite !ffunE NM !ffunE sum_ffunE.
-under [RHS]eq_bigr do rewrite !ffunE sum_ffunE scaler_suml.
+move=> T /= v; apply/ffunP => /= vi; rewrite tsmorE !ffunE NM tsmorE sum_ffunE.
+under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
@@ -305,7 +312,7 @@ Lemma focusI tr : naturality tr -> focus (lens_id n) tr =e tr.
 Proof.
 rewrite focusE => /naturalityP [f Hf] /= T v.
 apply/ffunP => /= vi.
-rewrite /focus_fun !{}Hf {tr} !ffunE sum_ffunE.
+rewrite /focus_fun !{}Hf {tr} !ffunE !tsmorE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
 congr (_ *: v _).
 apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
@@ -335,10 +342,10 @@ Qed.
 Lemma tsmor_comp (M : tmatrix n m)  (N : tmatrix m p) :
   tsmor (mults M N) =e tsmor M \v tsmor N.
 Proof.
-move=> T v; apply/ffunP => vi; rewrite !ffunE.
+move=> T v; apply/ffunP => vi; rewrite !tsmorE.
 under eq_bigr do rewrite !ffunE !scaler_suml.
 rewrite exchange_big /=.
-apply eq_bigr => vk _; rewrite !ffunE !(scaler_suml,scaler_sumr).
+apply eq_bigr => vk _; rewrite tsmorE !(scaler_suml,scaler_sumr).
 by apply eq_bigr => vj _; rewrite scalerA.
 Qed.
 
@@ -349,10 +356,10 @@ Lemma focusC (l' : lens n p) tr tr' :
 Proof.
 rewrite !focusE => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'] T v /=.
 apply/ffunP => /= vi.
-rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !sum_ffunE.
-under eq_bigr do rewrite !ffunE !sum_ffunE scaler_sumr.
+rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !tsmorE !sum_ffunE.
+under eq_bigr do rewrite !ffunE tsmorE !sum_ffunE scaler_sumr.
 rewrite exchange_big; apply eq_bigr => /= vj _.
-rewrite !ffunE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
+rewrite !ffunE tsmorE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (f _ vk * f' _ vj *: v _).
 - by rewrite extract_merge_disjoint // disjoint_sym.
@@ -365,8 +372,8 @@ Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
   tsmor (tensor_tsquare M M').
 Proof.
 move=> T v; apply/ffunP => /= vi.
-rewrite focusE !ffunE !sum_ffunE.
-under eq_bigr do rewrite !focusE !ffunE !sum_ffunE scaler_sumr.
+rewrite focusE !(ffunE,tsmorE) !sum_ffunE.
+under eq_bigr do rewrite !focusE !(ffunE,tsmorE) !sum_ffunE scaler_sumr.
 rewrite reindex_left_right.
 apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
@@ -380,7 +387,7 @@ Proof.
 case/naturalityP => f Hf T v.
 rewrite !focusE /focus_fun /= !{}Hf {tr}.
 apply/ffunP => /= vi.
-rewrite !ffunE (extract_lothers_comp dI) -!extract_comp.
+rewrite !ffunE !tsmorE (extract_lothers_comp dI) -!extract_comp.
 rewrite -[in RHS]lothers_in_l_comp -(lothers_notin_l_comp l l') !sum_ffunE.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _).
@@ -632,8 +639,7 @@ apply (iffP idP).
 move -> ; by apply/allP.
 Qed.
 
-Lemma sum_enum_indices (CR : comRingType) (L : lmodType CR)
-      m (F : m.-tuple I -> L) :
+Lemma sum_enum_indices (L : zmodType) m (F : m.-tuple I -> L) :
   (\sum_vi F vi = foldr +%R 0 (map F (enum_indices m))).
 Proof.
 rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
