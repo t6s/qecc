@@ -62,6 +62,21 @@ case/boolP: unitaryts => /eqP Hts; apply/esym/eqP.
 - move=> Hmx; elim Hts.
   by rewrite -mxtmatrix_id // -Hmx mxtmatrix_mul // -hadjtsE !tmatrixmxK.
 Qed.
+
+Lemma unitary_invP : hadjts M = M ->
+  reflect (forall T, involutive (tsmor M T)) unitaryts.
+Proof.
+rewrite /unitaryts => ->.
+apply: (iffP idP) => [/eqP|] Hinv.
+- move=> T v.
+  move: (f_equal (fun M => tsmor M T v) Hinv).
+  by rewrite tsmor_comp -idmorE.
+- apply/eqP.
+  rewrite -[LHS]tsmorK -[RHS]tsmorK.
+  apply morts_eq => T v.
+  rewrite tsmor_comp -idmorE /=.
+  by have /= -> := Hinv T.
+Qed.
 End unitary_tmatrix.
 
 Lemma hadjts_mul n m p M N : hadjts (M *t N) = @hadjts p m N *t @hadjts m n M.

@@ -132,11 +132,11 @@ Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
-Lemma hadamardK : involutive (tsmor hadamard Co).
+Lemma hadamardK (T : lmodType C) : involutive (tsmor hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: do! rewrite !(linE,ffunE,scalerDl,sum_enum_indices) /=.
+all: time (do! rewrite !(linE,ffunE,scalerDl,sum_enum_indices) /=).
 all: rewrite -mulNrn !mulr1n -!scalerA !scale1r !scalerDr !scaleN1r !scalerN.
 all: rewrite !scalerA.
 all: simpc.
@@ -147,6 +147,16 @@ all: rewrite -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
 all: rewrite -mulr2n -mulr_natl -rmorphMn /=.
 all: simpc.
 all: by rewrite Hnn mul0r scale1r.
+Qed.
+
+Lemma hadamardU : unitaryts hadamard.
+Proof. (* Fast proof using hadamardK *)
+apply/unitary_invP; last exact: hadamardK.
+apply/eq_from_indicesP; do !(apply/andP; split) => //=;
+  apply/eqP/eq_from_indicesP; do !(apply/andP; split); apply /eqP => //=.
+all: time (rewrite !ffunE /= !linE).
+all: rewrite /GRing.scale /= ?mulr1 //.
+by simpc.
 Qed.
 
 (* Try on a fast machine ... *)

@@ -149,8 +149,7 @@ Definition idmor n : endo n := fun T => GRing.idfun_linear _.
 Lemma idmorE n : idmor n =e tsmor (idts n).
 Proof.
 move=> T v; apply/ffunP => vi.
-rewrite /idmor ffunE (bigD1 vi) //= big1 !ffunE ?(eqxx,scale1r,addr0) //.
-move=> i /negbTE Hi; by rewrite ffunE eq_sym Hi scale0r.
+rewrite /idmor ffunE; under eq_bigr do rewrite ffunE; by rewrite sum_tpbasisK.
 Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
