@@ -181,6 +181,30 @@ par: time (rewrite !ffunE;
      by rewrite -mulr2n -mulr_natl divrr // nat_unit).
 Qed.
 
+(* The direct proof is fast but verbose *)
+Lemma hadamardU_direct : unitary_endo (tsmor hadamard).
+Proof.
+rewrite /unitary_endo /tinner /= => s t.
+rewrite !sum_enum_indices /= !tsmorE.
+time (rewrite !sum_enum_indices /= !ffunE /= !linE).
+rewrite /GRing.scale /= !mulr1.
+rewrite mulr1n mulrN mulr1.
+simpc.
+rewrite !mulrDr !rmorphD !rmorphM /= !mulrDl !oppr0.
+rewrite -!real_complexE.
+rewrite !mulrA !(mulrC (_ ^*)%C) !(mulrAC _ (_ ^*)%C).
+rewrite !addrA -!rmorphM !mulrN !mulNr !rmorphN /=.
+rewrite -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
+rewrite opprK.
+rewrite -!(addrAC _ (_ * t [tuple 0%:O] * ((s [tuple 0%:O])^*)%C)).
+rewrite -!mulrA -mulrDl addrC !addrA.
+rewrite -!(addrAC _ (_ * (t [tuple 1%:O] * ((s [tuple 1%:O])^*)%C))).
+rewrite -mulrDl -addrA !mulNr -opprD -addrA addrK.
+rewrite -(_ : 1 = (2%:R^-1)%:C + (2%:R^-1)%:C).
+  by rewrite !mul1r addrC.
+by rewrite -rmorphD -mulr2n -mulr_natl divrr // nat_unit.
+Qed.
+
 (*
 (* Trying to check the hadamart representation of cnot... *)
 Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.
