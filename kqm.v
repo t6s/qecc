@@ -139,27 +139,63 @@ rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
 by rewrite !(add0r,addr0,scale0r,scaler0,scale1r).
 Qed.
 
+Lemma extract_lens_left m n T (tl : m.-tuple T) (tr : n.-tuple T) :
+  extract (lens_left m n) [tuple of tl ++ tr] = tl.
+Proof.
+apply eq_from_tnth => i.
+rewrite [LHS](tnth_nth (tnth tl i)) /=.
+rewrite -map_comp (nth_map i) /=.
+  by rewrite nth_ord_enum tnth_lshift.
+by rewrite size_enum_ord.
+Qed.
+
+Lemma extract_lens_right m n T (tl : m.-tuple T) (tr : n.-tuple T) :
+  extract (lens_right m n) [tuple of tl ++ tr] = tr.
+Proof.
+apply eq_from_tnth => i.
+rewrite [LHS](tnth_nth (tnth tr i)) /=.
+rewrite -map_comp (nth_map i) /=.
+  by rewrite nth_ord_enum tnth_rshift.
+by rewrite size_enum_ord.
+Qed.
+
 Lemma straighten : cap [lens 1; 2] \v cup [lens 0; 1] =e idmor 1.
 Proof.
 move=> T /= v.
 rewrite /cap_fun /cup_fun.
-(*
-Check (uncurry0 (L:=ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) \o
-       tsmor (curry0 (uncurry (lens_left 1 1) (idts I R 1)))
-         (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T)).
-
-rewrite (lock tsmor).
-rewrite /curry0 /uncurry0 /=.
-rewrite -lock.
-Check tsmor [ffun=> uncurry (lens_left 1 1) (idts I R 1)] (ffun_lmodType (tuple_finType (1 + 2 - 2) I) T) = uncurry_mor _ _ (lens_left 1 1).
-
-rewrite /uncurry0 /curry /uncurry /curry0 /idmorfun /=.
-rewrite /tsmor_fun /=.
-apply ffunP=> /= vi.
-rewrite 2!ffunE.
-rewrite sum_enum_indices /= !ffunE.
-*)
-Abort.
+apply/ffunP => t /=.
+rewrite /uncurry0 /inner_prod /inner_coprod /M_inner_prod /M_inner_coprod.
+rewrite map_tpcastE.
+rewrite tsmorE sum_enum_indices /= !ffunE /=.
+have tup2 : forall x y : I, [tuple x; y] = [tuple of [tuple x] ++ [tuple y]].
+  by move=> x y /=; apply/eqP; rewrite eq_ord_tuple.
+rewrite !tup2 !extract_lens_left.
+rewrite !(extract_eq_cast (lothers_left 1 1)) !extract_lens_right /=.
+rewrite !scale1r !scale0r !add0r.
+rewrite !tsmorE !sum_enum_indices /= !ffunE /= !addr0.
+apply/eqP.
+move: t; apply/(forall_indicesP (enumI := enum I)).
+  move=> i; by rewrite mem_enum.
+rewrite enum_ordinalE /= andbT.
+apply/andP.
+rewrite -!extract_comp !(lens_eq_cast (lothers_left 1 1)) /=.
+rewrite (_ : lens_comp _ _ = [lens 0]); last first.
+  by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
+rewrite (_ : lens_comp _ _ = [lens 1]); last first.
+  by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
+rewrite (_ : lothers [lens 0; 1] = [lens 2]); last first.
+  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+rewrite -(_ : lothers [lens 1; 2] = [lens 0]); last first.
+  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+rewrite !(@extract_lothers_merge _ _ 3 2 [lens 1;2]).
+rewrite -(_ : lens_comp [lens 1; 2] [lens 0] = [lens 1]); last first.
+  by apply/val_inj/eqP; rewrite eq_ord_tuple.
+rewrite -(_ : lens_comp [lens 1; 2] [lens 1] = [lens 2]); last first.
+  by apply/val_inj/eqP; rewrite eq_ord_tuple.
+rewrite !extract_comp !extract_merge /= !linE /=.
+rewrite /extract /= !(tnth_nth dI) /=.
+by split; apply/eqP; f_equal; apply/eqP; rewrite eq_ord_tuple.
+Qed.
 
 Lemma cap_focusC n p (l1 : lens n 2) (l2 : lens (n-2) p) (tr : endo p) :
   naturality tr ->

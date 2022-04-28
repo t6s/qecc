@@ -304,12 +304,15 @@ rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
+Lemma map_tpcastE T m n (H : n = n) v :
+  map_tpower (m:=m) (tpcast (T:=T) H) v = v.
+Proof. apply/ffunP => w; apply/ffunP => t; by rewrite !ffunE cast_tupleE. Qed.
+
 Lemma asym_focus_sym (m n : nat) (l : lens (m+n) m) (f : mor m m) :
   asym_focus l l f =e focus l f.
 Proof.
 move=> T v /=; rewrite focusE /= /asym_focus_fun /focus_fun /=.
-congr uncurry; apply/ffunP => w; apply/ffunP => t.
-by rewrite !ffunE cast_tupleE.
+by rewrite map_tpcastE.
 Qed.
 
 Section focus_props.
@@ -637,14 +640,21 @@ apply eq_uniq.
 move=> t. by rewrite mem_enum_indices mem_enum.
 Qed.
 
+Lemma forall_indicesP n (P : pred (n.-tuple I)) :
+  reflect (forall v, P v) (all P (enum_indices n)).
+Proof.
+apply (iffP idP).
+  move=> H vi.
+  have : vi \in enum_indices _ by rewrite mem_enum_indices.
+  by apply/allP: vi.
+move=> H; by apply/allP.
+Qed.
+
 Lemma eq_from_indicesP n (T : eqType) (v w : tpower I n T) :
   reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
 Proof.
-apply (iffP idP).
-  move=> H; apply/ffunP => vi; apply/eqP.
-  have : vi \in enum_indices _ by rewrite mem_enum_indices.
-  by apply/allP: vi.
-move -> ; by apply/allP.
+apply/(iffP (forall_indicesP _)) => [H | -> //].
+apply/ffunP => vi; exact/eqP.
 Qed.
 
 Lemma sum_enum_indices (L : zmodType) m (F : m.-tuple I -> L) :
