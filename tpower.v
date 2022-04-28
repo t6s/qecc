@@ -304,6 +304,14 @@ rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
+Lemma asym_focus_sym (m n : nat) (l : lens (m+n) m) (f : mor m m) :
+  asym_focus l l f =e focus l f.
+Proof.
+move=> T v /=; rewrite focusE /= /asym_focus_fun /focus_fun /=.
+congr uncurry; apply/ffunP => w; apply/ffunP => t.
+by rewrite !ffunE cast_tupleE.
+Qed.
+
 Section focus_props.
 Variables (n m p : nat) (l : lens n m).
 
