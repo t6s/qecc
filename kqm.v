@@ -186,7 +186,6 @@ rewrite !(@extract_lothers_merge _ _ 3 2 [lens 1;2]).
 rewrite -(_ : lens_comp [lens 1; 2] [lens 0] = [lens 1]); last by eq_lens.
 rewrite -(_ : lens_comp [lens 1; 2] [lens 1] = [lens 2]); last by eq_lens.
 rewrite !extract_comp !extract_merge /= !linE.
-rewrite /extract /= !(tnth_nth dI) /=.
 by split; apply/eqP; f_equal; apply/eqP; rewrite eq_ord_tuple.
 Qed.
 
