@@ -170,8 +170,7 @@ rewrite tsmorE sum_enum_indices /= !ffunE /=.
 have tup2 : forall x y : I, [tuple x; y] = [tuple of [tuple x] ++ [tuple y]].
   by move=> x y /=; apply/eqP; rewrite eq_ord_tuple.
 rewrite !tup2 !extract_lens_left.
-rewrite !(extract_eq_cast (lothers_left 1 1)) !extract_lens_right /=.
-rewrite !scale1r !scale0r !add0r.
+rewrite !(extract_eq_cast (lothers_left 1 1)) !extract_lens_right /= !linE.
 rewrite !tsmorE !sum_enum_indices /= !ffunE /= !addr0.
 apply/eqP.
 move: t; apply/(forall_indicesP (enumI := enum I)).
@@ -179,20 +178,14 @@ move: t; apply/(forall_indicesP (enumI := enum I)).
 rewrite enum_ordinalE /= andbT.
 apply/andP.
 rewrite -!extract_comp !(lens_eq_cast (lothers_left 1 1)) /=.
-rewrite (_ : lens_comp _ _ = [lens 0]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
-rewrite (_ : lens_comp _ _ = [lens 1]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= enum_ordinalE.
-rewrite (_ : lothers [lens 0; 1] = [lens 2]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
-rewrite -(_ : lothers [lens 1; 2] = [lens 0]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+rewrite (_ : lens_comp _ _ = [lens 0]); last by eq_lens.
+rewrite (_ : lens_comp _ _ = [lens 1]); last by eq_lens.
+have -> : lothers [lens 0; 1] = [lens 2] by eq_lens.
+have <- : lothers [lens 1; 2] = [lens 0] by eq_lens.
 rewrite !(@extract_lothers_merge _ _ 3 2 [lens 1;2]).
-rewrite -(_ : lens_comp [lens 1; 2] [lens 0] = [lens 1]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple.
-rewrite -(_ : lens_comp [lens 1; 2] [lens 1] = [lens 2]); last first.
-  by apply/val_inj/eqP; rewrite eq_ord_tuple.
-rewrite !extract_comp !extract_merge /= !linE /=.
+rewrite -(_ : lens_comp [lens 1; 2] [lens 0] = [lens 1]); last by eq_lens.
+rewrite -(_ : lens_comp [lens 1; 2] [lens 1] = [lens 2]); last by eq_lens.
+rewrite !extract_comp !extract_merge /= !linE.
 rewrite /extract /= !(tnth_nth dI) /=.
 by split; apply/eqP; f_equal; apply/eqP; rewrite eq_ord_tuple.
 Qed.
