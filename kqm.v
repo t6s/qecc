@@ -37,6 +37,7 @@ Notation curry := (curry dI).
 
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
+Local Definition forall_indicesP := forall_indicesP mem_enum2.
 
 Section cap_cup.
 Variables (n : nat) (l : lens n 2).
@@ -139,25 +140,8 @@ rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
 by rewrite !(add0r,addr0,scale0r,scaler0,scale1r).
 Qed.
 
-Lemma extract_lens_left m n T (tl : m.-tuple T) (tr : n.-tuple T) :
-  extract (lens_left m n) [tuple of tl ++ tr] = tl.
-Proof.
-apply eq_from_tnth => i.
-rewrite [LHS](tnth_nth (tnth tl i)) /=.
-rewrite -map_comp (nth_map i) /=.
-  by rewrite nth_ord_enum tnth_lshift.
-by rewrite size_enum_ord.
-Qed.
-
-Lemma extract_lens_right m n T (tl : m.-tuple T) (tr : n.-tuple T) :
-  extract (lens_right m n) [tuple of tl ++ tr] = tr.
-Proof.
-apply eq_from_tnth => i.
-rewrite [LHS](tnth_nth (tnth tr i)) /=.
-rewrite -map_comp (nth_map i) /=.
-  by rewrite nth_ord_enum tnth_rshift.
-by rewrite size_enum_ord.
-Qed.
+Lemma cat_2tuple A (x y : A) : [tuple of [tuple x]++[tuple y]] =  [tuple x; y].
+Proof. exact/val_inj. Qed.
 
 Lemma straighten : cap [lens 1; 2] \v cup [lens 0; 1] =e idmor 1.
 Proof.
@@ -165,18 +149,18 @@ move=> T /= v.
 rewrite /cap_fun /cup_fun.
 apply/ffunP => t /=.
 rewrite /uncurry0 /inner_prod /inner_coprod /M_inner_prod /M_inner_coprod.
-rewrite map_tpcastE.
-rewrite tsmorE sum_enum_indices /= !ffunE /=.
-have tup2 : forall x y : I, [tuple x; y] = [tuple of [tuple x] ++ [tuple y]].
-  by move=> x y /=; apply/eqP; rewrite eq_ord_tuple.
-rewrite !tup2 !extract_lens_left.
+rewrite map_tpcastE tsmorE sum_enum_indices /= !ffunE /=.
+rewrite -!cat_2tuple !extract_lens_left.
 rewrite !(extract_eq_cast (lothers_left 1 1)) !extract_lens_right /= !linE.
 rewrite !tsmorE !sum_enum_indices /= !ffunE /= !addr0.
-apply/eqP.
-move: t; apply/(forall_indicesP (enumI := enum I)).
-  move=> i; by rewrite mem_enum.
-rewrite enum_ordinalE /= andbT.
-apply/andP.
+apply/eqP; move: t; apply/forall_indicesP.
+rewrite /= andbT; apply/andP.
+(* brute force *)
+rewrite !eq_ord_tuple /= /tnth /= /tnth /= /others.
+rewrite /in_mem /mem /= !enum_ordinalE /= !linE.
+split; apply/eqP/f_equal/eqP;
+  by rewrite eq_ord_tuple /= /tnth /= /others !enum_ordinalE.
+(* incremental proof
 rewrite -!extract_comp !(lens_eq_cast (lothers_left 1 1)) /=.
 rewrite (_ : lens_comp _ _ = [lens 0]); last by eq_lens.
 rewrite (_ : lens_comp _ _ = [lens 1]); last by eq_lens.
@@ -186,7 +170,7 @@ rewrite !(@extract_lothers_merge _ _ 3 2 [lens 1;2]).
 rewrite -(_ : lens_comp [lens 1; 2] [lens 0] = [lens 1]); last by eq_lens.
 rewrite -(_ : lens_comp [lens 1; 2] [lens 1] = [lens 2]); last by eq_lens.
 rewrite !extract_comp !extract_merge /= !linE.
-by split; apply/eqP; f_equal; apply/eqP; rewrite eq_ord_tuple.
+by split; apply/eqP; f_equal; apply/eqP; rewrite eq_ord_tuple. *)
 Qed.
 
 Lemma cap_focusC n p (l1 : lens n 2) (l2 : lens (n-2) p) (tr : endo p) :

@@ -448,6 +448,18 @@ exists [tuple rshift m i | i < n].
 abstract (rewrite map_inj_uniq ? enum_uniq //; exact/rshift_inj).
 Defined.
 
+Variables (T : Type) (tl : m.-tuple T) (tr : n.-tuple T).
+Lemma extract_lens_left : extract lens_left [tuple of tl ++ tr] = tl.
+Proof.
+apply eq_from_tnth => i; rewrite [LHS](tnth_nth (tnth tl i)) /= -map_comp.
+by rewrite (nth_map i) /= ?size_enum_ord // nth_ord_enum tnth_lshift.
+Qed.
+Lemma extract_lens_right : extract lens_right [tuple of tl ++ tr] = tr.
+Proof.
+apply eq_from_tnth => i; rewrite [LHS](tnth_nth (tnth tr i)) /= -map_comp.
+by rewrite (nth_map i) /= ?size_enum_ord // nth_ord_enum tnth_rshift.
+Qed.
+
 Lemma lens_left_right_disjoint : [disjoint lens_left & lens_right].
 Proof.
 apply/pred0P => /= i.
