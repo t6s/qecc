@@ -70,20 +70,7 @@ End cap_cup.
 
 Lemma extract_rev A n m (l1 l2 : lens n m) (v : n.-tuple A) :
   rev l1 = l2 -> [tuple of rev (extract l1 v)] = extract l2 v.
-Proof.
-case: m l1 l2 => [|m] l1 l2 Hrev.
-  rewrite !extract_lens_empty; exact/val_inj.
-apply/val_inj/eq_from_nth' => /=.
-  by rewrite size_rev !size_tuple.
-move=> a i.
-rewrite size_rev => Hi.
-rewrite nth_rev //= size_map size_tuple -Hrev.
-rewrite (nth_map (tnth l1 ord0)).
-  rewrite size_map in Hi.
-  rewrite -[X in X - i.+1](size_tuple l1) -nth_rev //.
-  by rewrite -(nth_map _ a) // size_rev.
-by rewrite size_tuple ltn_subrL.
-Qed.
+Proof. by move=> Hrev; apply/val_inj; rewrite /= -map_rev Hrev. Qed.
 
 Ltac eq_lens :=
   apply/val_inj/eqP; rewrite ?eq_ord_tuple /= /others /= ?enum_ordinalE.
