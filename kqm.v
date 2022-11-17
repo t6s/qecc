@@ -210,12 +210,9 @@ apply/ffunP => vi.
 rewrite !ffunE.
 f_equal; last by apply val_inj.
 apply/ffunP => vj.
-rewrite /inner_coprod /M_inner_coprod /=.
-rewrite !tsmorE !ffunE /=.
-rewrite !sum_ffunE.
+rewrite /inner_coprod /M_inner_coprod /= !tsmorE !ffunE /= !sum_ffunE.
 apply eq_bigr => i _.
-rewrite !ffunE.
-rewrite -!extract_comp /=.
+rewrite !ffunE -!extract_comp /=.
 have -> : lens_comp (lens_left 2 1) [lens 0; 1] = lens_left 2 1.
   eq_lens => /=.
   by apply/eqP; do! f_equal; rewrite (tnth_nth ord0) /= enum_ordinalE.
@@ -224,13 +221,10 @@ have -> : lens_comp (lens_left 2 1) (lens_left 1 1) = [lens 0].
 have -> : lens_comp (lens_left 2 1) (lothers (lens_left 1 1)) = [lens 1].
   eq_lens.
   rewrite -map_comp /=.
-  rewrite ifF.
-    rewrite ifT /=.
-      by rewrite (tnth_nth ord0) /= enum_ordinalE.
-    by rewrite mem_lensE memtE /= enum_ordinalE.
-  by rewrite mem_lensE memtE /= enum_ordinalE.
-have -> : lens_comp (lens_left 2 1) (lothers [lens 0; 1]) = [lens].
-  by eq_lens.
+  rewrite ifF; last by rewrite mem_lensE memtE /= enum_ordinalE.
+  rewrite ifT /=; last by rewrite mem_lensE memtE /= enum_ordinalE.
+  by rewrite (tnth_nth ord0) /= enum_ordinalE.
+have -> : lens_comp (lens_left 2 1) (lothers [lens 0; 1]) = [lens] by eq_lens.
 case H: (tnth vi 0%:O == tnth vi 1%:O).
   rewrite (_ : (_ == _) = true); last first.
     rewrite !eq_ord_tuple /= (eqP H). exact/eqP.
