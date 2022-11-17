@@ -181,18 +181,43 @@ Lemma comp_morE m n p (f : mor I R m n) (g : mor I R n p) T v :
  (g \v f) T v = g T (f T v).
 Proof. by []. Qed.
 
-About asym_focus.
-Notation "[ 'lens' ]" := (@mkLens _ _ [tuple] erefl).
+Definition cast_mor m2 n2 m1 n1 (f : mor I R m1 n1)
+           (Hm : m1 = m2) (Hn : n1 = n2) : mor I R m2 n2.
+rewrite -> Hm, -> Hn in f.
+exact f.
+Defined.
 
-Lemma asym_focus_cup :
-  cup ([lens 0; 1] : lens (2 + 1) 2) =e
-  asym_focus dI ([lens] : lens (0 + 1) 0) ([lens 0; 1] : lens (2 + 1) 2)
+Lemma asym_focus_cup n :
+  cast_mor (cup (lens_left 2 n)) (addKn _ _) (erefl _) =e
+  asym_focus dI (lens_left 0 n) (lens_left 2 n)
     (cup ([lens 0; 1] : lens 2 2)).
 Proof.
-move=> T v.
-rewrite /= /asym_focus_fun /=.
+move=> T v /=.
+rewrite /asym_focus_fun /=.
+apply/ffunP => vi.
+rewrite !ffunE.
 rewrite /cup_fun /uncurry /curry /=.
-Admitted.
+Abort.
+
+Lemma asym_focus_cup :
+  cup (lens_left 2 1) =e
+  asym_focus dI (lens_left 0 1) (lens_left 2 1)
+    (cup ([lens 0; 1] : lens 2 2)).
+Proof.
+move=> T v /=.
+rewrite /asym_focus_fun /=.
+apply/ffunP => vi.
+rewrite !ffunE /=.
+f_equal; last by apply val_inj.
+apply/ffunP => vj.
+rewrite /inner_coprod /M_inner_coprod /=.
+rewrite !tsmorE !ffunE /=.
+rewrite !sum_ffunE.
+apply eq_bigr => i _.
+rewrite !ffunE.
+rewrite -!extract_comp.
+rewrite (_ : (_ == _) = true); last first.
+Abort.
 
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose_tsquare M) =e

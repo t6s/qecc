@@ -408,6 +408,62 @@ End focus_props.
 Notation "f \v g" := (comp_mor f g).
 Notation tsapp l M := (focus l (tsmor M)).
 
+(* Too complicated
+Lemma asym_focusC n m p n' m' p' (l1 : lens (m+n) m) (l2 : lens (p+n) p)
+      (l3 : lens (m'+n') m') (l4 : lens (p'+n') p') (tr : mor m p)
+      (tr' : mor m' p') :
+  [disjoint map val l2 & map val l3] -> p + n = m' + n' ->
+  asym_focus l3 l4 tr' \v asym_focus l1 l2 tr \v =e ???
+*)
+
+Lemma asym_focusC n m p (l1 : lens (m+n) m) (l2 : lens (p+n) p)
+      (g : mor m p) (f : endo n) :
+  naturality f -> naturality g ->
+  focus (cast_lens (lothers l2) (addKn _ _)) f \v asym_focus l1 l2 g =e
+  asym_focus l1 l2 g \v focus (cast_lens (lothers l1) (addKn _ _)) f.
+Proof.
+rewrite !focusE => /naturalityP [Mf Hf] /naturalityP [Mg Hg] T v /=.
+apply/ffunP => /= vi.
+rewrite /focus_fun /asym_focus_fun !{}Hf {f} !{}Hg {g}.
+rewrite !ffunE !tsmorE !sum_ffunE.
+under eq_bigr do rewrite !ffunE tsmorE !sum_ffunE scaler_sumr.
+rewrite exchange_big; apply eq_bigr => /= vj _.
+rewrite !ffunE tsmorE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
+rewrite !ffunE !scalerA [in RHS]mulrC.
+congr (Mf _ vk * Mg _ vj *: v _).
+- apply val_inj => /=.
+  set w := cast_tuple _ _.
+  by move/(f_equal val): (extract_lothers_merge dI l1 vj w) => /= ->.
+- rewrite extract_merge_disjoint //.
+  apply/pred0P => /= i.
+  rewrite simpl_predE /= andbC /=.
+  case Hi: (i \in l2) => //=.
+  by rewrite mem_lensE /= memtE /= mem_others Hi.
+- rewrite !merge_indices_extract_others.
+  apply eq_from_tnth => i /=.
+  rewrite !tnth_mktuple /=.
+  case/boolP: (i \in l1) => Hil1. 
+    rewrite !nth_lens_index.
+    rewrite nth_default // memNindex ?(mem_others,Hil1) //.
+    by rewrite (eqP (size_others l1)) size_tuple addKn.
+  rewrite !nth_lens_out //.
+  move/negbF: Hil1.
+  rewrite -mem_others => /negbFE.
+  have -> : others l1 = cast_lens (lothers l1) (addKn _ _) by [].
+  move=> Hil1.
+  rewrite !nth_lens_index (tnth_nth dI).
+  congr nth.
+  have -> : others l2 = cast_lens (lothers l2) (addKn _ _) by [].
+  transitivity (map_tuple (tnth (inject (cast_lens (lothers l2) (addKn p n))
+                           vi vk)) (cast_lens (lothers l2) (addKn p n))) => //.
+  apply f_equal, eq_from_tnth => j.
+  rewrite tnth_map /= tnth_mktuple nth_lens_index ?mem_tnth // => H.
+  rewrite -(nth_lens_index H dI) nthK /=.
+  + by rewrite -?tnth_nth.
+  + by rewrite uniq_others.
+  + by rewrite (eqP (size_others _)) addKn inE.
+Qed.
+
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
       (M : tsquare m) (M' : tsquare p) :
   tsapp l M \v tsapp l' M' =e tsapp (lens_cat H) (tensor_tsquare M M').

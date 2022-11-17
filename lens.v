@@ -369,13 +369,19 @@ move/card_uniqP: (lens_uniq l).
 by rewrite size_tuple cardT size_enum_ord cardsE => -> ->.
 Qed.
 
+Lemma mem_others i : (i \in others) = ~~ (i \in l).
+Proof. by rewrite mem_filter mem_enum andbT. Qed.
+
+Lemma uniq_others : uniq others.
+Proof. by rewrite filter_uniq // enum_uniq. Qed.
+
 Definition lothers : lens n (n-m).
 exists (Tuple size_others).
-abstract (by rewrite filter_uniq // enum_uniq).
+exact uniq_others.
 Defined.
 
 Lemma mem_lothers i : (i \in lothers) = (i \notin l).
-Proof. by rewrite mem_filter mem_enum andbT. Qed.
+Proof. by rewrite mem_others. Qed.
 
 Definition merge_indices (v : m.-tuple I) (w : (n-m).-tuple I) :=
   [tuple nth (nth dI w (index i lothers)) v (index i l) | i < n].
@@ -754,6 +760,7 @@ Lemma succO0 n : succO ord0 = 1%:O :> 'I_n.+2.
 Proof. exact/val_inj. Qed.
 Definition succOE := (succO0,succOS).
 
+Notation "[ 'lens' ]" := (@mkLens _ _ [tuple] erefl).
 Notation "[ 'lens' x1 ; .. ; xn ]" :=
   (@mkLens _ _ [tuple of x1%:O :: .. [:: xn%:O] ..] erefl).
 
