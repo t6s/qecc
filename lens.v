@@ -438,6 +438,19 @@ Proof. apply eq_from_tnth => x. have := ltn_ord x. by rewrite ltn0. Qed.
 
 Lemma lothers_id : lothers (lens_id n) = lens_empty :> seq _.
 Proof. apply/nilP. by rewrite /nilp size_tuple subnn. Qed.
+
+Lemma lothers_empty : lothers lens_empty = lens_id n :> seq _.
+Proof. by rewrite /lothers /others /= filter_predT. Qed.
+
+Lemma merge_indices_empty (T : eqType) (dI:T) v w :
+  merge_indices dI lens_empty v w = cast_tuple w (subn0 n).
+Proof.
+rewrite /merge_indices.
+rewrite (eq_mktuple (tnth (cast_tuple w (subn0 n)))); last first.
+  move => i.
+  by rewrite nth_lens_out // lothers_empty index_lens_id (tnth_nth dI).
+by apply eq_from_tnth => i; rewrite tnth_mktuple.
+Qed.
 End lens_empty.
 
 (* Ordered lenses *)

@@ -206,42 +206,44 @@ Lemma asym_focus_cup :
 Proof.
 move=> T v /=.
 rewrite /asym_focus_fun /=.
-apply/(eq_from_indicesP mem_enum2) => /=.
-do! (apply/andP; split) => //=; apply/eqP; rewrite !ffunE /=;
-f_equal; last by apply val_inj;
-try apply/(eq_from_indicesP mem_enum2) => /=.
+apply/ffunP => vi.
+rewrite !ffunE.
+f_equal; last by apply val_inj.
+apply/ffunP => vj.
 rewrite /inner_coprod /M_inner_coprod /=.
 rewrite !tsmorE !ffunE /=.
 rewrite !sum_ffunE.
 apply eq_bigr => i _.
 rewrite !ffunE.
 rewrite -!extract_comp /=.
-(*
-case H: (tnth vi ord0 == tnth vi (lift ord0 ord0)).
+have -> : lens_comp (lens_left 2 1) [lens 0; 1] = lens_left 2 1.
+  eq_lens => /=.
+  by apply/eqP; do! f_equal; rewrite (tnth_nth ord0) /= enum_ordinalE.
+have -> : lens_comp (lens_left 2 1) (lens_left 1 1) = [lens 0].
+  by eq_lens; rewrite /mktuple /= (tnth_nth ord0) /= enum_ordinalE.
+have -> : lens_comp (lens_left 2 1) (lothers (lens_left 1 1)) = [lens 1].
+  eq_lens.
+  rewrite -map_comp /=.
+  rewrite ifF.
+    rewrite ifT /=.
+      by rewrite (tnth_nth ord0) /= enum_ordinalE.
+    by rewrite mem_lensE memtE /= enum_ordinalE.
+  by rewrite mem_lensE memtE /= enum_ordinalE.
+have -> : lens_comp (lens_left 2 1) (lothers [lens 0; 1]) = [lens].
+  by eq_lens.
+case H: (tnth vi 0%:O == tnth vi 1%:O).
   rewrite (_ : (_ == _) = true); last first.
-  rewrite !eq_ord_tuple.
-  apply/eqP.
-  do !f_equal.
-  apply val_inj => /=.
-  rewrite /others /lens_left /=.
-  rewrite !enum_ordinalE /=.
-  rewrite ifF //.
-    rewrite ifT //.
-      f_equal.
-      apply val_inj => /=.
-
-  apply/eqP
-rewrite (merge_indices_extract_others (lens_left 0 1)).
-Check curry0.
-
-apply/ffunP => vj.
-rewrite
-Print naturality.
-rewrite /cup_fun /uncurry /curry /=.
-
-rewrite (_ : (_ == _) = true); last first.
-*)
-Abort.
+    rewrite !eq_ord_tuple /= (eqP H). exact/eqP.
+  rewrite !scale1r.
+  have -> : lens_left 0 1 = lens_empty 1 by eq_lens.
+  f_equal; apply/val_inj.
+  by rewrite merge_indices_empty.
+rewrite (_ : (_ == _) = false).
+  by rewrite !scale0r.
+rewrite !eq_ord_tuple /=.
+apply/eqP => -[] /val_inj vi01.
+by rewrite vi01 eqxx in H.
+Qed.
 
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose_tsquare M) =e
@@ -268,7 +270,8 @@ rewrite transpose_tsquare_involutive => <-.
 have<- := uncurryK dI (lens_left 2 1) (cup_fun (n:=2) [lens 0; 1] (curry0 _ v)).
 set mycup := uncurry _ (cup_fun _ _).
 have := focusM dI (lens_left 2 1) [lens 0] (tr:=tsmor (transpose_tsquare M)) _ mycup.
-rewrite [in focus (lens_left 2 1) _ _ _]focusE /= /focus_fun => <-.
+rewrite [in focus (lens_left 2 1) _ _ _]focusE /= /focus_fun => <-;
+  last by apply/naturalityP; esplit.
 have <- : [lens 0] = lens_comp (lens_left 2 1) [lens 0]
   by eq_lens; rewrite tnth_mktuple.
 Abort.
