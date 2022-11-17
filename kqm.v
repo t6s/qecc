@@ -173,14 +173,36 @@ rewrite /uncurry0 /=.
 rewrite !(tsmorE,ffunE,sum_ffunE) /=.
 Abort.
 
+Lemma comp_morA m n p q (f : mor I R m n) (g : mor I R n p) (h : mor I R p q) :
+  h \v (g \v f) =e (h \v g) \v f.
+Proof. by []. Qed.
+
+Lemma comp_morE m n p (f : mor I R m n) (g : mor I R n p) T v :
+ (g \v f) T v = g T (f T v).
+Proof. by []. Qed.
+
+About asym_focus.
+Notation "[ 'lens' ]" := (@mkLens _ _ [tuple] erefl).
+
+Lemma asym_focus_cup :
+  cup ([lens 0; 1] : lens (2 + 1) 2) =e
+  asym_focus dI ([lens] : lens (0 + 1) 0) ([lens 0; 1] : lens (2 + 1) 2)
+    (cup ([lens 0; 1] : lens 2 2)).
+Proof.
+move=> T v.
+rewrite /= /asym_focus_fun /=.
+Admitted.
+
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose_tsquare M) =e
   cap [lens 1; 2] \v focus [lens 1] (tsmor M) \v cup [lens 0; 1].
 Proof.
-move=> T v /=.
-apply/ffunP => vi /=.
-have -> : [lens 1] = lens_comp (lens_left 2 1) [lens 1].
-  by eq_lens; rewrite tnth_mktuple.
+rewrite -{2}(transpose_tsquare_involutive M).
+move=> T v.
+rewrite -comp_morA comp_morE.
+have -> : ([lens 1] : lens 3 1) = lens_comp [lens 0; 1] [lens 1].
+  by eq_lens.
+(*
 rewrite focusM; last by apply/naturalityP; eexists.
 rewrite [in RHS]focusE /= /focus_fun.
 have -> : cup_fun (n:=3) [lens 0; 1] v =
@@ -195,6 +217,7 @@ have := focusM dI (lens_left 2 1) [lens 0] (tr:=tsmor (transpose_tsquare M)) _ m
 rewrite [in focus (lens_left 2 1) _ _ _]focusE /= /focus_fun => <-.
 have <- : [lens 0] = lens_comp (lens_left 2 1) [lens 0]
   by eq_lens; rewrite tnth_mktuple.
+*)
 Abort.
 
 Definition idts' n : tpower I n (tpower I (n + n - n) R^o).
