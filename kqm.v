@@ -206,17 +206,41 @@ Lemma asym_focus_cup :
 Proof.
 move=> T v /=.
 rewrite /asym_focus_fun /=.
-apply/ffunP => vi.
-rewrite !ffunE /=.
-f_equal; last by apply val_inj.
-apply/ffunP => vj.
+apply/(eq_from_indicesP mem_enum2) => /=.
+do! (apply/andP; split) => //=; apply/eqP; rewrite !ffunE /=;
+f_equal; last by apply val_inj;
+try apply/(eq_from_indicesP mem_enum2) => /=.
 rewrite /inner_coprod /M_inner_coprod /=.
 rewrite !tsmorE !ffunE /=.
 rewrite !sum_ffunE.
 apply eq_bigr => i _.
 rewrite !ffunE.
-rewrite -!extract_comp.
+rewrite -!extract_comp /=.
+(*
+case H: (tnth vi ord0 == tnth vi (lift ord0 ord0)).
+  rewrite (_ : (_ == _) = true); last first.
+  rewrite !eq_ord_tuple.
+  apply/eqP.
+  do !f_equal.
+  apply val_inj => /=.
+  rewrite /others /lens_left /=.
+  rewrite !enum_ordinalE /=.
+  rewrite ifF //.
+    rewrite ifT //.
+      f_equal.
+      apply val_inj => /=.
+
+  apply/eqP
+rewrite (merge_indices_extract_others (lens_left 0 1)).
+Check curry0.
+
+apply/ffunP => vj.
+rewrite
+Print naturality.
+rewrite /cup_fun /uncurry /curry /=.
+
 rewrite (_ : (_ == _) = true); last first.
+*)
 Abort.
 
 Lemma transpose_focus (M : tsquare 1) :
