@@ -191,7 +191,7 @@ rewrite /GRing.scale /= !mulr1.
 rewrite mulr1n mulrN mulr1.
 simpc.
 rewrite !mulrDr !rmorphD !rmorphM /= !mulrDl !oppr0.
-rewrite -!real_complexE.
+rewrite !complexr0.
 rewrite !mulrA !(mulrC (_ ^*)%C) !(mulrAC _ (_ ^*)%C).
 rewrite !addrA -!rmorphM !mulrN !mulNr !rmorphN /=.
 rewrite -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
