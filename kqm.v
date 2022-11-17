@@ -191,6 +191,7 @@ Lemma asym_focus_cup :
 Proof.
 move=> T v.
 rewrite /= /asym_focus_fun /=.
+rewrite /cup_fun /uncurry /curry /=.
 Admitted.
 
 Lemma transpose_focus (M : tsquare 1) :
@@ -202,7 +203,11 @@ move=> T v.
 rewrite -comp_morA comp_morE.
 have -> : ([lens 1] : lens 3 1) = lens_comp [lens 0; 1] [lens 1].
   by eq_lens.
-(*
+Restart.
+move=> T v /=.
+apply/ffunP => vi /=.
+have -> : [lens 1] = lens_comp (lens_left 2 1) [lens 1].
+  by eq_lens; rewrite tnth_mktuple.
 rewrite focusM; last by apply/naturalityP; eexists.
 rewrite [in RHS]focusE /= /focus_fun.
 have -> : cup_fun (n:=3) [lens 0; 1] v =
@@ -217,7 +222,6 @@ have := focusM dI (lens_left 2 1) [lens 0] (tr:=tsmor (transpose_tsquare M)) _ m
 rewrite [in focus (lens_left 2 1) _ _ _]focusE /= /focus_fun => <-.
 have <- : [lens 0] = lens_comp (lens_left 2 1) [lens 0]
   by eq_lens; rewrite tnth_mktuple.
-*)
 Abort.
 
 Definition idts' n : tpower I n (tpower I (n + n - n) R^o).
