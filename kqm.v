@@ -219,10 +219,7 @@ have -> : lens_comp (lens_left 2 1) [lens 0; 1] = lens_left 2 1.
 have -> : lens_comp (lens_left 2 1) (lens_left 1 1) = [lens 0].
   by eq_lens; rewrite /mktuple /= (tnth_nth ord0) /= enum_ordinalE.
 have -> : lens_comp (lens_left 2 1) (lothers (lens_left 1 1)) = [lens 1].
-  eq_lens.
-  rewrite -map_comp /=.
-  rewrite ifF; last by rewrite mem_lensE memtE /= enum_ordinalE.
-  rewrite ifT /=; last by rewrite mem_lensE memtE /= enum_ordinalE.
+  eq_lens; rewrite -map_comp /= !mem_lensE !memtE /= enum_ordinalE /=.
   by rewrite (tnth_nth ord0) /= enum_ordinalE.
 have -> : lens_comp (lens_left 2 1) (lothers [lens 0; 1]) = [lens] by eq_lens.
 case H: (tnth vi 0%:O == tnth vi 1%:O).
