@@ -8,10 +8,6 @@ Unset Printing Implicit Defensive.
 
 Import GRing.Theory.
 
-(* Reduce a linear form *)
-Definition linE :=
-  (mulr0,mul0r,mulr1,mul1r,addr0,add0r,subr0,oppr0,scale0r,scale1r).
-
 Section gate_examples.
 Import Num.Theory.
 Local Open Scope ring_scope.
@@ -90,11 +86,6 @@ Definition cnotH : tsquare 2 :=
 
 Definition cnotHe :=
   tsmor hadamard2 \v tsmor cnot \v tsmor hadamard2.
-
-Definition enum2 : seq I := [:: 0%:O; 1%:O].
-Lemma uniq_enum2 : uniq enum2. Proof. by []. Qed.
-Lemma mem_enum2 i : i \in enum2.
-Proof. by rewrite !inE; case: i => -[|[]]. Qed.
 
 Notation enum_indices := (enum_indices enum2).
 Local Definition mem_enum_indices := mem_enum_indices mem_enum2.

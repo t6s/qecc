@@ -1,7 +1,7 @@
 (* Kindergarten quantum mechanics *)
 
 From mathcomp Require Import all_ssreflect all_algebra.
-Require Import lens tpower qexamples.
+Require Import lens tpower.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

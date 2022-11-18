@@ -12,6 +12,10 @@ Reserved Notation "f \v g" (at level 50, format "f  \v  g").
 Reserved Notation "f =e g" (at level 70).
 Reserved Notation "M1 '*t' M2" (at level 50).
 
+(* Reduce a linear form *)
+Definition linE :=
+  (mulr0,mul0r,mulr1,mul1r,addr0,add0r,subr0,oppr0,scale0r,scale1r).
+
 Section tensor_space.
 Variables (I : finType) (dI : I) (R : comRingType).
 Local Notation merge_indices := (merge_indices dI).
@@ -720,3 +724,12 @@ rewrite foldrE big_map [RHS]big_uniq ?uniq_enum_indices //=.
 apply/esym/eq_bigl => vi. exact/mem_enum_indices.
 Qed.
 End enum_indices.
+
+Section enum2.
+Let I := [finType of 'I_2].
+
+Definition enum2 : seq I := [:: 0%:O; 1%:O].
+Lemma uniq_enum2 : uniq enum2. Proof. by []. Qed.
+Lemma mem_enum2 i : i \in enum2.
+Proof. by rewrite !inE; case: i => -[|[]]. Qed.
+End enum2.
