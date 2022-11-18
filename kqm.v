@@ -120,7 +120,7 @@ case: ifP; by rewrite (scale1r,scale0r).
 Qed.
 
 Lemma transpose_cup (M : tsquare 1) :
-  focus [lens 0] (tsmor M) \v cup (n:=2) [lens 0; 1] =e
+  focus [lens 0] (tsmor M) \v cup (n:=1) [lens 0; 1] =e
   focus [lens 1] (tsmor (transpose_tsquare M)) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
@@ -133,8 +133,8 @@ rewrite !lens_left_1. (* !extract_merge !extract_lothers_merge. *)
 have -> : lothers [lens 0] = [lens 1] by eq_lens.
 rewrite !cast_tupleE /=.
 rewrite -!extract_comp.
-have -> : lens_comp [lens 0; 1] [lens 0] = [lens 0] :> lens 4 1 by eq_lens.
-have -> : lens_comp [lens 0; 1] [lens 1] = [lens 1] :> lens 4 1 by eq_lens.
+have -> : lens_comp [lens 0; 1] [lens 0] = [lens 0] :> lens 3 1 by eq_lens.
+have -> : lens_comp [lens 0; 1] [lens 1] = [lens 1] :> lens 3 1 by eq_lens.
 rewrite !extract_merge.
 rewrite !merge_indices_empty /=.
 rewrite !extract_merge_disjoint.
@@ -262,42 +262,34 @@ by rewrite vi01 eqxx in H.
 Qed.
 *)
 
+Lemma focus_empty n (f : endo n) :
+  naturality f ->
+  focus (lothers (lens_empty n)) (cast_mor f (esym (subn0 n)) (esym (subn0 n)))
+  =e f.
+Admitted.
+
 Lemma transpose_focus (M : tsquare 1) :
   tsmor (transpose_tsquare M) =e
   cap [lens 1; 2] \v focus [lens 1] (tsmor M) \v cup [lens 0; 1].
 Proof.
 rewrite -{2}(transpose_tsquare_involutive M).
 move=> T v.
-rewrite -comp_morA comp_morE.
-set cmp := (_ \v _).
-have -> : cmp =e asym_focus dI (n:=1) (p:=2) (m:=0) [lens] [lens 0; 1]
-  (focus [lens 1] (tsmor (transpose_tsquare (transpose_tsquare M))) \v 
-   cup [lens 0; 1]).
-  subst cmp => T' v'.
-  rewrite /= /asym_focus_fun comp_morE /cup /= /asym_focus_fun.
-Abort.
-(*
-move=> T v /=.
-apply/ffunP => vi /=.
-have -> : [lens 1] = lens_comp (lens_left 2 1) [lens 1].
-  by eq_lens; rewrite tnth_mktuple.
-rewrite focusM; last by apply/naturalityP; eexists.
-rewrite [in RHS]focusE /= /focus_fun.
-have -> : cup_fun (n:=3) [lens 0; 1] v =
-  uncurry (lens_left 2 1) (cup_fun (n:=2) [lens 0; 1] (curry0 _ v)).
-  admit.
-rewrite uncurryK.
-have /= := transpose_cup (transpose_tsquare M) (curry0 I v).
-rewrite transpose_tsquare_involutive => <-.
-have<- := uncurryK dI (lens_left 2 1) (cup_fun (n:=2) [lens 0; 1] (curry0 _ v)).
-set mycup := uncurry _ (cup_fun _ _).
-have := focusM dI (lens_left 2 1) [lens 0] (tr:=tsmor (transpose_tsquare M)) _ mycup.
-rewrite [in focus (lens_left 2 1) _ _ _]focusE /= /focus_fun => <-;
-  last by apply/naturalityP; esplit.
-have <- : [lens 0] = lens_comp (lens_left 2 1) [lens 0]
-  by eq_lens; rewrite tnth_mktuple.
-Abort.
-*)
+rewrite -comp_morA comp_morE comp_morE.
+move: (transpose_cup (transpose_tsquare M) v) => /= <-.
+Search naturality.
+have NM : naturality (tsmor (transpose_tsquare M)) by apply/naturalityP; esplit.
+have NIP : naturality (inner_prod I 1 (R:=R)) by apply/naturalityP; esplit.
+set mycup := asym_focus_fun dI (lens_empty 1 : lens (0+1) 0) ([lens 0; 1] : lens (2+1) 2) (inner_coprod I 1) v.
+move: (asym_focusC dI ([lens 1; 2] : lens (2+1) 2) (lens_empty 1 : lens (0+1) 0) NM NIP mycup).
+rewrite !cast_lensE.
+have -> : lothers [lens 1; 2] = [lens 0] by eq_lens.
+move => /= <-.
+subst mycup.
+move: (straighten v) => /= ->.
+move: (focus_empty NM v) => <-.
+rewrite !focusE /focus_fun /= /cast_mor /=.
+have -> // : subn0 1 = erefl by apply nat_irrelevance.
+Qed.
 
 Definition idts' n : tpower I n (tpower I (n + n - n) R^o).
 rewrite addKn.
