@@ -793,6 +793,9 @@ rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
 by rewrite map_comp -IH (iotaDl 1 0 n).
 Qed.
 
+Ltac eq_lens :=
+  apply/val_inj/eqP; rewrite ?eq_ord_tuple /= /others /= ?enum_ordinalE.
+
 Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
 

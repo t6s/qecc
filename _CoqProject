@@ -9,8 +9,8 @@
 lens.v
 tpower.v
 unitary.v
-qexamples.v
 kqm.v
+qexamples.v
 
 -R . qecc
 

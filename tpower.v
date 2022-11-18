@@ -32,6 +32,12 @@ Notation endofun n := (morfun n n).
 Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
   [ffun vi => v (cast_tuple vi (esym H))].
 
+Definition cast_mor m2 n2 m1 n1 (f : mor m1 n1)
+           (Hm : m1 = m2) (Hn : n1 = n2) : mor m2 n2.
+rewrite -> Hm, -> Hn in f.
+exact f.
+Defined.
+
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
    map h \o f T1 = f T2 \o map h
@@ -347,6 +353,16 @@ Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
 End comp_mor.
 Notation "f \v g" := (comp_mor f g).
 
+Section comp_mor_facts.
+Variables (q : nat) (f : mor m n) (g : mor n p) (h : mor p q).
+
+Lemma comp_morA : h \v (g \v f) =e (h \v g) \v f.
+Proof. by []. Qed.
+
+Lemma comp_morE T v : (g \v f) T v = g T (f T v).
+Proof. by []. Qed.
+End comp_mor_facts.
+
 Lemma focus_comp r q (tr tr' : endo q) (lq : lens r q) :
   focus lq (tr \v tr') =e focus lq tr \v focus lq tr'.
 Proof.
@@ -478,6 +494,7 @@ rewrite -> focusM; last by apply/naturalityP; eexists.
 have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.
+
 End tensor_space.
 
 Notation "f1 =e f2" := (eq_mor f1 f2).
