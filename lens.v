@@ -6,6 +6,7 @@ Unset Printing Implicit Defensive.
 
 Reserved Notation "[ 'lens' x1 ; .. ; xn ]"
   (format "[ 'lens'  x1 ;  .. ;  xn ]").
+Reserved Notation "[ 'lens' ]" (format "[ 'lens' ]").
 
 (* Utility lemmas *)
 
