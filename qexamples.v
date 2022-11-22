@@ -49,6 +49,10 @@ Definition toffoli : tsquare 3 :=
   ket_bra ¦1,0,0⟩ ¦1,0,0⟩ + ket_bra ¦1,0,1⟩ ¦1,0,1⟩ +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
+Definition swap : tsquare 2 :=
+  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,0⟩ +
+  ket_bra ¦1,0⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩.
+
 Definition bit_flip_enc : endo 3 :=
   tsapp [lens 0; 2] cnot \v  tsapp [lens 0; 1] cnot.
 
@@ -87,11 +91,76 @@ Definition cnotH : tsquare 2 :=
 Definition cnotHe :=
   tsmor hadamard2 \v tsmor cnot \v tsmor hadamard2.
 
+Lemma leq_half n : (n./2 <= n)%N.
+Proof. by rewrite -{2}(odd_double_half n) -addnn addnA leq_addl. Qed.
+
+Lemma uniq_swap_lens n (i : 'I_(n./2)):
+  let i' := widen_ord (leq_half n) i in uniq [:: i'; rev_ord i'].
+Proof.
+rewrite /= inE andbT neq_ltn.
+apply/orP/or_introl => /=.
+rewrite ltn_subRL -addnS.
+apply (@leq_trans (n./2 + n./2)%N).
+  by apply leq_add.
+by rewrite -{3}(odd_double_half n) addnn leq_addl.
+Qed.
+
+Definition swap_lens n (i : 'I_(n./2)) : lens n 2 := mkLens (uniq_swap_lens i).
+
+Definition rev_circuit n : endo n :=
+  \big[@comp_mor I C n n n/idmor I n]_(i < (n./2)%N)
+     tsapp (swap_lens i) swap.
+
 Notation enum_indices := (enum_indices enum2).
 Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
+
+(* Semantics of rev_circuit *)
+Lemma swapU : unitary_endo (tsmor swap).
+Proof.
+rewrite /unitary_endo /tinner /= => s t.
+rewrite !sum_enum_indices /= !tsmorE.
+time (rewrite !ffunE /= !linE).
+rewrite !sum_tpbasisK.
+by rewrite !addrA -(addrA (_ * _)) (addrC (_ * _) (_ * _)) !addrA.
+Qed.
+
+Lemma idmorU (J : finType) (S : rcfType) n : unitary_endo (R:=S) (idmor J n).
+Proof. done. Qed.
+
+Lemma rev_circuitU n : unitary_endo (rev_circuit n).
+Proof.
+apply: big_ind.
+- exact: idmorU.
+- exact: unitary_comp.
+- move=> i _. by apply/unitary_focus/swapU/naturalityP; esplit.
+Qed.
+
+(* Attempts at proving spec *)
+Lemma rev_circuit_ok n :
+  rev_circuit n =e
+  tsmor [ffun vi : n.-tuple I => tpbasis C [tuple of rev vi]].
+Proof.
+move=> T v.
+apply/ffunP => vi /=.
+rewrite tsmorE /rev_circuit.
+Abort.
+
+Lemma uniq_lens_rev n : uniq (map_tuple (@rev_ord n) (lens_id n)).
+Proof.
+rewrite (map_uniq (f:=@rev_ord n)) // -map_comp (eq_map (f2:=id)).
+  by rewrite map_id enum_uniq.
+by move=> x /=; rewrite rev_ordK.
+Qed.
+Definition lens_rev n := mkLens (uniq_lens_rev n).
+
+Lemma rev_circuit_ok n :
+  cast_mor (rev_circuit n) (esym (addn0 n)) (esym (addn0 n)) =e
+  asym_focus ord0 (cast_lens_ord (lens_id n) (esym (addn0 n)))
+                  (cast_lens_ord (lens_rev n) (esym (addn0 n))) (idmor I n).
+Abort.
 
 (* Checking equality of functions (sum of tensors) *)
 Lemma cnotK : involutive (tsmor cnot Co).

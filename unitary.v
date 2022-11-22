@@ -119,6 +119,10 @@ apply/(iffP idP).
   by rewrite sum_muleqr [LHS]conjc_nat.
 Qed.
 
+Lemma unitary_comp n (f g : endo n) :
+  unitary_endo f -> unitary_endo g -> unitary_endo (f \v g).
+Proof. move=> Hf Hg s t /=; by rewrite Hf. Qed.
+
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
   naturality f -> unitary_endo f -> unitary_endo (focus l f).
 Proof.
