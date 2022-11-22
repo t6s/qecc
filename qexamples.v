@@ -139,6 +139,37 @@ apply: big_ind.
 Qed.
 
 (* Attempts at proving spec *)
+Section monoid.
+Variable n : nat.
+Lemma comp_mor1f (f : endo n) : idmor I n \v f =e f.
+Proof. done. Qed.
+Lemma comp_morf1 (f : endo n) : f \v idmor I n =e f.
+Proof. done. Qed.
+Fail Canonical comp_monoid :=
+  Monoid.Law (@comp_morA I C n n n n) comp_mor1f comp_morf1.
+End monoid.
+
+Lemma rev_circuit_ok n (i : 'I_n) v :
+  proj ord0 (lens_single (rev_ord i)) (rev_circuit n Co v) =
+  proj ord0 (lens_single i) v.
+Proof.
+case Hi: (i < n./2)%N.
+- rewrite /rev_circuit.
+  have Hn : (n./2.-1.+1 = n./2)%N by apply (ltn_predK Hi).
+  set f := fun j => tsapp (swap_lens (cast_ord Hn (inord j))) swap.
+  rewrite (eq_bigr (fun j => f (val j))); last first.
+    move=> j _. congr focus. f_equal.
+    by apply val_inj => /=; rewrite inordK // Hn.
+  rewrite -(big_mkord xpredT f) /=.
+  subst f => /=.
+  set h := n./2 in Hi.
+  have: (h <= n./2)%N by [].
+  rewrite -{2}/h.
+  elim: h Hi => // h IH.
+  rewrite ltnS leq_eqVlt => /orP [/eqP <-|] Hh.
+    rewrite big_nat_recl /=.
+Abort.
+
 Lemma rev_circuit_ok n :
   rev_circuit n =e
   tsmor [ffun vi : n.-tuple I => tpbasis C [tuple of rev vi]].

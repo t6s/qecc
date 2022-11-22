@@ -138,5 +138,46 @@ rewrite focusE /= /focus_fun.
 rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.
 by rewrite -!Nf !ffunE.
 Qed.
-End unitary_endo.  
+End unitary_endo.
+
+Section projection.
+Variables (n m : nat) (l : lens n m).
+Definition proj (t : tpower I n Co) : tpower I m Co :=
+  map_tpower (fun s : tpower I (n-m) Co => tinner s s)
+     (curry dI l t).
+
+Lemma map_tpower_linear p (T1 T2 : lmodType C) (f : {linear T1 -> T2}) :
+  linear (map_tpower (I:=I) (m:=p) f).
+Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
+
+Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : tpower I n Co) :
+  [disjoint l & l'] -> naturality f -> unitary_endo f ->
+  proj (focus l' f Co t) = proj t.
+Proof.
+move=> Hdisj Nf Uf.
+rewrite /proj.
+(*
+case/naturalityP: (Nf) => M Hf.
+apply/ffunP => vi.
+rewrite !ffunE.
+rewrite /tinner.
+under eq_bigr do rewrite !ffunE.
+under [in RHS]eq_bigr do rewrite !ffunE.
+rewrite -(unitary_focus l' Nf Uf).
+rewrite unitary_focus.
+*)
+have : exists l1, l' = lens_comp (lothers l) l1. admit.
+case => l1 Hl1.
+rewrite Hl1.
+have -> : focus (lens_comp (lothers l) l1) f Co t =
+          uncurry l (Linear (map_tpower_linear (focus l1 f Co)) (curry dI l t)).
+  apply/ffunP => vi.
+  rewrite !focusE !ffunE /=.
+  rewrite -!extract_comp.
+  admit.
+rewrite uncurryK /=.
+apply/ffunP => vi.
+by rewrite !ffunE unitary_focus.
+Admitted.
+End projection.
 End unitary.

@@ -454,6 +454,13 @@ by apply eq_from_tnth => i; rewrite tnth_mktuple.
 Qed.
 End lens_empty.
 
+Section lens_single.
+Variable n : nat.
+
+Definition lens_single i : lens n 1 :=
+  {|lens_t := [tuple i]; lens_uniq := erefl|}.
+End lens_single.
+
 (* Ordered lenses *)
 Section lens_left_right.
 Variables m n : nat.
