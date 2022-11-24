@@ -52,6 +52,9 @@ Definition toffoli : tsquare 3 :=
 Definition swap : tsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,0⟩ +
   ket_bra ¦1,0⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩.
+Definition swap' : tsquare 2 :=
+  [ffun vi => [ffun vj =>
+     (tnth vi 0%O == tnth vj 1%O)%:R * (tnth vi 1%O == tnth vj 0%O)%:R]].
 
 Definition bit_flip_enc : endo 3 :=
   tsapp [lens 0; 2] cnot \v  tsapp [lens 0; 1] cnot.
@@ -140,34 +143,126 @@ Qed.
 
 (* Attempts at proving spec *)
 Section monoid.
+Axiom morP : forall m n (f g : mor I C m n), f =e g <-> f = g.
 Variable n : nat.
-Lemma comp_mor1f (f : endo n) : idmor I n \v f =e f.
-Proof. done. Qed.
-Lemma comp_morf1 (f : endo n) : f \v idmor I n =e f.
-Proof. done. Qed.
-Fail Canonical comp_monoid :=
-  Monoid.Law (@comp_morA I C n n n n) comp_mor1f comp_morf1.
+Lemma comp_mor1f (f : endo n) : idmor I n \v f = f.
+Proof. by apply/morP. Qed.
+Lemma comp_morf1 (f : endo n) : f \v idmor I n = f.
+Proof. by apply/morP . Qed.
+Lemma comp_morA' : associative (@comp_mor I C n n n).
+Proof. move=> f g h; apply/morP/comp_morA. Qed.
+Canonical comp_monoid :=
+  Monoid.Law comp_morA' comp_mor1f comp_morf1.
 End monoid.
 
-Lemma rev_circuit_ok n (i : 'I_n) v :
-  proj ord0 (lens_single (rev_ord i)) (rev_circuit n Co v) =
+Record foc_endo n : Type :=
+  mkFoc { foc_m : nat; foc_l : lens n foc_m; foc_e : endo foc_m }.
+
+Definition compn_foc n (s : seq (foc_endo n)) :=
+  \big[@comp_mor I C n n n/idmor I n]_(f <- s) focus (foc_l f) (foc_e f).
+
+Definition all_disjoint n (s : seq (foc_endo n)) :=
+  pairwise (fun f g : foc_endo n => [disjoint foc_l f & foc_l g]) s.
+
+(*
+Lemma compn_foc_perm n (s q : seq (foc_endo n)) :
+  all_disjoint s ->
+  compn_foc s = compn_foc q.
+*)
+
+Lemma rev_circuit_ok n (i : 'I_(n.+2)%N) v :
+  proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
   proj ord0 (lens_single i) v.
 Proof.
-case Hi: (i < n./2)%N.
+case Hi: (i < n./2.+1)%N.
 - rewrite /rev_circuit.
-  have Hn : (n./2.-1.+1 = n./2)%N by apply (ltn_predK Hi).
+  have Hn : (n./2.+1 = n.+2./2)%N by [].
   set f := fun j => tsapp (swap_lens (cast_ord Hn (inord j))) swap.
   rewrite (eq_bigr (fun j => f (val j))); last first.
     move=> j _. congr focus. f_equal.
     by apply val_inj => /=; rewrite inordK // Hn.
   rewrite -(big_mkord xpredT f) /=.
   subst f => /=.
-  set h := n./2 in Hi.
-  have: (h <= n./2)%N by [].
+  set h := n./2.+1 in Hi.
+  have: (h <= n./2.+1)%N by [].
   rewrite -{2}/h.
   elim: h Hi => // h IH.
-  rewrite ltnS leq_eqVlt => /orP [/eqP <-|] Hh.
-    rewrite big_nat_recl /=.
+  rewrite ltnS leq_eqVlt => /orP [/eqP|] Hi Hh.
+    rewrite -Hi big_nat_recr //=.
+    clear IH.
+    rewrite {1}Hi.
+    have : (i >= h)%N by rewrite -Hi.
+    move: Hh.
+    rewrite -{1}Hi => {}Hi.
+    elim: h => [|h IH].
+      move => _.
+      rewrite big_mkord big_ord0 /=.
+      apply/ffunP => vi.
+      rewrite !focusE !ffunE /= /tinner.
+      rewrite [LHS](reindex_merge_indices _ ord0 (lens_single (inord i))) /=.
+      rewrite [RHS](reindex_merge_indices _ ord0
+        (lens_single (inord (index (rev_ord i) (others (lens_single i)))))) /=.
+      apply eq_bigr => vj _.
+      apply eq_bigr => vk _.
+      rewrite /swap !ffunE !tsmorE.
+      under eq_bigr do rewrite !ffunE.
+      rewrite sum_enum_indices /= !scaler0 !linE !ffunE.
+      rewrite /GRing.scale /= !mulr1.
+      case H1: (_ == _) => /=.
+        rewrite !mul1r -!(eqP H1) /= !linE.
+        rewrite (eqP H1) merge_indices_extract.
+        set lhs := merge_indices ord0 (lens_single (rev_ord i)) _ _.
+        set rhs := merge_indices ord0 (lens_single i) _ _.
+        have -> // : lhs = rhs.
+        subst lhs rhs.
+        move: H1.
+        rewrite /extract /swap_lens /= => /eqP /(f_equal val) /= [].
+        rewrite (_ : widen_ord _ _ = i); last
+          by apply/val_inj => /=; rewrite inordK.
+        rewrite !tnth_merge_indices_single.
+        move => Hti Ht0.
+        apply/eq_from_tnth => j.
+        rewrite ![in RHS]tnth_map /= tnth_ord_tuple.
+        case: ifPn => [/eqP | ij].
+          by rewrite -(tnth_nth _ vi (val (@ord0 0))) -Ht0 Hti => ->.
+        rewrite nth_default; last by rewrite size_tuple.
+        have Hj : j \in lothers (lens_single i).
+          by rewrite mem_filter inE eq_sym ij mem_enum.
+        rewrite (nth_map ord0); last first.
+          move: Hj.
+          by rewrite -index_mem (eqP (size_others _)) size_enum_ord.
+        rewrite !tnth_map /= tnth_ord_tuple.
+        case: ifPn => rij.
+          rewrite -(tnth_nth _ vi (val (@ord0 0))).
+          rewrite ifT.
+            rewrite -(tnth_nth _ _ (val (@ord0 0))).
+            admit.
+          apply/eqP/val_inj => /=.
+          rewrite (make_lens_index Hj) nth_ord_enum /= -(eqP rij) inordK //.
+          move: Hj.
+          by rewrite -index_mem (eqP rij) (eqP (size_others _)).
+        rewrite nth_default; last by rewrite size_tuple.
+        have Hj' : j \in lothers (lens_single (rev_ord i)).
+          by rewrite mem_filter inE eq_sym rij mem_enum.
+        rewrite (nth_map ord0); last first.
+          move: Hj'.
+          by rewrite -index_mem (eqP (size_others _)) size_enum_ord.
+        rewrite ifF; last first.
+          apply/negP => /eqP/(f_equal val) /=.
+          rewrite (make_lens_index Hj') nth_ord_enum /=.
+          admit.
+        have Hri : rev_ord i \in lothers (lens_single i).
+          admit.
+        rewrite ifF; last first.
+          apply/negP => /eqP/(f_equal val) /=.
+          rewrite (make_lens_index Hj) nth_ord_enum /= inordK.
+            move/(f_equal (nth ord0 (others (lens_single i)))).
+            rewrite !nth_index //.
+            by move/eqP => rij'; rewrite rij' in rij.
+          by rewrite -index_mem size_tuple in Hri.
+        admit.
+      rewrite !linE.
+      admit.
 Abort.
 
 Lemma rev_circuit_ok n :

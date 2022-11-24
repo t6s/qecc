@@ -50,6 +50,10 @@ Definition naturality m n (f : mor m n) :=
   forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}) (v : tpower m T1),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
 
+Lemma map_tpower_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
+  linear (map_tpower (m:=m) f).
+Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
+
 Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
 

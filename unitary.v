@@ -142,13 +142,10 @@ End unitary_endo.
 
 Section projection.
 Variables (n m : nat) (l : lens n m).
+
 Definition proj (t : tpower I n Co) : tpower I m Co :=
   map_tpower (fun s : tpower I (n-m) Co => tinner s s)
      (curry dI l t).
-
-Lemma map_tpower_linear p (T1 T2 : lmodType C) (f : {linear T1 -> T2}) :
-  linear (map_tpower (I:=I) (m:=p) f).
-Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
 
 Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : tpower I n Co) :
   [disjoint l & l'] -> naturality f -> unitary_endo f ->
@@ -166,9 +163,8 @@ under [in RHS]eq_bigr do rewrite !ffunE.
 rewrite -(unitary_focus l' Nf Uf).
 rewrite unitary_focus.
 *)
-have : exists l1, l' = lens_comp (lothers l) l1. admit.
-case => l1 Hl1.
-rewrite Hl1.
+rewrite -(lmake_compE Hdisj).
+set l1 := lmake_comp Hdisj.
 have -> : focus (lens_comp (lothers l) l1) f Co t =
           uncurry l (Linear (map_tpower_linear (focus l1 f Co)) (curry dI l t)).
   apply/ffunP => vi.

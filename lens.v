@@ -146,6 +146,7 @@ Definition make_lens_index : index i l = lens_index. Proof. by []. Qed.
 
 Lemma lens_indexK : tnth l lens_index = i.
 Proof. by rewrite (tnth_nth i) nth_index. Qed.
+
 End lens_index.
 
 (* Focusing on subvector *)
@@ -455,10 +456,21 @@ Qed.
 End lens_empty.
 
 Section lens_single.
-Variable n : nat.
+Variables n : nat.
 
 Definition lens_single i : lens n 1 :=
   {|lens_t := [tuple i]; lens_uniq := erefl|}.
+
+Lemma index_lens_single i : index i (lens_single i) = (@ord0 1).
+Proof. by rewrite /= eqxx. Qed.
+
+Lemma tnth_merge_indices_single (T : eqType) (dI : T) i vi vj :
+  tnth (merge_indices dI (lens_single i) vi vj) i = tnth vi ord0.
+Proof.
+rewrite !tnth_map tnth_ord_tuple nth_lens_index. by rewrite inE eqxx.
+move=> H. case: lens_index => -[] // i0.
+by apply/f_equal/val_inj.
+Qed.
 End lens_single.
 
 (* Ordered lenses *)
@@ -627,6 +639,41 @@ rewrite (negbTE Hi) orbF => Him.
 by rewrite (nth_lens_index Him) tnth_map lens_indexK.
 Qed.      
 End inject_all.
+
+(* Shifting of disjoint lenses *)
+Section make_comp.
+Variables (n m p : nat) (l : lens n m) (l' : lens n p).
+Hypothesis Hdisj : [disjoint l & l'].
+
+Lemma make_comp_present i :
+  tnth l' i \in lothers l.
+Proof.
+move: (mem_tnth i l').
+rewrite mem_lothers => Hl'; apply/negP => Hl.
+move: Hdisj; rewrite disjoint_has => /hasP; elim.
+by exists (tnth l' i).
+Qed.
+
+Definition make_comp :=
+  [tuple lens_index (make_comp_present i) | i < p].
+
+Lemma uniq_map_comp : uniq make_comp.
+Proof.
+rewrite /make_comp/= map_inj_in_uniq ?enum_uniq // => i j _ _.
+move/(f_equal (tnth (lothers l))).
+rewrite !lens_indexK => /tnth_inj; apply.
+by apply lens_uniq.
+Qed.
+
+Definition lmake_comp := mkLens uniq_map_comp.
+
+Lemma lmake_compE : lens_comp (lothers l) lmake_comp = l'.
+Proof.
+apply/val_inj/eq_from_tnth => i.
+rewrite tnth_map tnth_mktuple (tnth_nth (tnth l' i)) /=.
+by rewrite nth_index // make_comp_present.
+Qed.
+End make_comp.
 
 (* associativity of focussing *)
 Section lens_assoc.
