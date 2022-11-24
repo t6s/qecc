@@ -813,6 +813,40 @@ congr val.
 apply (tnth_inj _ (lens_uniq (lothers l))).
 by rewrite -[in LHS]lothers_notin_l_comp tnth_comp !lens_indexK.
 Qed.
+
+(* For focus_others, only uses variables *)
+Lemma merge_indices_comp_others (l1 : lens (n-m) p) vi vj :
+  merge_indices (lens_comp (lothers l) l1) vj
+                (extract (lothers (lens_comp (lothers l) l1)) vi) =
+  merge_indices l (extract l vi)
+     (merge_indices l1 vj (extract (lens_comp (lothers l) (lothers l1)) vi)).
+Proof.
+set l2 := lens_comp (lothers l) l1.
+apply eq_from_tnth => i.
+rewrite !tnth_map !tnth_ord_tuple.
+case/boolP: (i \in l) => Hl.
+  rewrite (make_lens_index Hl) -tnth_nth.
+  have Hl2: i \notin l2.
+    apply/negP => /lens_comp_sub.
+    by rewrite mem_others Hl.
+  rewrite nth_lens_out //.
+  rewrite -mem_lothers in Hl2.
+  rewrite (make_lens_index Hl2) -tnth_nth.
+  by rewrite !tnth_map !lens_indexK.
+rewrite (nth_lens_out _ _ Hl).
+rewrite -mem_lothers in Hl.
+rewrite (make_lens_index Hl) -tnth_nth.
+case/boolP: (i \in l2) => Hl2.
+  rewrite (make_lens_index Hl2) -tnth_nth tnth_map tnth_ord_tuple.
+  by rewrite -!index_lens_comp (make_lens_index Hl2) -tnth_nth.
+rewrite nth_lens_out //.
+rewrite -mem_lothers in Hl2.
+rewrite (make_lens_index Hl2) -tnth_nth.
+rewrite !tnth_map lens_indexK tnth_ord_tuple -!index_lens_comp.
+rewrite nth_lens_out; last by rewrite -mem_lothers.
+rewrite nth_extract_index //.
+by rewrite /l2 mem_lothers mem_lens_comp -mem_lothers -mem_lens_comp in Hl2.
+Qed.
 End lens_assoc.
 
 (* Computable Ordinal constants *)
