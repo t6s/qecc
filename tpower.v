@@ -435,15 +435,12 @@ Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : tpower n T) :
   naturality f ->
   focus (lens_comp (lothers l) l') f T t =
   uncurry l (map_tpower (m:=m) (focus l' f T) (curry l t)).
-  (* polymorphism prevents writing it this way:
+  (* parametricity prevents writing it this way:
      focus l (fun _ => Linear (map_tpower_linear (focus l' f T))) T t. *)
 Proof.
-case/naturalityP => M Hf.
-apply/ffunP => vi.
+case/naturalityP => M Hf; apply/ffunP => vi.
 rewrite !focusE !ffunE /= -!extract_comp !Hf !tsmorE /= !sum_ffunE.
-set l2 := lens_comp (lothers l) l'.
-apply eq_bigr => vj _.
-by rewrite !ffunE merge_indices_comp_others.
+apply eq_bigr => vj _; by rewrite !ffunE merge_indices_comp_others.
 Qed.
 End focus_props.
 Notation "f \v g" := (comp_mor f g).
