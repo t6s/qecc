@@ -152,28 +152,9 @@ Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : tpower I n Co) :
   proj (focus l' f Co t) = proj t.
 Proof.
 move=> Hdisj Nf Uf.
-rewrite /proj.
-(*
-case/naturalityP: (Nf) => M Hf.
-apply/ffunP => vi.
-rewrite !ffunE.
-rewrite /tinner.
-under eq_bigr do rewrite !ffunE.
-under [in RHS]eq_bigr do rewrite !ffunE.
-rewrite -(unitary_focus l' Nf Uf).
-rewrite unitary_focus.
-*)
-rewrite -(lmake_compE Hdisj).
-set l1 := lmake_comp Hdisj.
-have -> : focus (lens_comp (lothers l) l1) f Co t =
-          uncurry l (Linear (map_tpower_linear (focus l1 f Co)) (curry dI l t)).
-  apply/ffunP => vi.
-  rewrite !focusE !ffunE /=.
-  rewrite -!extract_comp.
-  admit.
-rewrite uncurryK /=.
+rewrite /proj -(lmake_compE Hdisj) focus_others // uncurryK /=.
 apply/ffunP => vi.
 by rewrite !ffunE unitary_focus.
-Admitted.
+Qed.
 End projection.
 End unitary.

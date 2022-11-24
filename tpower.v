@@ -428,6 +428,52 @@ apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _).
 exact: merge_indices_comp.
 Qed.
+
+(* Variant for disjoint lenses, used in unitary.v *)
+Variable T : lmodType R.
+Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : tpower n T) :
+  naturality f ->
+  focus (lens_comp (lothers l) l') f T t =
+  uncurry l (map_tpower (m:=m) (focus l' f T) (curry l t)).
+  (* polymorphism prevents writing it this way:
+     focus l (fun _ => Linear (map_tpower_linear (focus l' f T))) T t. *)
+Proof.
+case/naturalityP => M Hf.
+apply/ffunP => vi.
+rewrite !focusE !ffunE /=.
+rewrite -!extract_comp !Hf !tsmorE /= !sum_ffunE.
+apply eq_bigr => vj _.
+rewrite !ffunE; do 2!f_equal.
+apply eq_from_tnth => i.
+rewrite !tnth_map !tnth_ord_tuple.
+set l2 := lens_comp (lothers l) l'.
+case/boolP: (i \in l) => Hl.
+  have Hlo: i \notin lothers l by rewrite mem_lothers Hl.
+  rewrite (make_lens_index Hl) -tnth_nth.
+  have Hll: i \notin l2.
+    apply/negP => /lens_comp_sub Hll.
+    by rewrite Hll in Hlo.
+  rewrite nth_lens_out //.
+  have Hll2: i \in lothers l2 by rewrite mem_lothers.
+  rewrite (make_lens_index Hll2) -tnth_nth.
+  by rewrite !tnth_map !lens_indexK.
+rewrite (nth_lens_out _ _ Hl).
+have Hlo: i \in lothers l by rewrite mem_lothers Hl.
+rewrite (make_lens_index Hlo) -tnth_nth.
+case/boolP: (i \in l2) => Hl2.
+  rewrite (make_lens_index Hl2) -tnth_nth.
+  rewrite tnth_map tnth_ord_tuple.
+  rewrite -!index_lens_comp.
+  by rewrite (make_lens_index Hl2) -tnth_nth.
+rewrite nth_lens_out //.
+rewrite -mem_lothers in Hl2.
+rewrite (make_lens_index Hl2) -tnth_nth.
+rewrite !tnth_map lens_indexK tnth_ord_tuple -!index_lens_comp.
+rewrite nth_lens_out; last by rewrite -mem_lothers.
+rewrite nth_extract_index //.
+move: Hl2; rewrite /l2.
+by rewrite mem_lothers mem_lens_comp -mem_lothers -mem_lens_comp.
+Qed.
 End focus_props.
 Notation "f \v g" := (comp_mor f g).
 Notation tsapp l M := (focus l (tsmor M)).

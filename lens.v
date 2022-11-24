@@ -267,6 +267,12 @@ Lemma mem_lens_comp i (H : i \in l1) :
   (i \in lens_comp) = (lens_index H \in l2).
 Proof. by rewrite -!index_mem !size_tuple index_lens_comp. Qed.
 
+Lemma lens_comp_sub :
+  {subset lens_comp <= l1}.
+Proof.
+by move=> i; rewrite mem_lensE memtE => /mapP [j] _ ->; rewrite mem_tnth.
+Qed.
+
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
 Proof.
