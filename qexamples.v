@@ -141,6 +141,14 @@ apply: big_ind.
 - move=> i _. by apply/unitary_focus/swapU/naturalityP; esplit.
 Qed.
 
+Lemma rev_circuitN n : naturality (rev_circuit n).
+Proof.
+apply: big_ind.
+- by apply/naturalityP; esplit => T v; rewrite idmorE.
+- exact: comp_naturality.
+- by move=> i _;apply/focus_naturality/naturalityP; esplit.
+Qed.
+
 (* Attempts at proving spec *)
 Section monoid.
 Axiom morP : forall m n (f g : mor I C m n), f =e g <-> f = g.
@@ -169,6 +177,66 @@ Lemma compn_foc_perm n (s q : seq (foc_endo n)) :
   all_disjoint s ->
   compn_foc s = compn_foc q.
 *)
+
+Lemma rev_circuit_ok n (i : 'I_(n.+2)%N) v :
+  proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
+  proj ord0 (lens_single i) v.
+Proof.
+case Hi: (i == rev_ord i).
+  rewrite -(eqP Hi).
+  have : rev_circuit n.+2 =e focus (lothers (lens_single i)) (rev_circuit n.+1).
+    admit.
+  move ->.
+  rewrite proj_focusE //.
+  - rewrite disjoint_has -all_predC.
+    apply/allP => j /=.
+    by rewrite mem_others negbK.
+  - exact: rev_circuitN.
+  - exact: rev_circuitU.  
+have {}Hi: ((i < n./2.+1) || (rev_ord i < n./2.+1))%N.
+  case: (ltngtP i n./2.+1) => //=.
+  - rewrite -{2}(odd_double_half (n.+2)) /= negbK.
+    rewrite -addnn !ltnS leq_subLR addnS -addSn addnA leq_add2r => Hni.
+    rewrite -[i.+1]add1n leq_add //.
+    by case: (odd n).
+  - move => Hni.
+    rewrite Hni -{1}(odd_double_half (n.+2)).
+    rewrite -addnn /= negbK addSn !addnS !subSS addnA addnK.
+    move: Hni.
+    rewrite -{2}(odd_double_half n).
+    case Ho: (odd n) => //= Hi'.
+    move/eqP: Hi; elim.
+    apply/val_inj => /=.
+    rewrite Hi'.
+    rewrite !subSS uphalf_double.
+    by rewrite -{2}(odd_double_half n) Ho -addnn !addnA addnK.
+rewrite /rev_circuit.
+have Hn : (n./2.+1 = n.+2./2)%N by [].
+set f := fun j => tsapp (swap_lens (cast_ord Hn (inord j))) swap.
+rewrite (eq_bigr (fun j => f (val j))); last first.
+  move=> j _. congr focus. f_equal.
+  by apply val_inj => /=; rewrite inordK // Hn.
+rewrite -(big_mkord xpredT f) /=.
+pose h := n./2.+1.
+rewrite -(congr_big_nat _ _ _ _ (subnn h) erefl
+            (fun i _ => erefl) (fun i _ => erefl)).
+rewrite {1}/h.
+have: (h <= n./2.+1)%N by [].
+have: ((n./2.+1 - h <= i) && (n./2.+1 - h <= rev_ord i))%N by rewrite subnn.
+elim: h => // [|h IH] hi Hh.
+  rewrite subn0 in hi.
+  have : (n./2.+1 < n./2.+1)%N.
+    case/orP: Hi.
+    by rewrite (leq_ltn_trans hi).
+  by rewrite ltnn.
+rewrite big_nat_recl.
+rewrite -(big_add1 _ _ (n./2.+1 - h.+1) (n./2.+1) xpredT f).
+rewrite comp_morE /f.
+set v' := _ _ v.
+rewrite -(addK1 n./2).
+
+    rewrite subn0 big_geq //.
+  
 
 Lemma rev_circuit_ok n (i : 'I_(n.+2)%N) v :
   proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
