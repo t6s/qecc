@@ -226,17 +226,45 @@ have: ((n./2.+1 - h <= i) && (n./2.+1 - h <= rev_ord i))%N by rewrite subnn.
 elim: h => // [|h IH] hi Hh.
   rewrite subn0 in hi.
   have : (n./2.+1 < n./2.+1)%N.
-    case/orP: Hi.
-    by rewrite (leq_ltn_trans hi).
+    case/andP: hi => Hin Hrin.
+    by case/orP: Hi; apply leq_ltn_trans.
   by rewrite ltnn.
 rewrite big_nat_recl.
 rewrite -(big_add1 _ _ (n./2.+1 - h.+1) (n./2.+1) xpredT f).
 rewrite comp_morE /f.
+rewrite subnS prednK; last by rewrite ltn_subRL addn0.
 set v' := _ _ v.
-rewrite -(addK1 n./2).
-
-    rewrite subn0 big_geq //.
-  
+rewrite -subnS.
+case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
+  admit.
+case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
+  admit.
+rewrite proj_focusE; first last.
+- exact: swapU.
+- by apply/naturalityP; esplit.
+- rewrite disjoint_has /= orbF.
+  rewrite !inE /=.
+  rewrite (inj_eq rev_ord_inj).
+  apply/negP => /orP[] /eqP /(f_equal val) /=; rewrite inordK;
+    (try by rewrite ltnS subSS leq_subr); move => Hi'.
+  + by elim (negP rih); rewrite -Hi'.
+  + by elim (negP ih); rewrite Hi'.
+apply IH => //.
+- case/andP: hi => Hin Hrin.
+  apply/andP; split.
+    rewrite leq_eqVlt in Hin.
+    case/orP: Hin => Hin.
+      by rewrite Hin in ih.
+    rewrite subnS prednK // in Hin.
+    by rewrite ltn_subRL addn0.
+  rewrite leq_eqVlt in Hrin.
+  case/orP: Hrin => Hrin.
+    by rewrite Hrin in rih.
+  rewrite subnS prednK // in Hrin.
+  by rewrite ltn_subRL addn0.
+- exact: ltnW.
+- by rewrite subSS leq_subr.
+Abort.
 
 Lemma rev_circuit_ok n (i : 'I_(n.+2)%N) v :
   proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
