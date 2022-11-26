@@ -513,6 +513,25 @@ have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.
 
+(*
+Section narrow.
+Variables (n m : nat) (l : lens n m).
+Definition narrow_in (T : lmodType R) (st : tpower m T) : tpower n T :=
+  [ffun v : n.-tuple I => st (extract l v)].
+Definition narrow_out (T : lmodType R) (st : tpower n T) : tpower m T :=
+  [ffun v : m.-tuple I => st (inject l [tuple of nseq n dI] v)].
+Definition narrow (f : endofun n) : endofun m :=
+  fun T (v : tpower m T) => narrow_out (f T (narrow_in v)).
+End narrow.
+Lemma narrow_focus n m p (l : lens n m) (l' : lens n p)
+      (H : [disjoint l & l']) f (T : lmodType R) v :
+  narrow (lothers l) (focus l' f) v =
+  focus (lmake_comp H) f T v.
+Proof.
+apply/ffunP => vi.
+rewrite /narrow !focusE /= !ffunE.
+Abort.
+*)
 End tensor_space.
 
 Notation "f1 =e f2" := (eq_mor f1 f2).
