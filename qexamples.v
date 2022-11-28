@@ -417,6 +417,81 @@ apply eq_lothers => /= k.
 by rewrite !mem_lensE !memtE !inE lens_indexK -!(inj_eq val_inj) /= inordK.
 Qed.
 
+Lemma proj_focusE_swap n (i : 'I_n.+2) (v : tpower n.+2 Co) h
+      (Hn : n./2.+1 = (n.+2)./2) :
+  (h < n./2.+1)%N -> (n./2.+1 - h.+1)%N == i ->
+  proj ord0 (lens_single i)
+       ((\big[comp_mor (s:=n.+2)/idmor I n.+2]_(n./2.+1 - h <= i0 < n./2.+1)
+          tsapp (swap_lens (cast_ord Hn (inord i0))) swap) Co v) =
+  proj ord0 (lens_single i) v.
+Proof.
+pose f := fun j : nat => tsapp (swap_lens (cast_ord Hn (inord j))) swap.
+move=> Hh ih.
+have : (n./2.+1 - h > i)%N.
+  by rewrite -(eqP ih) subnS prednK // ltn_subRL addn0.
+elim : h Hh {ih} => [|h IH].
+  by rewrite !subn0 big_geq.
+move=> Hh ih.
+rewrite big_nat_recl; last by rewrite subSS leq_subr.
+rewrite -(big_add1 _ _ (n./2.+1 - h.+1) (n./2.+1) xpredT f).
+rewrite comp_morE /f proj_focusE; first last.
+- exact: swapU.
+- by apply/naturalityP; esplit.
+- rewrite disjoint_has /= orbF !inE /=.
+  apply/negP => /orP[] /eqP /(f_equal val) /=; rewrite inordK;
+    (try by rewrite ltnS subSS leq_subr); move => Hi'.
+  + by rewrite Hi' ltnn in ih.
+  + move: ih; rewrite Hi'.
+    rewrite subSS ltn_subLR; last first.
+    rewrite subSS -{2}(odd_double_half n) -addnn addnC -addnS -addnA.
+      by rewrite leq_subLR addnC -!addnA leq_addr.
+    rewrite addnn => /half_leq.
+    rewrite doubleK /= subSS.
+    move/(@leq_trans _ _ n./2)/(_ (leq_subr _ _)).
+    by rewrite ltnn.
+rewrite -IH.
+- by rewrite subnS prednK // ltn_subRL addn0 ltnW.
+- exact: ltnW.
+- by move: ih; rewrite !ltn_subRL addSn => /ltnW.
+Qed.
+
+Lemma proj_focusE_swap' n (i : 'I_n.+2) (v : tpower n.+2 Co) h
+      (Hn : n./2.+1 = (n.+2)./2) :
+  (h < n./2.+1)%N -> (n./2.+1 - h.+1)%N == rev_ord i ->
+  proj ord0 (lens_single i)
+       ((\big[comp_mor (s:=n.+2)/idmor I n.+2]_(n./2.+1 - h <= i0 < n./2.+1)
+          tsapp (swap_lens (cast_ord Hn (inord i0))) swap) Co v) =
+  proj ord0 (lens_single i) v.
+Proof.
+pose f := fun j : nat => tsapp (swap_lens (cast_ord Hn (inord j))) swap.
+move=> Hh ih.
+have : (n./2.+1 - h > rev_ord i)%N.
+  by rewrite -(eqP ih) subnS prednK // ltn_subRL addn0.
+elim : h Hh {ih} => [|h IH].
+  by rewrite !subn0 big_geq.
+move=> Hh ih.
+rewrite big_nat_recl; last by rewrite subSS leq_subr.
+rewrite -(big_add1 _ _ (n./2.+1 - h.+1) (n./2.+1) xpredT f).
+rewrite comp_morE /f proj_focusE; first last.
+- exact: swapU.
+- by apply/naturalityP; esplit.
+- rewrite disjoint_has /= orbF !inE /=.
+  apply/negP => /orP[] /eqP /(f_equal val) /=; rewrite inordK;
+    (try by rewrite ltnS subSS leq_subr); move => Hi'.
+  + move: ih; rewrite /= Hi' -(odd_double_half n.+2) -addnn.
+    rewrite /= addSn addnS negbK subSS addnA subnBA; last by apply ltnW.
+    rewrite addnAC addnK ltn_subRL.
+    rewrite ltnNge (addnC (odd n)) !addnA (addnC _ n./2) -(addSnnS n./2).
+    by rewrite -!addnA leq_addr.
+  +  move: ih; rewrite /= Hi'.
+     rewrite !subSS subKn. by rewrite ltnn.
+     admit.
+rewrite -IH.
+- by rewrite subnS prednK // ltn_subRL addn0 ltnW.
+- exact: ltnW.
+- by move: ih; rewrite !ltn_subRL addSn => /ltnW.
+Admitted.
+
 Lemma rev_circuit_ok n (i : 'I_(n.+2)%N) v :
   proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
   proj ord0 (lens_single i) v.
@@ -484,7 +559,8 @@ have Hior : i \in lothers (lens_single (rev_ord i)).
 have Hroi : rev_ord i \in lothers (lens_single i).
   by rewrite mem_lothers mem_lensE memtE inE eq_sym Hi0.
 case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
-  transitivity (proj ord0 (lens_single i) v').
+  transitivity (proj ord0 (lens_single i) v'); last by apply proj_focusE_swap.
+  clearbody v'.
   rewrite (eqP ih).
   apply/ffunP => vi.
   rewrite focusE !ffunE /tinner.
@@ -505,35 +581,32 @@ case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
   have := mem_enum_indices vj => /=.
   rewrite !inE.
   by do 2! (case/orP => /eqP ->); rewrite /= !(mul1r,mul0r,addr0,add0r).
-  clear - ih Hh f.
-  subst v'.
-  have : (n./2.+1 - h > i)%N.
-    by rewrite -(eqP ih) subnS prednK // ltn_subRL addn0.
-  elim : h Hh {ih} => [|h IH].
-    by rewrite !subn0 big_geq.
-  move=> Hh ih.
-  rewrite big_nat_recl; last by rewrite subSS leq_subr.
-  rewrite -(big_add1 _ _ (n./2.+1 - h.+1) (n./2.+1) xpredT f).
-  rewrite comp_morE /f proj_focusE; first last.
-  - exact: swapU.
-  - by apply/naturalityP; esplit.
-  - rewrite disjoint_has /= orbF !inE /=.
-    apply/negP => /orP[] /eqP /(f_equal val) /=; rewrite inordK;
-    (try by rewrite ltnS subSS leq_subr); move => Hi'.
-    + by rewrite Hi' ltnn in ih.
-    + move: ih; rewrite Hi'.
-      rewrite subSS ltn_subLR; last first.
-        rewrite subSS -{2}(odd_double_half n) -addnn addnC -addnS -addnA.
-        by rewrite leq_subLR addnC -!addnA leq_addr.
-      rewrite addnn => /half_leq.
-      rewrite doubleK /= subSS.
-      move/(@leq_trans _ _ n./2)/(_ (leq_subr _ _)).
-      by rewrite ltnn.
-    rewrite -IH. by rewrite subnS prednK // ltn_subRL addn0 ltnW.
-    + exact: ltnW.
-    + by move: ih; rewrite !ltn_subRL addSn => /ltnW.
 case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
-  admit.
+  transitivity (proj ord0 (lens_single i) v'); last by apply proj_focusE_swap'.
+  clearbody v'.
+  rewrite (eqP rih).
+  rewrite -[in RHS](rev_ordK i).
+  rewrite -{1 4}(rev_ordK i) in Hior Hroi.
+  rewrite -{1}(rev_ordK i) eq_sym in Hi0.
+  apply/ffunP => vi.
+  rewrite focusE !ffunE /tinner.
+  rewrite [LHS](reindex_merge_indices _ ord0
+                                      (lens_single (lens_index Hior))) //.
+  rewrite [RHS](reindex_merge_indices _ ord0
+                                      (lens_single (lens_index Hroi))) //.
+  apply eq_bigr => vj _.
+  apply eq_bigr => vk _.
+  rewrite !ffunE !tsmorE.
+  under eq_bigr do rewrite !ffunE.
+  rewrite sum_enum_indices /= /GRing.scale !(linE,ffunE) /= !(mulr1,mulr0,linE).
+  rewrite (merge_indices_swap' (h:=h)) //.
+  rewrite extract_merge extract_lothers_merge.
+  rewrite (merge_indices_swap (h:=h)) //.
+  rewrite /GRing.scale /=.
+  have := mem_enum_indices vi => /=.
+  have := mem_enum_indices vj => /=.
+  rewrite !inE.
+  by do 2! (case/orP => /eqP ->); rewrite /= !(mul1r,mul0r,addr0,add0r).
 rewrite proj_focusE; first last.
 - exact: swapU.
 - by apply/naturalityP; esplit.
@@ -558,7 +631,7 @@ apply IH => //.
   rewrite subnS prednK // in Hrin.
   by rewrite ltn_subRL addn0.
 - exact: ltnW.
-Abort.
+Qed.
 
 Lemma rev_circuit_ok n (i : 'I_(n.+2)%N) v :
   proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
