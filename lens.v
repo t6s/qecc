@@ -907,36 +907,36 @@ Lemma merge_indices_comp vj vk (vl : (n-p - (m-p)).-tuple I)
   merge_indices (lens_comp l l') vj (merge_indices lothers_in_l vk vl) =
   merge_indices l (merge_indices l' vj vk) vm.
 Proof.
-rewrite /merge_indices => Hlm.
-apply eq_mktuple => i.
-case/boolP: (i \in lens_comp l l') => Hi.
-  case/mapP: Hi => j Hj ->.
-  rewrite tnth_lensK -tnth_nth tnth_mktuple index_map ?(nth_lens_index Hj) //.
-  exact/tnth_inj/lens_uniq.
-have Hilo : i \in lothers_comp by rewrite mem_lothers.
-rewrite nth_lens_out // nth_lens_index tnth_mktuple.
+move=> Hlm.
+apply/eq_from_tnth => i.
 case/boolP: (i \in l) => Hil.
-  rewrite mem_lens_comp in Hi.
-  rewrite (nth_lens_index Hil) tnth_mktuple [RHS]nth_lens_out //.
-  rewrite -mem_lothers in Hi.
-  rewrite (nth_lens_index Hi).
-  have <- : tnth lothers_in_l (lens_index Hi) = lens_index Hilo.
-    apply (tnth_inj _ (lens_uniq lothers_comp)).
-    by rewrite -tnth_comp lothers_in_l_comp tnth_comp !tnth_lens_index.
-  by rewrite tnth_lensK -tnth_nth.
-rewrite [RHS]nth_lens_out //.
-have Hillo : lens_index Hilo \notin lothers_in_l.
-  apply: contra Hil.
-  case/tnthP => j /(f_equal (tnth lothers_comp)); rewrite tnth_lens_index => ->.
-  by rewrite -tnth_comp lothers_in_l_comp tnth_comp mem_tnth.
-rewrite [LHS]nth_lens_out //.
-congr nth => //.
-have Hillo' : lens_index Hilo \in lothers_notin_l by rewrite mem_lothers.
-rewrite -mem_lothers in Hil.
-rewrite (make_lens_index Hillo') (make_lens_index Hil).
-congr val.
-apply (tnth_inj _ (lens_uniq (lothers l))).
-by rewrite -[in LHS]lothers_notin_l_comp tnth_comp !tnth_lens_index.
+  rewrite (tnth_merge_indices _ _ _ Hil).
+  case/boolP: (lens_index Hil \in l') => Hill'.
+    rewrite (tnth_merge_indices _ _ _ Hill').
+    have Hilcl' : i \in lens_comp l l' by rewrite mem_lens_comp.
+    rewrite (tnth_merge_indices _ _ _ Hilcl').
+    congr tnth; apply/val_inj => /=; by rewrite -index_lens_comp.
+  have Hilo : i \in lothers_comp by rewrite mem_lothers mem_lens_comp.
+  rewrite -mem_lothers in Hill'.
+  rewrite tnth_merge_indices_lothers [RHS]tnth_merge_indices_lothers.
+  have Hic : i \in lens_comp l (lothers l') by rewrite mem_lens_comp.
+  have Hilol : lens_index Hilo \in lothers_in_l.
+    by rewrite -lothers_in_l_comp mem_lens_comp in Hic.
+  rewrite tnth_merge_indices.
+  congr tnth; apply (tnth_inj _ (lens_uniq (lens_comp l (lothers l')))).
+  by rewrite -{1}lothers_in_l_comp !tnth_comp !tnth_lens_index.
+case/boolP: (i \in lens_comp l l').
+  move/lens_comp_sub => Hi; by rewrite Hi in Hil.
+move=> Hic.
+rewrite -!mem_lothers in Hil Hic.
+rewrite tnth_merge_indices_lothers [RHS]tnth_merge_indices_lothers.
+have Hlil : lens_index Hic \in lothers lothers_in_l.
+  rewrite -mem_lens_comp mem_lensE /=.
+  by move/(f_equal (val \o val)): lothers_notin_l_comp => /= ->.
+rewrite tnth_merge_indices_lothers.
+set a := tnth _ _; rewrite /a (tnth_nth a) /= Hlm [RHS](tnth_nth a) /=.
+congr nth; move/(f_equal (val \o val)): lothers_notin_l_comp => /= <-.
+by rewrite -(index_lens_comp (lothers lothers_in_l)).
 Qed.
 
 (* For focus_others, only uses variables *)
