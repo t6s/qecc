@@ -925,9 +925,8 @@ case/boolP: (i \in l) => Hil.
   rewrite tnth_merge_indices.
   congr tnth; apply (tnth_inj _ (lens_uniq (lens_comp l (lothers l')))).
   by rewrite -{1}lothers_in_l_comp !tnth_comp !tnth_lens_index.
-case/boolP: (i \in lens_comp l l').
-  move/lens_comp_sub => Hi; by rewrite Hi in Hil.
-move=> Hic.
+case/boolP: (i \in lens_comp l l') => [/lens_comp_sub|] Hic.
+  by rewrite Hic in Hil.
 rewrite -!mem_lothers in Hil Hic.
 rewrite tnth_merge_indices_lothers [RHS]tnth_merge_indices_lothers.
 have Hlil : lens_index Hic \in lothers lothers_in_l.
@@ -948,29 +947,20 @@ Lemma merge_indices_comp_others (l1 : lens (n-m) p) vi vj :
 Proof.
 set l2 := lens_comp (lothers l) l1.
 apply eq_from_tnth => i.
-rewrite !tnth_map !tnth_ord_tuple.
 case/boolP: (i \in l) => Hl.
-  rewrite (make_lens_index Hl) -tnth_nth.
+  rewrite [RHS]tnth_merge_indices.
   have Hl2: i \notin l2.
-    apply/negP => /lens_comp_sub.
-    by rewrite mem_others Hl.
-  rewrite nth_lens_out //.
+    apply/negP => /lens_comp_sub; by rewrite mem_others Hl.
   rewrite -mem_lothers in Hl2.
-  rewrite (make_lens_index Hl2) -tnth_nth.
-  by rewrite !tnth_map !tnth_lens_index.
-rewrite (nth_lens_out _ _ Hl).
+  by rewrite tnth_merge_indices_lothers !tnth_extract !tnth_lens_index.
 rewrite -mem_lothers in Hl.
-rewrite (make_lens_index Hl) -tnth_nth.
+rewrite [RHS]tnth_merge_indices_lothers.
 case/boolP: (i \in l2) => Hl2.
-  rewrite (make_lens_index Hl2) -tnth_nth tnth_map tnth_ord_tuple.
-  by rewrite -!index_lens_comp (make_lens_index Hl2) -tnth_nth.
-rewrite nth_lens_out //.
-rewrite -mem_lothers in Hl2.
-rewrite (make_lens_index Hl2) -tnth_nth.
-rewrite !tnth_map tnth_lens_index tnth_ord_tuple -!index_lens_comp.
-rewrite nth_lens_out; last by rewrite -mem_lothers.
-rewrite nth_extract_index //.
-by rewrite /l2 mem_lothers mem_lens_comp -mem_lothers -mem_lens_comp in Hl2.
+  have := Hl2; rewrite mem_lens_comp => Hl1; rewrite !tnth_merge_indices.
+  congr tnth; apply/val_inj; by rewrite /= -index_lens_comp.
+have := Hl2; rewrite mem_lens_comp => Hl1.
+rewrite -!mem_lothers in Hl1 Hl2.
+by rewrite !tnth_merge_indices_lothers !tnth_extract !tnth_lens_index.
 Qed.
 
 Lemma merge_indices_pair (i i' : 'I_n.+2) (vi vj : 1.-tuple I)
