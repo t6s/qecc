@@ -67,7 +67,7 @@ case H: (_ == _); last by rewrite !scale0r.
 rewrite !scale1r !merge_indices_empty.
 do 3!f_equal.
 apply/val_inj/val_inj/eq_filter => /= i.
-by rewrite !mem_lensE !memtE -Hrev mem_rev.
+by rewrite !mem_lensE /= -Hrev mem_rev.
 Qed.
 
 Lemma transpose_cup (M : tsquare 1) :

@@ -476,7 +476,7 @@ congr (Mf _ vk * Mg _ vj *: v _).
   apply/pred0P => /= i.
   rewrite simpl_predE /= andbC /=.
   case Hi: (i \in l2) => //=.
-  by rewrite mem_lensE /= memtE /= mem_others Hi.
+  by rewrite mem_lensE /= mem_others Hi.
 - rewrite !merge_indices_extract_others.
   apply eq_from_tnth => i /=.
   rewrite !tnth_mktuple /=.

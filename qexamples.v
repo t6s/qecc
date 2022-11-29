@@ -336,9 +336,9 @@ rewrite subnS prednK; last by rewrite ltn_subRL addn0.
 set v' := _ _ v.
 rewrite -subnS.
 have Hior : i \in lothers (lens_single (rev_ord i)).
-  by rewrite mem_lothers mem_lensE memtE inE Hir.
+  by rewrite mem_lothers mem_lensE inE Hir.
 have Hroi : rev_ord i \in lothers (lens_single i).
-  by rewrite mem_lothers mem_lensE memtE inE eq_sym Hir.
+  by rewrite mem_lothers mem_lensE inE eq_sym Hir.
 have Hri : rev_ord i != rev_ord (rev_ord i) by rewrite rev_ordK eq_sym.
 case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
   transitivity (proj ord0 (lens_single i) v'); last first.
