@@ -140,6 +140,9 @@ Lemma tnth_extract (v : n.-tuple T) i :
   tnth (extract v) i = tnth v (tnth l i).
 Proof. by rewrite tnth_map. Qed.
 
+Lemma eq_lens_tnth (l' : lens) : (tnth l =1 tnth l') -> l = l'.
+Proof. by move/eq_from_tnth/val_inj. Qed.
+
 Lemma eq_lens_sorted l' :
   l =i l' -> lens_sorted l -> lens_sorted l' -> l = l'.
 Proof.
@@ -570,6 +573,12 @@ Proof. done. Qed.
 Lemma index_lens_single i : index i (lens_single i) = (@ord0 1).
 Proof. by rewrite /= eqxx. Qed.
 
+Lemma lens_index_single i j (H : j \in lens_single i) : lens_index H = ord0.
+Proof. by apply/val_inj => /=; move: H; rewrite inE eq_sym => ->. Qed.
+
+Lemma tnth_lens_single i j : tnth (lens_single i) j = i.
+Proof. by rewrite /= ord1. Qed.
+
 Lemma tnth_merge_indices_single T (dI : T) i vi vj :
   tnth (merge_indices dI (lens_single i) vi vj) i = tnth vi ord0.
 Proof.
@@ -608,12 +617,19 @@ by rewrite nth_ord_enum.
 Qed.
 
 Section lens_pair.
-Lemma uniq_pair n (i j : 'I_n) :
-  i != j -> uniq [:: i; j].
+Variables (n : nat) (i j : 'I_n).
+Lemma uniq_pair : i != j -> uniq [:: i; j].
 Proof. by rewrite /= inE andbT. Qed.
 
-Definition lens_pair n (i j : 'I_n) (ij : i != j) : lens n 2 :=
-  mkLens (uniq_pair ij).
+Hypothesis ij : i != j.
+Definition lens_pair : lens n 2 := mkLens (uniq_pair ij).
+
+Lemma lens_pair0 : lens_comp lens_pair (lens_single ord0) = lens_single i.
+Proof. by apply/eq_lens_tnth => k; rewrite tnth_comp !tnth_lens_single. Qed.
+
+Lemma lens_pair1 :
+  lens_comp lens_pair (lens_single (lift ord0 ord0)) = lens_single j.
+Proof. by apply/eq_lens_tnth => k; rewrite tnth_comp !tnth_lens_single. Qed.
 End lens_pair.
 
 (* Ordered lenses *)
@@ -711,14 +727,12 @@ Variables (p : nat) (l : lens p m) (l' : lens p n) (H : [disjoint l & l']).
 
 Lemma lens_comp_left : l = lens_comp (lens_cat H) lens_left.
 Proof.
-apply/val_inj/eq_from_tnth => i.
-by rewrite !tnth_map tnth_ord_tuple tnth_lshift.
+by apply/eq_lens_tnth => i; rewrite !tnth_map tnth_ord_tuple tnth_lshift.
 Qed.
 
 Lemma lens_comp_right : l' = lens_comp (lens_cat H) lens_right.
 Proof.
-apply/val_inj/eq_from_tnth => i.
-by rewrite !tnth_map tnth_ord_tuple tnth_rshift.
+by apply/eq_lens_tnth => i; rewrite !tnth_map tnth_ord_tuple tnth_rshift.
 Qed.
 End lens_left_right.
 
@@ -812,7 +826,7 @@ Definition lmake_comp := mkLens uniq_map_comp.
 
 Lemma lmake_compE : lens_comp (lothers l) lmake_comp = l'.
 Proof.
-apply/val_inj/eq_from_tnth => i.
+apply/eq_lens_tnth => i.
 rewrite tnth_map tnth_mktuple (tnth_nth (tnth l' i)) /=.
 by rewrite nth_index // make_comp_present.
 Qed.
@@ -863,7 +877,7 @@ Defined.
 Lemma lothers_in_l_comp :
   lens_comp lothers_comp lothers_in_l = lens_comp l (lothers l').
 Proof.
-apply/val_inj/eq_from_tnth => i.
+apply/eq_lens_tnth => i.
 by rewrite !tnth_map tnth_ord_tuple tnth_lens_index.
 Qed.
 
@@ -982,7 +996,7 @@ case: ifP => rij.
 rewrite nth_default; last by rewrite size_tuple.
 have Hjl : j \in lothers (lens_single i').
   by rewrite mem_lothers mem_lensE inE eq_sym rij.
-case: ifP => ij.
+case: ifPn => ij.
   rewrite -(eqP ij) in Hjl *.
   rewrite make_lens_index -tnth_nth.
   have -> : lens_index Hjl = lens_index Hior by apply/val_inj.
@@ -991,8 +1005,7 @@ case: ifP => ij.
 rewrite make_lens_index -tnth_nth !tnth_map !tnth_ord_tuple.
 rewrite nth_lens_out; last first.
   rewrite mem_lensE inE.
-  apply/negP => /eqP index_ij.
-  move/negP: ij; elim.
+  apply: contra ij => /eqP index_ij.
   by rewrite -(tnth_lens_index Hjl) -{1}(tnth_lens_index Hior) /= index_ij.
 rewrite [RHS]nth_default ?size_tuple //.
 congr nth.
@@ -1058,12 +1071,11 @@ Proof.
 move=> Hl Hv.
 rewrite -(merge_indices_perm dI l' lens_rev).
 f_equal.
-  apply/val_inj/eq_from_tnth => i /=.
-  rewrite !tnth_map tnth_ord_tuple -[LHS](tnth_rev (val l) i).
+  apply/eq_lens_tnth => i /=.
+  rewrite tnth_extract tnth_mktuple -[LHS]tnth_rev.
   by congr tnth; apply/val_inj; rewrite /= Hl revK.
 apply/eq_from_tnth => i.
-rewrite !tnth_map !tnth_ord_tuple.
-rewrite -[LHS]tnth_rev.
+rewrite tnth_extract tnth_mktuple -[LHS]tnth_rev.
 by congr tnth; apply/val_inj; rewrite /= Hv revK.
 Qed.
 End lens_rev.
