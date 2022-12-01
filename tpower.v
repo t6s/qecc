@@ -32,6 +32,9 @@ Notation endofun n := (morfun n n).
 Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
   [ffun vi => v (cast_tuple vi (esym H))].
 
+Lemma tpcastE T n v (H : n = n) : tpcast (T:=T) H v = v.
+Proof. by apply/ffunP => vi; rewrite !ffunE cast_tupleE. Qed.
+
 Definition cast_mor m2 n2 m1 n1 (f : mor m1 n1)
            (Hm : m1 = m2) (Hn : n1 = n2) : mor m2 n2.
 rewrite -> Hm, -> Hn in f.
@@ -53,6 +56,10 @@ Definition naturality m n (f : mor m n) :=
 Lemma map_tpower_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
   linear (map_tpower (m:=m) f).
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
+
+Lemma map_tpcastE T m n (H : n = n) v :
+  map_tpower (m:=m) (tpcast (T:=T) H) v = v.
+Proof. by apply/ffunP => w /=; rewrite !ffunE tpcastE. Qed.
 
 Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
@@ -317,10 +324,6 @@ rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
-
-Lemma map_tpcastE T m n (H : n = n) v :
-  map_tpower (m:=m) (tpcast (T:=T) H) v = v.
-Proof. apply/ffunP => w; apply/ffunP => t; by rewrite !ffunE cast_tupleE. Qed.
 
 Lemma asym_focus_sym (m n : nat) (l : lens (m+n) m) (f : mor m m) :
   asym_focus l l f =e focus l f.
