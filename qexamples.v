@@ -504,6 +504,10 @@ apply eq_foc_endo => //=.
   by case: q / Hn.
 Qed.
 
+Lemma tpcastK p q T (H : p = q) (t : tpower q T) :
+  tpcast H (tpcast (esym H) t) = t.
+Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
+
 Lemma comp_fendoA : associative comp_fendo.
 Proof.
 move=> f g h.
@@ -573,9 +577,67 @@ apply eq_foc_endo => /=.
   move: (foc_m f + (foc_m g + foc_m h))%N Hm => q Hm.
   case: q / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
-- set lhs := _ \v _.
+- case: f g h Hg_h Hf_g Hf_gh Hfg_h Hm =>
+        fm fl fS fe fN [] gm gl gS ge gN [] hm hl hS he hN /=
+          Hg_h Hf_g Hf_gh Hfg_h Hm.
+  set lhs := _ \v _.
   set rhs := _ \v _.
-Admitted.
+  have Hrhs : forall T : lmodType C,
+      linear (fun v => tpcast Hm (rhs T (tpcast (esym Hm) v))).
+    clear.
+    move: (fm + (gm + hm))%N Hm rhs => q Hm.
+    case: q / Hm => rhs T x y z /=.
+    by rewrite !tpcastE !linearE.
+  have -> : lhs = fun T => Linear (Hrhs T).
+    apply/morP => T v /=.
+    rewrite !focus_comp /= -!focusM //.
+    have <- : cast_lens_ord (lens_perm_left Hf_gh) (esym Hm) =
+              lens_comp (lens_perm_left Hfg_h) (lens_perm_left Hf_g).
+      eq_lens; apply/eqP. rewrite -6!map_comp.
+      apply eq_map => i /=.
+      rewrite !(tnth_mktuple,tnth_ord_tuple,tnth_map) /=.
+      rewrite !tnth_lshift.
+      rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hf_g))) tnth_lshift.
+      congr index; apply eq_filter => j.
+      by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
+    have <- : cast_lens_ord
+                (lens_comp (lens_perm_right Hf_gh) (lens_perm_left Hg_h))
+                (esym Hm) =
+              lens_comp (lens_perm_left Hfg_h) (lens_perm_right Hf_g).
+      eq_lens; apply/eqP. rewrite -7!map_comp.
+      apply eq_map => i /=.
+      rewrite !(tnth_mktuple,tnth_ord_tuple,tnth_map) /=.
+      rewrite tnth_rshift [in RHS]tnth_lshift.
+      rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hg_h))).
+      rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hf_g))).
+      rewrite tnth_lshift tnth_rshift.
+      congr index; apply eq_filter => j.
+      by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
+    have <- : cast_lens_ord
+                (lens_comp (lens_perm_right Hf_gh) (lens_perm_right Hg_h))
+                (esym Hm) =
+              lens_perm_right Hfg_h.
+      eq_lens; apply/eqP. rewrite -6!map_comp.
+      apply eq_map => i /=.
+      rewrite !(tnth_mktuple,tnth_ord_tuple,tnth_map) /=.
+      rewrite tnth_rshift [in RHS]tnth_rshift.
+      rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hg_h))) tnth_rshift.
+      congr index; apply eq_filter => j.
+      by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
+    clear Hrhs rhs.
+    apply (can_inj (tpcastK Hm)).
+    have HK := tpcastK (esym Hm).
+    rewrite esymK in HK.
+    rewrite {}HK.
+    move: (fm + gm + hm)%N (esym Hm) => q {}Hm.
+    case: q / Hm.
+    by rewrite !tpcastE !cast_lens_ordE.
+  clear lhs; subst rhs.
+  move: (fm + (gm + hm))%N Hm Hrhs => q Hm.
+  case: q / Hm => Hrhs.
+  apply/eq_JMeq/morP => T v /=.
+  by rewrite !tpcastE.
+Qed.
 
 Canonical compf_monoid := Monoid.Law comp_fendoA comp_fendo1f comp_fendof1.
 Canonical compf_comoid := Monoid.ComLaw comp_fendoC.
