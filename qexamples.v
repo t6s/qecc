@@ -302,8 +302,10 @@ Record foc_endo : Type :=
   mkFoc { foc_m : nat; foc_l : lens n foc_m; foc_s : lens_sorted foc_l;
           foc_e :> endo foc_m; foc_n : naturality foc_e }.
 
+Definition fendo_mor f := focus (foc_l f) f.
+
 Definition compn_foc (F : 'I_m -> foc_endo) :=
-  \big[@comp_mor I C n n n/idmor I n]_(i < m) focus (foc_l (F i)) (F i).
+  \big[@comp_mor I C n n n/idmor I n]_(i < m) fendo_mor (F i).
 
 Definition all_disjoint (F : 'I_m -> foc_endo) :=
   forall i j, i != j -> [disjoint foc_l (F i) & foc_l (F j)].
@@ -642,6 +644,73 @@ Qed.
 Canonical compf_monoid := Monoid.Law comp_fendoA comp_fendo1f comp_fendof1.
 Canonical compf_comoid := Monoid.ComLaw comp_fendoC.
 End comoid.
+
+Lemma compf_mor_disjoint F :
+  all_disjoint F ->
+  compn_mor (fendo_mor \o F) = fendo_mor (\big[comp_fendo/id_fendo]_i F i).
+Proof.
+move=> Hdisj.
+pose h := m.
+rewrite /compn_mor.
+rewrite /index_enum /= -enumT.
+have -> : enum 'I_m = take h (enum 'I_m).
+  by rewrite -[h](size_enum_ord m) take_size.
+apply (@proj1 _ (foc_l (\big[comp_fendo/id_fendo]_(i <- take h (enum 'I_m)) F i)
+            =i (fun i => [exists j : 'I_m, (j < h)%N && (i \in foc_l (F j))]))).
+have : (h <= m)%N by [].
+elim: h => [|h IH] Hh.
+  rewrite take0 !big_nil.
+  split.
+    apply/morP => T v.
+    by rewrite /fendo_mor focusE /focus_fun /= curryK.
+  move=> j. rewrite -!topredE /=.
+  by apply/esym/existsP => -[].
+case/(_ (ltnW Hh)): IH => IHe IHl.
+rewrite (take_nth (Ordinal Hh)); last by rewrite size_enum_ord.
+rewrite -cats1 2!big_cat !big_seq1 /= IHe {2 4 5 6}/comp_fendo.
+case: Bool.bool_dec => H.
+  split.
+    apply/morP => T v.
+    rewrite /fendo_mor /= !focus_comp /=.
+    do 2! (rewrite -focusM; last exact/foc_n).
+    by rewrite lens_perm_leftE lens_perm_rightE
+       -lens_comp_left -lens_comp_right.
+  move=> j /=.
+  rewrite mem_lensE /= mem_filter mem_cat mem_enum andbT IHl -topredE /=.
+  rewrite -[RHS]topredE /=.
+  apply/esym/existsP.
+  case: ifPn.
+    case/orP.
+      case/existsP => k /andP [Hk Hjk].
+      exists k. by rewrite ltnS (ltnW Hk).
+    move=> Hjh.
+    exists (Ordinal Hh).
+    rewrite ltnS leqnn /= /is_true -Hjh.
+    congr (j \in foc_l (F _)).
+    apply/val_inj => /=.
+    by rewrite {3}(_ : h = Ordinal Hh) // nth_ord_enum.
+  move/negP => Hneg [k] /andP [Hk Hjk].
+  elim: Hneg; apply/orP.
+  move: Hk; rewrite ltnS leq_eqVlt => /orP [/eqP|] Hk.
+    right.
+    rewrite /is_true - Hjk.
+    congr (j \in foc_l (F _)).
+    apply/val_inj => /=.
+    by rewrite -{2}Hk nth_ord_enum.
+  left; apply/existsP; exists k.
+  by rewrite Hk.
+elim: H; rewrite disjoint_has.
+apply/negP => /hasP [j].
+rewrite IHl -topredE /= => /existsP [k] /andP [kh Hjk] Hjh.
+have : k != nth (Ordinal Hh) (enum 'I_m) h.
+  apply/negP => /eqP kh'.
+  move: kh; rewrite kh'.
+  have {2} -> : h = Ordinal Hh by [].
+  by rewrite nth_ord_enum ltnn.
+move/Hdisj.
+rewrite disjoint_has => /negP; elim.
+by apply/hasP; exists j.
+Qed.
 End foc_endo.
 (*
 Lemma compn_foc_reindex (l : lens m m) (F : 'I_m -> foc_endo n) :
