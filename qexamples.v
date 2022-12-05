@@ -211,6 +211,17 @@ Record foc_endo : Type :=
 
 Definition fendo_mor f := focus (foc_l f) f.
 
+Section mkFendo.
+Variables (m : nat) (l : lens n m) (f : endo m) (Nf : naturality f).
+Definition mkFendo :=
+  mkFoc (lens_sorted_basis l) (focus_naturality ord0 (lens_perm l) Nf).
+
+Lemma mkFendoE : fendo_mor mkFendo = focus l f.
+Proof.
+by apply/morP => T v; rewrite /fendo_mor /= -focusM // lens_basis_perm.
+Qed.
+End mkFendo.
+
 Lemma null_lin p q (T : lmodType C) :
   linear (fun v : tpower p T => (0 : tpower q T)).
 Proof. move=> x y z; by rewrite scaler0 add0r. Qed.
