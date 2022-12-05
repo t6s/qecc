@@ -143,9 +143,10 @@ End unitary_endo.
 Section projection.
 Variables (n m : nat) (l : lens n m).
 
+Let norm p := fun s : tpower I p Co => (sqrtc (tinner s s) : Co).
+
 Definition proj (t : tpower I n Co) : tpower I m Co :=
-  map_tpower (fun s : tpower I (n-m) Co => tinner s s)
-     (curry dI l t).
+  map_tpower (@norm _) (curry dI l t).
 
 Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : tpower I n Co) :
   [disjoint l & l'] -> naturality f -> unitary_endo f ->
@@ -154,7 +155,7 @@ Proof.
 move=> Hdisj Nf Uf.
 rewrite /proj -(lmake_compE Hdisj) focus_others // uncurryK /=.
 apply/ffunP => vi.
-by rewrite !ffunE unitary_focus.
+by rewrite !ffunE /norm unitary_focus.
 Qed.
 End projection.
 End unitary.

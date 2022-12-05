@@ -16,6 +16,20 @@ Proof. move/(f_equal (subn^~ m)); by rewrite addKn. Qed.
 Lemma ltn_ordK q (i : 'I_q) : Ordinal (ltn_ord i) = i.
 Proof. by apply val_inj. Qed.
 
+Lemma disjointP (T : finType) (a1 a2 : pred T) :
+  reflect (forall i, i \in a1 -> ~ i \in a2) [disjoint a1 & a2].
+Proof.
+case/boolP: [disjoint a1 & a2] => /pred0P Hdisj; constructor.
+  move=> i H1 H2. move: (Hdisj i). by rewrite /= H1 H2.
+move=> H; elim: Hdisj => i /=.
+case H1: (i \in a1) => //.
+by apply/negbTE/negP/H.
+Qed.
+
+Lemma enum_filterP (T : finType) (P : pred T) :
+  [seq x <- enum T | P x] = enum P.
+Proof. by rewrite {2}/enum_mem -enumT. Qed.
+
 Section tnth.
 Variables (T : Type) (m n : nat) (vl : m.-tuple T) (vr : n.-tuple T).
 
@@ -143,6 +157,9 @@ Proof. by rewrite tnth_map. Qed.
 Lemma eq_lens_tnth (l' : lens) : (tnth l =1 tnth l') -> l = l'.
 Proof. by move/eq_from_tnth/val_inj. Qed.
 
+Lemma tnth_lens_inj : injective (tnth l).
+Proof. exact/tnth_inj/lens_uniq. Qed.
+
 Lemma eq_lens_sorted l' :
   l =i l' -> lens_sorted l -> lens_sorted l' -> l = l'.
 Proof.
@@ -152,8 +169,19 @@ apply/val_inj/val_inj; move: Hl Hl'; apply H.
 - by move=> x; rewrite /ord_ltn /= ltnn.
 Qed.
 
-Lemma tnth_lens_inj : injective (tnth l).
-Proof. exact/tnth_inj/lens_uniq. Qed.
+Lemma lens_sortedP :
+  reflect (exists p, l = [seq i <- enum 'I_n | p i] :> seq _) (lens_sorted l).
+Proof.
+case/boolP: (lens_sorted l) => Hl; constructor.
+  exists (mem l). apply/(irr_sorted_eq (leT:=ord_ltn)) => //.
+  - exact/ltn_trans.
+  - by move=> x; rewrite /ord_ltn /= ltnn.
+  - rewrite sorted_filter //. exact/ltn_trans. exact/sorted_enum.
+    by move=> i; rewrite mem_filter mem_enum andbT.
+case => p Hp.
+move/negP: Hl; elim.
+rewrite /lens_sorted Hp sorted_filter //. exact/ltn_trans. exact/sorted_enum.
+Qed.
 
 Section lens_index.
 Variables (i : 'I_n) (H : i \in l).
@@ -365,6 +393,95 @@ by rewrite !focus1_out.
 Qed.
 End lens_comp.
 
+Section lens_comp_id.
+Variables (n m : nat) (l : lens n m).
+
+Lemma lens_comp1l : lens_comp (lens_id n) l = l.
+Proof. by apply/eq_lens_tnth => i; rewrite tnth_comp tnth_lens_id. Qed.
+
+Lemma lens_compl1 : lens_comp l (lens_id m) = l.
+Proof. by apply/eq_lens_tnth => i; rewrite tnth_comp tnth_lens_id. Qed.
+End lens_comp_id.
+
+Section lens_pred.
+Variables (n : nat) (p : pred 'I_n).
+
+Let pred_tuple := Tuple (enum_tupleP p).
+Lemma uniq_pred_tuple : uniq pred_tuple.
+Proof. exact/enum_uniq. Qed.
+
+Definition lens_pred := mkLens uniq_pred_tuple.
+
+Lemma lens_sorted_pred : lens_sorted lens_pred.
+Proof. by apply/lens_sortedP; exists (mem p); rewrite enum_filterP. Qed.
+End lens_pred.
+
+(* Decomposition into inclusion and permutation *)
+Section lens_basis_perm.
+Variables (n p : nat) (l : lens n p).
+
+Definition seq_basis := [seq i <- enum 'I_n | i \in l].
+Lemma size_basis : size seq_basis == p.
+Proof.
+apply/eqP.
+rewrite /seq_basis.
+rewrite (eq_filter (a2:=mem [set i | i in l])); last first.
+  move=> i. rewrite !inE.
+  case: imsetP.
+    by case => x Hx ->.
+  by move=> Hx; apply/negP => Hi; move: Hx; elim; exists i.
+rewrite enum_filterP /= -cardE card_imset // -[RHS](size_tuple l).
+exact/card_uniqP/lens_uniq.
+Qed.
+Lemma uniq_basis : uniq (Tuple size_basis).
+Proof. by rewrite filter_uniq // enum_uniq. Qed.
+
+Definition lens_basis := mkLens uniq_basis.
+
+Lemma lens_sorted_basis : lens_sorted lens_basis.
+Proof. by apply/lens_sortedP; exists (mem l). Qed.
+
+Lemma lens_basis_sortedE : lens_sorted l -> lens_basis = l.
+Proof.
+move=> H.
+apply eq_lens_sorted => //; last exact/lens_sorted_basis.
+by move=> j; rewrite mem_filter mem_enum /= andbT.
+Qed.
+
+Lemma perm_in_basis i : tnth l i \in lens_basis.
+Proof. by rewrite mem_filter mem_tnth mem_enum. Qed.
+
+Definition tuple_perm := [tuple lens_index (perm_in_basis i) | i < p].
+Lemma uniq_perm : uniq tuple_perm.
+Proof.
+rewrite map_inj_uniq ?uniq_ord_tuple //.
+move=> i j.
+move/(f_equal (tnth lens_basis)).
+rewrite /lens_index.
+rewrite (tnth_nth (tnth l i)) [RHS](tnth_nth (tnth l i)) /=.
+rewrite !nth_index; try apply perm_in_basis.
+exact: (tnth_inj _ (lens_uniq l)).
+Qed.
+
+Definition lens_perm := mkLens uniq_perm.
+
+Lemma lens_basis_perm : lens_comp lens_basis lens_perm = l.
+Proof.
+apply/eq_lens_tnth => i.
+rewrite tnth_comp tnth_mktuple /=.
+by rewrite (tnth_nth (tnth l i)) /= nth_index // perm_in_basis.
+Qed.
+
+Lemma lens_perm_sortedE : lens_sorted l -> lens_perm = lens_id p.
+Proof.
+move=> H.
+apply/eq_lens_tnth => i; rewrite !tnth_mktuple !tnth_ord_tuple.
+apply/val_inj => /=.
+have /(f_equal (val \o val)) /= -> := lens_basis_sortedE H.
+by rewrite tnth_lensK.
+Qed.
+End lens_basis_perm.
+
 (* Composition of lenses *)
 Section lens_cat.
 Variables (n m p : nat) (l1 : lens n m) (l2 : lens n p).
@@ -524,6 +641,9 @@ Section lens_empty.
 Variable n : nat.
 Definition lens_empty : lens n 0 := {|lens_t := [tuple]; lens_uniq := erefl|}.
 
+Lemma lens_sorted_empty : lens_sorted lens_empty.
+Proof. done. Qed.
+
 Lemma eq_lens_empty (l : lens n 0) : l = lens_empty.
 Proof. case: l => -[] [] // Hl Hu; by apply/val_inj/val_inj. Qed.
 
@@ -545,6 +665,10 @@ rewrite (eq_mktuple (tnth (cast_tuple w (subn0 n)))); last first.
   by rewrite nth_lens_out // lothers_empty index_lens_id (tnth_nth dI).
 by apply eq_from_tnth => i; rewrite tnth_mktuple.
 Qed.
+
+Lemma lens_cat_emptyl m (l : lens n m) (H : [disjoint lens_empty & l]) :
+  lens_cat H = l.
+Proof. by apply/val_inj/val_inj. Qed.
 End lens_empty.
 
 Section lens_full.
@@ -743,6 +867,32 @@ Qed.
 Lemma lens_comp_right : l' = lens_comp (lens_cat H) lens_right.
 Proof.
 by apply/eq_lens_tnth => i; rewrite !tnth_map tnth_ord_tuple tnth_rshift.
+Qed.
+
+Definition lens_perm_left := lens_comp (lens_perm (lens_cat H)) lens_left.
+Definition lens_perm_right := lens_comp (lens_perm (lens_cat H)) lens_right.
+
+Lemma lens_perm_disjoint : [disjoint lens_perm_left & lens_perm_right].
+Proof.
+rewrite !disjoint_has.
+apply/negP => /hasP [/= i].
+rewrite -!map_comp => /mapP [/= j] _ -> /mapP [/= k] _.
+move/(tnth_inj _ (lens_uniq (lens_perm (lens_cat H))))/eqP.
+by rewrite eq_lrshift.
+Qed.
+
+Lemma lens_perm_leftE :
+  lens_comp (lens_basis (lens_cat H)) lens_perm_left =
+  lens_comp (lens_cat H) lens_left.
+Proof.
+by apply/eq_lens_tnth => i; rewrite !tnth_comp -tnth_comp lens_basis_perm.
+Qed.
+
+Lemma lens_perm_rightE :
+  lens_comp (lens_basis (lens_cat H)) lens_perm_right =
+  lens_comp (lens_cat H) lens_right.
+Proof.
+by apply/eq_lens_tnth => i; rewrite !tnth_comp -tnth_comp lens_basis_perm.
 Qed.
 End lens_left_right.
 

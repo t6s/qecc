@@ -35,6 +35,10 @@ Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
 Lemma tpcastE T n v (H : n = n) : tpcast (T:=T) H v = v.
 Proof. by apply/ffunP => vi; rewrite !ffunE cast_tupleE. Qed.
 
+Lemma tpcastK T n m (H : n = m) (t : tpower m T) :
+  tpcast H (tpcast (esym H) t) = t.
+Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
+
 Definition cast_mor m2 n2 m1 n1 (f : mor m1 n1)
            (Hm : m1 = m2) (Hn : n1 = n2) : mor m2 n2.
 rewrite -> Hm, -> Hn in f.
