@@ -1,7 +1,6 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
 Require Import lens tpower unitary endo_monoid.
-Require Import ProofIrrelevance.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -166,7 +165,7 @@ have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
   eq_lens.
   rewrite (eq_filter (a2:=fun j => j \notin lens_pair Hir)) // => k.
   by rewrite !inE orbC.
-have -> : esym (addKn_any n 2 2) = erefl by apply proof_irrelevance.
+have -> : esym (addKn_any n 2 2) = erefl by apply eq_irrelevance.
 rewrite cast_tupleE.
 under eq_bigr do rewrite 11!ffunE.
 move: (extract (lothers _) vi) => vi'.
@@ -305,7 +304,7 @@ case/boolP: (i < n.+2./2)%N => Hi.
   apply eq_bigr => vj _.
   apply eq_bigr => vk _.
   rewrite !ffunE.
-  have -> : addKn_any n 2 2 = erefl by apply/proof_irrelevance.
+  have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
   rewrite !cast_tupleE merge_indices_pair.
   have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
     apply/val_inj/val_inj/eq_lothers => j.
@@ -364,7 +363,7 @@ case/boolP: (i < n.+2./2)%N => Hi.
   apply eq_bigr => vj _.
   apply eq_bigr => vk _.
   rewrite !ffunE.
-  have -> : addKn_any n 2 2 = erefl by apply/proof_irrelevance.
+  have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
   rewrite !cast_tupleE 2!merge_indices_pair.
   by rewrite extract_lothers_merge extract_merge.
 Qed.

@@ -1,7 +1,7 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
 Require Import lens tpower unitary.
-Require Import JMeq ProofIrrelevance. (* Wooh *)
+Require Import JMeq ProofIrrelevance FunctionalExtensionality. (* Wooh *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -24,7 +24,16 @@ Variable R : comRingType.
 Local Notation mor m n := (mor I R m n).
 Local Notation endo n := (mor n n).
 
-Axiom morP : forall m n (f g : mor m n), f =e g <-> f = g.
+Lemma morP : forall m n (f g : mor m n), f =e g <-> f = g.
+Proof.
+split => [fg | -> //].
+apply functional_extensionality_dep => T /=.
+move/(_ T): fg.
+case f => /= {}f Hf.
+case g => /= {}g Hg /functional_extensionality fg.
+move: Hf Hg; case: g / fg => Hf Hg.
+by rewrite (proof_irrelevance (lmorphism f) Hf Hg).
+Qed.
 
 Section mor_monoid.
 Variable n : nat.
@@ -92,7 +101,7 @@ have := JMeq_eq Hl => Hl'.
 have := JMeq_eq He => He'.
 case: g_l / Hl' Hl => _.
 case: g_e / He' He => _ f_s g_s f_n g_n.
-rewrite (proof_irrelevance (lens_sorted f_l) f_s g_s).
+rewrite (eq_irrelevance f_s g_s).
 by rewrite (proof_irrelevance (naturality f_e) f_n g_n).
 Qed.
 
