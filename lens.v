@@ -695,6 +695,32 @@ apply/negbTE; apply: contra Hi. exact/lens_comp_sub.
 Qed.
 End lens_full.
 
+Section merge_indices_basis.
+Variables (I : Type) (dI : I) (n m : nat) (l : lens n m).
+Lemma merge_indices_basis vi vj :
+  merge_indices dI (lens_basis l) vi vj =
+  merge_indices dI l (extract (lens_perm l) vi) vj.
+Proof.
+apply eq_from_tnth => i.
+case/boolP: (i \in lens_basis l) => Hib.
+  rewrite tnth_merge_indices.
+  have Hil : i \in l.
+    by rewrite -(lens_basis_perm l) mem_lens_comp mem_lens_full.
+  rewrite tnth_merge_indices tnth_extract.
+  congr tnth.
+  apply/(tnth_inj (lens_basis l)); first by apply lens_uniq.
+  by rewrite -tnth_comp lens_basis_perm !tnth_lens_index.
+rewrite -mem_lothers in Hib.
+have Hil : i \in lothers l.
+  by rewrite -(lens_basis_perm l) lothers_comp_full.
+rewrite !tnth_merge_indices_lothers.
+congr tnth; apply/val_inj => /=.
+congr index.
+move/(f_equal (val \o val)): (lothers_comp_full (lens_basis l) (lens_perm l)).
+by rewrite lens_basis_perm.
+Qed.
+End merge_indices_basis.
+
 Section lens_single.
 Variables n : nat.
 
