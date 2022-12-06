@@ -133,15 +133,15 @@ Proof.
 apply: big_ind.
 - exact: idmorU.
 - exact: unitary_comp.
-- move=> i _. by apply/unitary_focus/swapU/naturalityP; esplit.
+- move=> i _. by apply/unitary_focus/swapU/tsmorN.
 Qed.
 
 Lemma rev_circuitN n : naturality (rev_circuit n).
 Proof.
 apply: big_ind.
-- by apply/naturalityP; esplit => T v; rewrite idmorE.
+- by apply/idmorN.
 - exact: comp_naturality.
-- by move=> i _;apply/focus_naturality/naturalityP; esplit.
+- by move=> i _;apply/focus_naturality/tsmorN.
 Qed.
 
 Lemma neq_ord_ge2 n (i j : 'I_n) : i != j -> (n >= 2)%N.
@@ -199,9 +199,6 @@ Proof.
 rewrite /lens_sorted /= /ord_ltn /= (@leq_trans n./2) //.
 by rewrite -{2}(odd_double_half n) leq_subRL -addnn addnA ?leq_add // ltn_addl.
 Qed.
-
-Lemma tsmorN m (M : tmatrix I C m m) : naturality (tsmor M).
-Proof. by apply/naturalityP; esplit. Qed.
 
 Definition fendo_swap (i : 'I_n./2) :=
   mkFoc (lens_pair_rev_sorted i) (tsmorN swap).
@@ -404,7 +401,7 @@ rewrite -(big_mkord xpredT f).
 rewrite Hn big_mkord.
 move: T x; apply /morP/eq_bigr => j _.
 apply/morP => T x.
-rewrite -focusM; last by apply/naturalityP; esplit.
+rewrite -focusM; last by apply/tsmorN.
 have -> // : lens_comp (lothers (lens_single i)) (lens_pair (rev_ord_neq j)) =
              lens_pair (rev_ord_neq (cast_ord Hn' (inord j))).
 eq_lens. apply/eqP.
@@ -454,7 +451,7 @@ have Hhn' : ~ (n.+2 - (n./2.+1 - h.+1).+1 < n./2.+1 - h.+1)%N.
   by rewrite ltnn.
 rewrite comp_morE /f proj_focusE; first last.
 - exact: swapU.
-- by apply/naturalityP; esplit.
+- by apply/tsmorN.
 - rewrite disjoint_has /= orbF !inE /=.
   apply/negP => /orP[] /eqP /(f_equal val) /=; rewrite inordK;
     (try by rewrite ltnS subSS leq_subr); move => Hi'.
@@ -612,7 +609,7 @@ case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
   by do 2! (case/orP => /eqP ->); rewrite /= !(mul1r,mul0r,addr0,add0r).
 rewrite proj_focusE; first last.
 - exact: swapU.
-- by apply/naturalityP; esplit.
+- exact: tsmorN.
 - rewrite disjoint_has /= orbF.
   rewrite !inE /=.
   rewrite (inj_eq rev_ord_inj).

@@ -97,6 +97,9 @@ Definition tinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
 Definition unitary_endo n (f : endo n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 
+Lemma idmorU n : unitary_endo (idmor I n).
+Proof. done. Qed.
+
 Lemma unitary_endoP n M : reflect (@unitary_endo n (tsmor M)) (unitaryts M).
 Proof.
 rewrite /unitaryts /unitary_endo.

@@ -156,6 +156,9 @@ split => [Hf | [M] HM].
   by rewrite linearZ_LR !ffunE.
 Qed.
 
+Lemma tsmorN m n M : naturality (@tsmor m n M).
+Proof. by apply/naturalityP; esplit. Qed.
+
 Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
   [ffun vi => ket vi *: bra].
 
@@ -182,6 +185,9 @@ move=> T v; apply/ffunP => vi.
 rewrite /idmor tsmorE.
 under eq_bigr do rewrite ffunE; by rewrite sum_tpbasisK.
 Qed.
+
+Lemma idmorN n : naturality (idmor n).
+Proof. done. Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
@@ -514,8 +520,8 @@ Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
   tsapp l M \v tsapp l' M' =e tsapp (lens_cat H) (tensor_tsquare M M').
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
-rewrite focusM; last by apply/naturalityP; eexists.
-rewrite -> focusM; last by apply/naturalityP; eexists.
+rewrite focusM; last by apply/tsmorN.
+rewrite -> focusM; last by apply/tsmorN.
 have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.

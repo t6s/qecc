@@ -11,12 +11,6 @@ Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 Local Open Scope complex_scope.
 
-Lemma idmorU (J : finType) (S : rcfType) n : unitary_endo (R:=S) (idmor J n).
-Proof. done. Qed.
-
-Lemma idmorN (J : finType) T n : naturality (idmor (R:=T) J n).
-Proof. done. Qed.
-
 Section endo_monoid.
 Variables (I : finType) (dI : I).
 
@@ -75,7 +69,7 @@ Lemma nullmorN p q : naturality (nullmor p q).
 Proof. by move=> T1 T2 h v; apply/ffunP => vi; rewrite !ffunE linearE. Qed.
 
 Section comoid.
-Definition id_fendo := mkFoc (lens_sorted_empty n) (idmorN (J:=I) (n:=0)).
+Definition id_fendo := mkFoc (lens_sorted_empty n) (idmorN (I:=I) (n:=0)).
 Definition err_fendo := mkFoc (lens_sorted_id n) (nullmorN (p:=n) n).
 Definition comp_fendo (f g : foc_endo) :=
   match Bool.bool_dec [disjoint foc_l f & foc_l g] true with
