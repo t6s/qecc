@@ -9,6 +9,7 @@
 lens.v
 tpower.v
 unitary.v
+endo_monoid.v
 kqm.v
 qexamples.v
 
