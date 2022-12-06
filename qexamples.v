@@ -243,7 +243,7 @@ Lemma disjoint_compn_lens_swap n i (Hi : (i < n./2)%N) :
 Proof.
 apply/disjointP => /= j.
 rewrite compn_mor_lens; last exact/all_disjoint_swap.
-rewrite !inE -topredE /= => /existsP[k /andP[] Hk].
+rewrite !inE /= => /existsP[k /andP[] Hk].
 rewrite !inE => /orP [] /eqP -> /orP [].
 - move/eqP/widen_ord_inj => Hk'; by rewrite Hk' eqxx in Hk.
 - exact/negP/rev_ord_gt.
@@ -266,7 +266,7 @@ case/boolP: (i == rev_ord i) => [/eqP|] Hir.
   - apply/disjointP => j.
     rewrite inE => /eqP -> {j}.
     rewrite compn_mor_lens //=; last by apply all_disjoint_swap.
-    rewrite -topredE => /existsP [k].
+    rewrite inE => /existsP [k].
     rewrite !inE => /orP[] /eqP /(f_equal val) /= Hk; move: (ltn_ord k).
     + rewrite Hk in Hi'; by rewrite Hi' ltnn.
     + move/(f_equal (addn k.+1)): Hk.

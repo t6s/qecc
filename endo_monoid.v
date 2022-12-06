@@ -399,7 +399,7 @@ Definition compn_mor_F := compn_mor (fendo_mor \o F) P.
 Lemma compn_mor_disjoint_lem :
   compn_mor_F = fendo_mor compn_fendo /\
   foc_l compn_fendo =i
-  (fun i => [exists j : 'I_m, (j < m)%N && P j && (i \in foc_l (F j))]).
+  [pred i | [exists j : 'I_m, (j < m)%N && P j && (i \in foc_l (F j))]].
 Proof.
 pose h := m.
 rewrite -{5}/h.
@@ -412,7 +412,7 @@ elim: h => [|h IH] Hh.
   split.
     apply/morP => T v.
     by rewrite /fendo_mor focusE /focus_fun /= curryK.
-  move=> j. rewrite -!topredE /=.
+  move=> j. rewrite inE.
   by apply/esym/existsP => -[].
 case/(_ (ltnW Hh)): IH => IHe IHl.
 rewrite (take_nth (Ordinal Hh)); last by rewrite size_enum_ord.
@@ -423,7 +423,7 @@ rewrite Hnth in IHe *.
 case Ph: (P (Ordinal Hh)); last first.
   do 2!(rewrite (big_mkcond (r:=[:: _])) big_seq1 Ph).
   rewrite IHe /= comp_fendof1; split => //=. exact/morP.
-  move=> i /=. rewrite IHl -!topredE; apply eq_existsb => j.
+  move=> i /=. rewrite IHl inE; apply eq_existsb => j.
   rewrite ltnS [in RHS]leq_eqVlt.
   case jh: (j == Ordinal Hh :> nat) => //.
   move/eqP/val_inj: jh => ->.
@@ -433,7 +433,7 @@ have Hd :
   [disjoint foc_l (\big[comp_fendo/id_fendo]_(i <- take h (enum 'I_m)| P i) F i)
    & foc_l (F (Ordinal Hh))].
   rewrite disjoint_has; apply/negP => /hasP [j].
-  rewrite IHl -topredE /= => /existsP [k] /andP [kh Hjk] Hjh.
+  rewrite IHl inE /= => /existsP [k] /andP [kh Hjk] Hjh.
   have /Hdisj : k != Ordinal Hh.
     apply/negP => /eqP kh'.
     by rewrite kh' ltnn in kh.
@@ -442,7 +442,7 @@ have Hd :
 split.
   by rewrite fendo_mor_comp // IHe.
 move=> i.
-rewrite foc_l_comp_fendo // !inE IHl -topredE /= -[in RHS]topredE /=.
+rewrite foc_l_comp_fendo // !inE IHl /= !inE.
 apply/esym/existsP.
 case: ifPn.
   case/orP.
@@ -467,9 +467,9 @@ Corollary compn_mor_disjoint :
 Proof. by case: compn_mor_disjoint_lem. Qed.
 
 Corollary compn_mor_lens :
-  foc_l compn_fendo =i (fun i => [exists j, P j && (i \in foc_l (F j))]).
+  foc_l compn_fendo =i [pred i | [exists j, P j && (i \in foc_l (F j))]].
 Proof.
-case: compn_mor_disjoint_lem => _ H i; rewrite H -2!topredE /=.
+case: compn_mor_disjoint_lem => _ H i; rewrite H /= !inE.
 by apply eq_existsb => j; rewrite ltn_ord.
 Qed.
 End compn_mor_disjoint.
