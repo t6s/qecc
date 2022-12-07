@@ -1138,9 +1138,10 @@ have Hlil : lens_index Hic \in lothers lothers_in_l.
   rewrite -mem_lens_comp mem_lensE /=.
   by move/(f_equal (val \o val)): lothers_notin_l_comp => /= ->.
 rewrite tnth_merge_indices_lothers.
-set a := tnth _ _; rewrite /a (tnth_nth a) /= Hlm [RHS](tnth_nth a) /=.
-congr nth; move/(f_equal (val \o val)): lothers_notin_l_comp => /= <-.
-by rewrite -(index_lens_comp (lothers lothers_in_l)).
+set a := tnth vl _; rewrite /a (tnth_nth a) /= Hlm [RHS](tnth_nth a) /=.
+congr nth. 
+have /(f_equal (val \o val)) := lothers_notin_l_comp; rewrite [RHS]/= => <-.
+by rewrite -[LHS](index_lens_comp (lothers lothers_in_l)).
 Qed.
 
 (* For focus_others, only uses variables *)

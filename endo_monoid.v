@@ -300,13 +300,7 @@ apply eq_foc_endo => /=.
           Hg_h Hf_g Hf_gh Hfg_h Hm.
   set lhs := _ \v _.
   set rhs := _ \v _.
-  have Hrhs : forall T : lmodType R,
-      linear (fun v => tpcast Hm (rhs T (tpcast (esym Hm) v))).
-    clear.
-    move: (fm + (gm + hm))%N Hm rhs => q Hm.
-    case: q / Hm => rhs T x y z /=.
-    by rewrite !tpcastE !linearE.
-  have -> : lhs = fun T => Linear (Hrhs T).
+  have -> : lhs = cast_mor rhs Hm Hm.
     apply/morP => T v /=.
     rewrite !focus_comp /= -!focusM //.
     have <- : cast_lens_ord (lens_perm_left Hf_gh) (esym Hm) =
@@ -342,7 +336,7 @@ apply eq_foc_endo => /=.
       rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hg_h))) tnth_rshift.
       congr index; apply eq_filter => j.
       by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
-    clear Hrhs rhs.
+    clear rhs.
     apply (can_inj (tpcastK Hm)).
     have HK := tpcastK (esym Hm).
     rewrite esymK in HK.
@@ -351,8 +345,8 @@ apply eq_foc_endo => /=.
     case: q / Hm.
     by rewrite !tpcastE !cast_lens_ordE.
   clear lhs; subst rhs.
-  move: (fm + (gm + hm))%N Hm Hrhs => q Hm.
-  case: q / Hm => Hrhs.
+  move: (fm + (gm + hm))%N Hm => q Hm.
+  case: q / Hm.
   apply/eq_JMeq/morP => T v /=.
   by rewrite !tpcastE.
 Qed.

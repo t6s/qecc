@@ -39,11 +39,11 @@ Lemma tpcastK T n m (H : n = m) (t : tpower m T) :
   tpcast H (tpcast (esym H) t) = t.
 Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
 
-Definition cast_mor m2 n2 m1 n1 (f : mor m1 n1)
-           (Hm : m1 = m2) (Hn : n1 = n2) : mor m2 n2.
-rewrite -> Hm, -> Hn in f.
-exact f.
-Defined.
+Lemma tpcast_linear (T : lmodType R) n m (H : n = m) : linear (tpcast (T:=T) H).
+Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE. Qed.
+
+Definition mor_tpcast n m (H : n = m) : mor n m :=
+  fun T : lmodType R => Linear (tpcast_linear (T:=T) H).
 
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
@@ -64,6 +64,9 @@ Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
 Lemma map_tpcastE T m n (H : n = n) v :
   map_tpower (m:=m) (tpcast (T:=T) H) v = v.
 Proof. by apply/ffunP => w /=; rewrite !ffunE tpcastE. Qed.
+
+Lemma tpcastN m n (H : n = m) : naturality (mor_tpcast H).
+Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
 
 Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
@@ -188,6 +191,9 @@ Qed.
 
 Lemma idmorN n : naturality (idmor n).
 Proof. done. Qed.
+
+Lemma mor_tpcastE n (H : n = n) : mor_tpcast H =e idmor n.
+Proof. by move=> T v; rewrite /mor_tpcast /= tpcastE. Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
@@ -369,6 +375,10 @@ Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_mor.
 Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
 End comp_mor.
 Notation "f \v g" := (comp_mor f g).
+
+Definition cast_mor m2 n2 m1 n1 (f : mor m1 n1)
+           (Hm : m1 = m2) (Hn : n1 = n2) : mor m2 n2 :=
+  mor_tpcast Hn \v f \v mor_tpcast (esym Hm).
 
 Section comp_mor_facts.
 Variables (q : nat) (f : mor m n) (g : mor n p) (h : mor p q).
