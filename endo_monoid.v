@@ -337,10 +337,8 @@ apply eq_foc_endo => /=.
       congr index; apply eq_filter => j.
       by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
     clear rhs.
-    apply (can_inj (tpcastK Hm)).
-    have HK := tpcastK (esym Hm).
-    rewrite esymK in HK.
-    rewrite {}HK.
+    have HK := tpcastK (esym Hm); rewrite esymK in HK; apply (can_inj (HK _ _)).
+    rewrite {HK} tpcastK.
     move: (fm + gm + hm)%N (esym Hm) => q {}Hm.
     case: q / Hm.
     by rewrite !tpcastE !cast_lens_ordE.
