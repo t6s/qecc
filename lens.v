@@ -157,17 +157,11 @@ Proof. by rewrite tnth_map. Qed.
 Lemma eq_lens_tnth (l' : lens) : (tnth l =1 tnth l') -> l = l'.
 Proof. by move/eq_from_tnth/val_inj. Qed.
 
+Lemma lens_inj : injective (fun x : lens => x : seq _).
+Proof. move=> x y H; exact/val_inj/val_inj. Qed.
+
 Lemma tnth_lens_inj : injective (tnth l).
 Proof. exact/tnth_inj/lens_uniq. Qed.
-
-Lemma eq_lens_sorted l' :
-  l =i l' -> lens_sorted l -> lens_sorted l' -> l = l'.
-Proof.
-move/irr_sorted_eq => H Hl Hl'.
-apply/val_inj/val_inj; move: Hl Hl'; apply H.
-- exact: ltn_trans.
-- by move=> x; rewrite /ord_ltn /= ltnn.
-Qed.
 
 Lemma lens_sortedP :
   reflect (exists p, l = [seq i <- enum 'I_n | p i] :> seq _) (lens_sorted l).
@@ -227,10 +221,19 @@ Lemma nth_extract_index dI t i :
   i \in l -> nth dI (extract t) (index i l) = tnth t i.
 Proof. move=> H; by rewrite nth_lens_index tnth_map tnth_lens_index. Qed.
 
+Lemma tnth_inject t t' i (H : i \in l) :
+  tnth (inject t t') i = tnth t' (lens_index H).
+Proof. by rewrite tnth_mktuple nth_lens_index. Qed.
+
+Lemma tnth_inject_others t t' i :
+  i \notin l -> tnth (inject t t') i = tnth t i.
+Proof. by move=> H; rewrite tnth_mktuple nth_lens_out. Qed.
+
 Lemma inject_extract t : inject t (extract t) = t.
 Proof.
-apply eq_from_tnth => i; rewrite !tnth_mktuple.
-case/boolP: (i \in l) => [/nth_extract_index | /nth_lens_out]; exact.
+apply/eq_from_tnth => i.
+case/boolP: (i \in l) => H; last by rewrite tnth_inject_others.
+by rewrite tnth_inject tnth_extract tnth_lens_index.
 Qed.
 End lens.
 
@@ -248,13 +251,21 @@ exists (cast_tuple l' H).
 apply lens_uniq.
 Defined.
 
+Lemma eq_lens_sorted :
+  l =i l' -> lens_sorted l -> lens_sorted l' -> l = l' :> seq _.
+Proof.
+move/irr_sorted_eq; apply.
+- exact: ltn_trans.
+- by move=> x; rewrite /ord_ltn /= ltnn.
+Qed.
+
 Hypothesis H : l = l' :> seq _.
 
 Lemma lens_size_eq : m' = m.
 Proof. by rewrite -(size_tuple l') -H size_tuple. Qed.
 
 Lemma lens_eq_cast : l = cast_lens lens_size_eq.
-Proof. exact/val_inj/val_inj. Qed.
+Proof. exact/lens_inj. Qed.
 
 Lemma extract_eq_cast A (v : n.-tuple A) :
  extract l v = cast_tuple (extract l' v) lens_size_eq.
@@ -262,13 +273,10 @@ Proof. apply val_inj => /=. by rewrite H. Qed.
 End cast_lens.
 
 Lemma cast_lens_ordE n m (l : lens n m) H : cast_lens_ord (n':=n) l H = l.
-Proof.
-apply/val_inj/val_inj/eq_from_nth' => //=. by rewrite size_map.
-move=> a i; rewrite size_map => Hsz; apply/val_inj; by rewrite (nth_map a).
-Qed.
+Proof. apply/eq_lens_tnth => i; rewrite tnth_map; by apply/val_inj. Qed.
 
 Lemma cast_lensE n m (l : lens n m) H : cast_lens (m':=m) l H = l.
-Proof. exact/val_inj/val_inj. Qed.
+Proof. exact/lens_inj. Qed.
 
 (* Identity *)
 Section lens_id.
@@ -330,15 +338,19 @@ Proof.
 by move=> i; rewrite mem_lensE => /mapP [j] _ ->; rewrite mem_tnth.
 Qed.
 
+Lemma mem_lens_comp_out i : i \notin l1 -> i \notin lens_comp.
+Proof. by apply contra => /lens_comp_sub. Qed.
+
 Lemma inject_comp (t : n.-tuple T) t' :
   inject l1 t (inject l2 (extract l1 t) t') = inject lens_comp t t'.
 Proof.
-apply eq_from_tnth => i; rewrite !tnth_mktuple.
+apply eq_from_tnth => i.
 case/boolP: (i \in l1) => Hl1.
-  rewrite nth_lens_index index_lens_comp.
-  by rewrite !tnth_map tnth_ord_tuple (tnth_nth i) nth_index.
-rewrite !nth_lens_out //.
-apply: contra Hl1 => /mapP [j Hj] ->; by rewrite mem_tnth.
+  rewrite tnth_inject [RHS]tnth_mktuple index_lens_comp.
+  case/boolP: (lens_index Hl1 \in l2) => Hl2.
+    by rewrite tnth_inject make_lens_index -tnth_nth.
+  by rewrite tnth_inject_others // tnth_extract tnth_lens_index nth_lens_out.
+by rewrite !tnth_inject_others // mem_lens_comp_out.
 Qed.
 
 Lemma focus1A (f : p.-tuple T -> p.-tuple T) :
@@ -353,30 +365,27 @@ Hypothesis Hdisj : [disjoint l & l'].
 
 Lemma extract_inject t' : extract l (inject l' t t') = extract l t.
 Proof.
-apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
+apply eq_from_tnth => i; rewrite !tnth_extract tnth_mktuple.
 by rewrite nth_lens_out // (disjointFr Hdisj) // mem_tnth.
 Qed.
 
 Lemma inject_disjointC vj vk :
   inject l' (inject l t vk) vj = inject l (inject l' t vj) vk.
 Proof.
-apply eq_from_tnth => i; rewrite !tnth_map !tnth_ord_tuple.
+apply eq_from_tnth => i.
 case/boolP: (i \in l) => Hil.
-  rewrite [RHS]nth_lens_index.
   have Hil' : i \notin l' by rewrite (disjointFr Hdisj) // mem_tnth.
-  by rewrite nth_lens_out // nth_lens_index.
-rewrite [RHS]nth_lens_out //.
+  by rewrite tnth_inject_others // !tnth_inject.
 case/boolP: (i \in l') => Hil'.
-  by rewrite !nth_lens_index.
-by rewrite !nth_lens_out.
+  by rewrite tnth_inject tnth_inject_others // tnth_inject.
+by rewrite !tnth_inject_others.
 Qed.
 
 Lemma focus1_commu_in (f : endo1 T q) (g : endo1 T r) i : i \in l ->
   tnth (focus1 l f (focus1 l' g t)) i = tnth (focus1 l' g (focus1 l f t)) i.
 Proof.
 move=> Hl; have Hl' : i \notin l' by rewrite (disjointFr Hdisj).
-rewrite (focus1_out _ _ Hl') /focus1 extract_inject // !tnth_mktuple.
-apply set_nth_default; by rewrite size_tuple index_tuple.
+by rewrite (focus1_out _ _ Hl') /focus1 extract_inject // !tnth_inject.
 Qed.
 End disjoint_lenses.
 
@@ -444,7 +453,7 @@ Proof. by apply/lens_sortedP; exists (mem l). Qed.
 Lemma lens_basis_sortedE : lens_sorted l -> lens_basis = l.
 Proof.
 move=> H.
-apply eq_lens_sorted => //; last exact/lens_sorted_basis.
+apply/lens_inj/eq_lens_sorted => //; last exact/lens_sorted_basis.
 by move=> j; rewrite mem_filter mem_enum /= andbT.
 Qed.
 
@@ -455,12 +464,8 @@ Definition tuple_perm := [tuple lens_index (perm_in_basis i) | i < p].
 Lemma uniq_perm : uniq tuple_perm.
 Proof.
 rewrite map_inj_uniq ?uniq_ord_tuple //.
-move=> i j.
-move/(f_equal (tnth lens_basis)).
-rewrite /lens_index.
-rewrite (tnth_nth (tnth l i)) [RHS](tnth_nth (tnth l i)) /=.
-rewrite !nth_index; try apply perm_in_basis.
-exact: (tnth_inj _ (lens_uniq l)).
+move=> i j /(f_equal (tnth lens_basis)).
+by rewrite !tnth_lens_index => /tnth_lens_inj.
 Qed.
 
 Definition lens_perm := mkLens uniq_perm.
@@ -468,17 +473,15 @@ Definition lens_perm := mkLens uniq_perm.
 Lemma lens_basis_perm : lens_comp lens_basis lens_perm = l.
 Proof.
 apply/eq_lens_tnth => i.
-rewrite tnth_comp tnth_mktuple /=.
-by rewrite (tnth_nth (tnth l i)) /= nth_index // perm_in_basis.
+by rewrite tnth_comp tnth_mktuple tnth_lens_index.
 Qed.
 
 Lemma lens_perm_sortedE : lens_sorted l -> lens_perm = lens_id p.
 Proof.
-move=> H.
-apply/eq_lens_tnth => i; rewrite !tnth_mktuple !tnth_ord_tuple.
-apply/val_inj => /=.
-have /(f_equal (val \o val)) /= -> := lens_basis_sortedE H.
-by rewrite tnth_lensK.
+move=> H; apply/eq_lens_tnth => i.
+rewrite tnth_mktuple tnth_ord_tuple.
+apply/(tnth_inj lens_basis); first exact/lens_uniq.
+by rewrite tnth_lens_index lens_basis_sortedE.
 Qed.
 End lens_basis_perm.
 
@@ -510,7 +513,7 @@ Lemma cards_filter (A : finType) (p : pred A) :
 Proof.
 rewrite cardsE /= cardE -filter_predI.
 congr size; apply eq_filter => /= i. 
-by rewrite !inE andbT -topredE.
+by rewrite !inE andbT.
 Qed.
 
 Definition others := [seq i <- enum 'I_n | i \notin l].
@@ -559,8 +562,8 @@ Qed.
 
 Lemma extract_merge v1 v2 : extract l (merge_indices v1 v2) = v1.
 Proof.
-apply eq_from_tnth => i.
-by rewrite !tnth_map tnth_ord_tuple tnth_lensK -tnth_nth.
+apply eq_from_tnth => i; rewrite tnth_extract.
+by rewrite (tnth_merge_indices _ _ (mem_tnth i l)) lens_indexK.
 Qed.
 
 Lemma extract_lothers_merge v1 v2 : extract lothers (merge_indices v1 v2) = v2.
@@ -572,9 +575,12 @@ Qed.
 Lemma merge_indices_extract_others v1 v2 :
   merge_indices v2 (extract lothers v1) = inject l v1 v2.
 Proof.
-apply eq_from_tnth => i; rewrite !tnth_mktuple.
-case/boolP: (i \in l) => Hil; first by rewrite !nth_lens_index.
-by rewrite !(nth_extract_index,nth_lens_out) // mem_lothers.
+apply eq_from_tnth => i.
+case/boolP: (i \in l) => Hil.
+  by rewrite tnth_merge_indices tnth_inject.
+rewrite tnth_inject_others //.
+rewrite -mem_lothers in Hil.
+by rewrite tnth_merge_indices_lothers tnth_extract tnth_lens_index.
 Qed.
 
 Lemma merge_indices_extract (v : n.-tuple I) :
@@ -645,7 +651,7 @@ Lemma lens_sorted_empty : lens_sorted lens_empty.
 Proof. done. Qed.
 
 Lemma eq_lens_empty (l : lens n 0) : l = lens_empty.
-Proof. case: l => -[] [] // Hl Hu; by apply/val_inj/val_inj. Qed.
+Proof. case: l => -[] [] // Hl Hu; exact/lens_inj. Qed.
 
 Lemma extract_lens_empty T (l : lens n 0) v : extract (T:=T) l v = [tuple].
 Proof. apply eq_from_tnth => x. have := ltn_ord x. by rewrite ltn0. Qed.
@@ -668,7 +674,7 @@ Qed.
 
 Lemma lens_cat_emptyl m (l : lens n m) (H : [disjoint lens_empty & l]) :
   lens_cat H = l.
-Proof. by apply/val_inj/val_inj. Qed.
+Proof. exact/lens_inj. Qed.
 End lens_empty.
 
 Section lens_full.
@@ -689,7 +695,7 @@ Qed.
 Lemma lothers_comp_full n m (l : lens n m) (l1 : lens m m) :
   lothers (lens_comp l l1) = lothers l.
 Proof.
-apply/val_inj/val_inj/eq_lothers => i.
+apply/lens_inj/eq_lothers => i.
 case/boolP: (i \in l) => Hi. by rewrite mem_lens_comp mem_lens_full.
 apply/negbTE; apply: contra Hi. exact/lens_comp_sub.
 Qed.
@@ -854,7 +860,7 @@ Qed.
 
 Lemma lens_left_right : lens_cat lens_left_right_disjoint = lens_id (m+n).
 Proof.
-apply/val_inj/val_inj => /=.
+apply/lens_inj => /=.
 by rewrite -[RHS](cat_take_drop m) take_enum_lshift drop_enum_rshift.
 Qed.
 
@@ -887,12 +893,12 @@ Variables (p : nat) (l : lens p m) (l' : lens p n) (H : [disjoint l & l']).
 
 Lemma lens_comp_left : l = lens_comp (lens_cat H) lens_left.
 Proof.
-by apply/eq_lens_tnth => i; rewrite !tnth_map tnth_ord_tuple tnth_lshift.
+by apply/eq_lens_tnth => i; rewrite tnth_comp tnth_mktuple tnth_lshift.
 Qed.
 
 Lemma lens_comp_right : l' = lens_comp (lens_cat H) lens_right.
 Proof.
-by apply/eq_lens_tnth => i; rewrite !tnth_map tnth_ord_tuple tnth_rshift.
+by apply/eq_lens_tnth => i; rewrite tnth_comp tnth_mktuple tnth_rshift.
 Qed.
 
 Definition lens_perm_left := lens_comp (lens_perm (lens_cat H)) lens_left.
@@ -900,11 +906,11 @@ Definition lens_perm_right := lens_comp (lens_perm (lens_cat H)) lens_right.
 
 Lemma lens_perm_disjoint : [disjoint lens_perm_left & lens_perm_right].
 Proof.
-rewrite !disjoint_has.
-apply/negP => /hasP [/= i].
-rewrite -!map_comp => /mapP [/= j] _ -> /mapP [/= k] _.
-move/(tnth_inj _ (lens_uniq (lens_perm (lens_cat H))))/eqP.
-by rewrite eq_lrshift.
+apply/disjointP => i /mapP [x] Hx -> /mapP [y] Hy.
+move/(f_equal (tnth (lens_basis (lens_cat H)))).
+rewrite -!tnth_comp lens_basis_perm => /tnth_lens_inj xy.
+rewrite -xy in Hy.
+by move/disjointP/(_ x): lens_left_right_disjoint; elim.
 Qed.
 
 Lemma lens_perm_leftE :
@@ -1069,7 +1075,7 @@ Qed.
 Lemma lothers_notin_l_comp :
   lens_comp lothers_comp lothers_notin_l = lothers l.
 Proof.
-apply/eq_lens_sorted/lens_sorted_lothers/lens_sorted_comp;
+apply/lens_inj/eq_lens_sorted/lens_sorted_lothers/lens_sorted_comp;
   try exact/sorted_filter/sorted_enum/ltn_trans.
 move=> /= i; rewrite mem_lothers.
 case/boolP: (i \in l) => /= Hi; apply/mapP.

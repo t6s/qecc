@@ -152,7 +152,7 @@ have Hm : (g_m + f_m = f_m + g_m)%N by rewrite addnC.
 apply eq_foc_endo => //=.
 - have -> : lens_basis (lens_cat H) =
             cast_lens (lens_basis (lens_cat H')) Hm.
-    apply/val_inj/val_inj/eq_filter => /= i.
+    apply/lens_inj/eq_filter => /= i.
     by rewrite !mem_cat orbC.
   move: (f_m + g_m)%N Hm => q Hm.
   case: q / Hm; apply eq_JMeq.
@@ -290,8 +290,7 @@ apply eq_foc_endo => /=.
 - by rewrite addnA.
 - have -> : lens_basis (lens_cat Hf_gh) =
             cast_lens (lens_basis (lens_cat Hfg_h)) Hm.
-    apply/val_inj/val_inj => /=.
-    apply/eq_filter => i.
+    apply/lens_inj/eq_filter => i.
     by rewrite !(mem_enum,mem_cat,mem_filter) /= !andbT !orbA.
   move: (foc_m f + (foc_m g + foc_m h))%N Hm => q Hm.
   case: q / Hm; apply eq_JMeq.

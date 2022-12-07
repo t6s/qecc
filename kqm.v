@@ -48,7 +48,7 @@ Proof. by eq_lens; rewrite /= addnOK. Qed.
 Lemma lens_comp_rev_left n (l1 l2 : lens (2+n) 2) : rev l1 = l2 ->
   lens_comp l1 (lens_left 1 1) = lens_comp l2 (lothers(lens_left 1 1)).
 Proof.
-move=> Hrev; apply/val_inj/val_inj => /=.
+move=> Hrev; apply/lens_inj => /=.
 move: (lothers_left 1 1) => /= ->.
 by rewrite !enum_ordinalE /= !(tnth_nth ord0) /= -Hrev nth_rev // size_tuple.
 Qed.
@@ -66,7 +66,7 @@ rewrite [in RHS]eq_sym.
 case H: (_ == _); last by rewrite !scale0r.
 rewrite !scale1r !merge_indices_empty.
 do 3!f_equal.
-apply/val_inj/val_inj/eq_filter => /= i.
+apply/lens_inj/eq_filter => /= i.
 by rewrite !mem_lensE /= -Hrev mem_rev.
 Qed.
 
