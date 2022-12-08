@@ -498,6 +498,12 @@ abstract
    by apply/hasPn => /= i /(disjointFl Hdisj') ->).
 Defined.
 
+Lemma tnth_lens_cat_l i : tnth lens_cat (lshift p i) = tnth l1 i.
+Proof. exact/tnth_lshift. Qed.
+
+Lemma tnth_lens_cat_r i : tnth lens_cat (rshift m i) = tnth l2 i.
+Proof. exact/tnth_rshift. Qed.
+
 Variable (T : eqType).
 
 Lemma extract_cat (t : n.-tuple T) :
