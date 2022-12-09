@@ -447,18 +447,19 @@ Proof. by rewrite filter_uniq // enum_uniq. Qed.
 
 Definition lens_basis := mkLens uniq_basis.
 
+Lemma mem_lens_basis : lens_basis =i l.
+Proof. by move=> i; rewrite mem_filter mem_enum andbT. Qed.
+
 Lemma lens_sorted_basis : lens_sorted lens_basis.
 Proof. by apply/lens_sortedP; exists (mem l). Qed.
 
 Lemma lens_basis_sortedE : lens_sorted l -> lens_basis = l.
 Proof.
-move=> H.
-apply/lens_inj/eq_lens_sorted => //; last exact/lens_sorted_basis.
-by move=> j; rewrite mem_filter mem_enum /= andbT.
+move=> H; exact/lens_inj/eq_lens_sorted/H/lens_sorted_basis/mem_lens_basis.
 Qed.
 
 Lemma perm_in_basis i : tnth l i \in lens_basis.
-Proof. by rewrite mem_filter mem_tnth mem_enum. Qed.
+Proof. by rewrite mem_lens_basis mem_tnth. Qed.
 
 Definition tuple_perm := [tuple lens_index (perm_in_basis i) | i < p].
 Lemma uniq_perm : uniq tuple_perm.

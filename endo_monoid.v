@@ -80,6 +80,8 @@ Proof. by move=> T1 T2 h v; apply/ffunP => vi; rewrite !ffunE linearE. Qed.
 Section comoid.
 Definition id_fendo := mkFoc (lens_sorted_empty n) (idmorN (I:=I) (n:=0)).
 Definition err_fendo := mkFoc (lens_sorted_id n) (nullmorN (p:=n) n).
+
+Section comp_fendo.
 Definition comp_fendo (f g : foc_endo) :=
   match Bool.bool_dec [disjoint foc_l f & foc_l g] true with
   | left H =>
@@ -89,6 +91,38 @@ Definition comp_fendo (f g : foc_endo) :=
         (focus_naturality dI (lens_perm_right H) (foc_n (f:=g))))
   | right _ => err_fendo
   end.
+
+Variables f g : foc_endo.
+Lemma comp_fendo_sub : {subset foc_l f <= foc_l (comp_fendo f g)}.
+Proof.
+move=> i Hif.
+rewrite /comp_fendo; case: Bool.bool_dec => H /=.
+- by rewrite mem_lens_basis mem_cat Hif.
+- by rewrite mem_lens_full.
+Qed.
+
+Lemma comp_fendo_err :
+  [disjoint foc_l f & foc_l g] <> true -> comp_fendo f g = err_fendo.
+Proof. by move=> H; rewrite /comp_fendo; case: Bool.bool_dec. Qed.
+
+Hypothesis Hdisj : [disjoint foc_l f & foc_l g].
+Lemma foc_l_comp_fendo :
+  foc_l (comp_fendo f g) =i predU (mem (foc_l f)) (mem (foc_l g)).
+Proof.
+move=> i; rewrite inE /comp_fendo /=.
+case: Bool.bool_dec => H; last contradiction.
+by rewrite mem_lens_basis mem_cat.
+Qed.
+
+Lemma fendo_mor_comp : fendo_mor (comp_fendo f g) = fendo_mor f \v fendo_mor g.
+Proof.
+apply/morP => T v.
+rewrite /fendo_mor /comp_fendo /=.
+case: Bool.bool_dec => H /=; last contradiction.
+rewrite focus_comp /= -!focusM; try exact/foc_n.
+by rewrite lens_perm_leftE lens_perm_rightE -lens_comp_left -lens_comp_right.
+Qed.
+End comp_fendo.
 
 Lemma eq_foc_endo (f g : foc_endo) (H : foc_m f = foc_m g) :
   JMeq (foc_l f) (foc_l g) -> JMeq (foc_e f) (foc_e g) -> f = g.
@@ -140,6 +174,19 @@ move=> H; apply eq_foc_endo => //=; apply eq_JMeq.
   by rewrite focus_left_idmor comp_mor1f focus_lens_right0.
 Qed.
 
+Lemma lens_perm_left_right m p (f : lens n m) (g : lens n p)
+  (H : [disjoint f & g]) (H' : [disjoint g & f]) (Hm : (p + m = m + p)%N) :
+  lens_perm_left H = cast_lens_ord (lens_perm_right H') Hm.
+Proof.
+eq_lens; apply/eqP.
+rewrite -[RHS]map_comp [RHS](eq_map (f2:=@nat_of_ord _)) //.
+rewrite -2!map_comp -2![RHS]map_comp.
+apply eq_map => i /=.
+rewrite !tnth_mktuple /= tnth_lshift tnth_rshift.
+congr index; apply eq_filter => j /=.
+by rewrite !mem_cat orbC.
+Qed.
+
 Lemma comp_fendoC (f g : foc_endo) : comp_fendo f g = comp_fendo g f.
 Proof.
 rewrite /comp_fendo /=.
@@ -157,22 +204,10 @@ apply eq_foc_endo => //=.
   move: (f_m + g_m)%N Hm => q Hm.
   case: q / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
-- have -> : lens_perm_left H = cast_lens_ord (lens_perm_right H') Hm.
-    eq_lens; apply/eqP.
-    rewrite -[RHS]map_comp [RHS](eq_map (f2:=@nat_of_ord _)) //.
-    rewrite -2!map_comp -2![RHS]map_comp.
-    apply eq_map => i /=.
-    rewrite !tnth_mktuple /= tnth_lshift tnth_rshift.
-    congr index; apply eq_filter => j /=.
-    by rewrite !mem_cat orbC.
+- rewrite lens_perm_left_right.
   have -> : lens_perm_right H = cast_lens_ord (lens_perm_left H') Hm.
-    eq_lens; apply/eqP.
-    rewrite -[RHS]map_comp [RHS](eq_map (f2:=@nat_of_ord _)) //.
-    rewrite -2!map_comp -2![RHS]map_comp.
-    apply eq_map => i /=.
-    rewrite !tnth_mktuple /= tnth_lshift tnth_rshift.
-    congr index; apply eq_filter => j /=.
-    by rewrite !mem_cat orbC.
+    rewrite (lens_perm_left_right  H' H (esym Hm)).
+    by eq_lens; apply/eqP; rewrite -!map_comp /=; apply eq_map.
   move: (f_m + g_m)%N Hm => q Hm.
   case: q / Hm; apply eq_JMeq.
   apply/morP => T v.
@@ -214,38 +249,30 @@ Proof.
 move=> f g h.
 rewrite {2}/comp_fendo /=.
 case: Bool.bool_dec => Hg_h; last first.
-  rewrite comp_fendoC comp_fendoef.
-  rewrite {1}/comp_fendo.
-  case: Bool.bool_dec => Hfg_h //.
+  rewrite comp_fendoC comp_fendoef comp_fendo_err //= => Hfg_h.
   elim: Hg_h; apply/disjointP => i ig ih.
   move/disjointP/(_ i): Hfg_h; elim => //.
-  rewrite /comp_fendo/=.
-  case: Bool.bool_dec => Hf_g /=.
-    by rewrite mem_filter mem_cat ig mem_enum orbC.
-  by rewrite mem_enum.
+  rewrite comp_fendoC; exact/comp_fendo_sub.
 rewrite {3}/comp_fendo /=.
 case: Bool.bool_dec => Hf_g; last first.
-  rewrite comp_fendoef.
-  rewrite {1}/comp_fendo /=.
-  case: Bool.bool_dec => Hf_gh //.
+  rewrite comp_fendoef comp_fendo_err //= => Hf_gh.
   elim: Hf_g; apply/disjointP => i i_f ig.
   move/disjointP/(_ i): Hf_gh; elim => //.
-  by rewrite mem_filter mem_cat ig mem_enum.
+  by rewrite mem_lens_basis mem_cat ig.
 rewrite {1}/comp_fendo /=.
 case: Bool.bool_dec => Hf_gh; last first.
-  rewrite {1}/comp_fendo /=.
-  case: Bool.bool_dec => Hfg_h //.
+  rewrite comp_fendo_err //= => Hfg_h.
   elim: Hf_gh; apply/disjointP => i i_f.
-  rewrite mem_filter mem_cat mem_enum andbT => /orP [ig|ih].
+  rewrite mem_lens_basis mem_cat => /orP [ig|ih].
     by move/disjointP/(_ i): (Hf_g); elim.
   move/disjointP/(_ i): (Hfg_h); elim => //.
-  by rewrite mem_filter mem_cat i_f mem_enum.
+  by rewrite mem_lens_basis mem_cat i_f.
 rewrite {1}/comp_fendo /=.
 case: Bool.bool_dec => Hfg_h; last first.
   elim: Hfg_h; apply/disjointP => i.
-  rewrite mem_filter mem_cat mem_enum andbT => /orP [i_f|ig] ih.
+  rewrite mem_lens_basis mem_cat => /orP [i_f|ig] ih.
     move/disjointP/(_ i): Hf_gh; elim => //.
-    by rewrite mem_filter mem_cat ih mem_enum orbT.
+    by rewrite mem_lens_basis mem_cat ih orbT.
   by move/disjointP/(_ i): (Hg_h); elim.
 have Hm := esym (addnA (foc_m f) (foc_m g) (foc_m h)).
 apply eq_foc_endo => /=.
@@ -253,7 +280,7 @@ apply eq_foc_endo => /=.
 - have -> : lens_basis (lens_cat Hf_gh) =
             cast_lens (lens_basis (lens_cat Hfg_h)) Hm.
     apply/lens_inj/eq_filter => i.
-    by rewrite !(mem_enum,mem_cat,mem_filter) /= !andbT !orbA.
+    by rewrite !(mem_cat,mem_lens_basis,orbA).
   move: (foc_m f + (foc_m g + foc_m h))%N Hm => q Hm.
   case: q / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
@@ -277,7 +304,7 @@ apply eq_foc_endo => /=.
     rewrite !(tnth_extract,tnth_mktuple) /= !tnth_lshift.
     rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hf_g))) tnth_lshift.
     congr index; apply eq_filter => j.
-    by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
+    by rewrite !(mem_cat,mem_lens_basis) orbA.
   have <- : cast_lens_ord
               (lens_comp (lens_perm_right Hf_gh) (lens_perm_left Hg_h))
               (esym Hm) =
@@ -290,7 +317,7 @@ apply eq_foc_endo => /=.
     rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hf_g))).
     rewrite tnth_lshift tnth_rshift.
     congr index; apply eq_filter => j.
-    by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
+    by rewrite !(mem_cat,mem_lens_basis) orbA.
   have <- : cast_lens_ord
               (lens_comp (lens_perm_right Hf_gh) (lens_perm_right Hg_h))
               (esym Hm) =
@@ -301,7 +328,7 @@ apply eq_foc_endo => /=.
     rewrite tnth_rshift [in RHS]tnth_rshift.
     rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hg_h))) tnth_rshift.
     congr index; apply eq_filter => j.
-    by rewrite !(mem_cat,mem_enum,mem_filter,andbT) orbA.
+    by rewrite !(mem_cat,mem_lens_basis) orbA.
   have HK := tpcastK (esym Hm); rewrite esymK in HK; apply (can_inj (HK _ _)).
   rewrite {HK} tpcastK.
   move: (fm + gm + hm)%N (esym Hm) => q {}Hm.
@@ -312,26 +339,6 @@ Qed.
 Canonical compf_monoid := Monoid.Law comp_fendoA comp_fendo1f comp_fendof1.
 Canonical compf_comoid := Monoid.ComLaw comp_fendoC.
 End comoid.
-
-Section comp_fendo.
-Variables (f g : foc_endo) (Hdisj : [disjoint foc_l f & foc_l g]).
-Lemma foc_l_comp_fendo :
-  foc_l (comp_fendo f g) =i predU (mem (foc_l f)) (mem (foc_l g)).
-Proof.
-move=> i; rewrite inE /comp_fendo /=.
-case: Bool.bool_dec => H; last contradiction.
-by rewrite mem_lensE /= mem_filter mem_enum andbT mem_cat.
-Qed.
-
-Lemma fendo_mor_comp : fendo_mor (comp_fendo f g) = fendo_mor f \v fendo_mor g.
-Proof.
-apply/morP => T v.
-rewrite /fendo_mor /comp_fendo /=.
-case: Bool.bool_dec => H /=; last contradiction.
-rewrite focus_comp /= -!focusM; try exact/foc_n.
-by rewrite lens_perm_leftE lens_perm_rightE -lens_comp_left -lens_comp_right.
-Qed.
-End comp_fendo.
 
 Section compn_mor_disjoint.
 Variable m : nat.
