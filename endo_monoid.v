@@ -81,6 +81,15 @@ Section comoid.
 Definition id_fendo := mkFoc (lens_sorted_empty n) (idmorN (I:=I) (n:=0)).
 Definition err_fendo := mkFoc (lens_sorted_id n) (nullmorN (p:=n) n).
 
+Lemma fendo_mor_id : fendo_mor id_fendo = idmor I n.
+Proof. by apply/morP => T v; rewrite /fendo_mor focusE /focus_fun/= curryK. Qed.
+
+Lemma fendo_mor_err : fendo_mor err_fendo = nullmor n n.
+Proof.
+apply/morP => T v; apply/ffunP => vi.
+by rewrite /fendo_mor focusE /= !ffunE.
+Qed.
+
 Section comp_fendo.
 Definition comp_fendo (f g : foc_endo) :=
   match Bool.bool_dec [disjoint foc_l f & foc_l g] true with
@@ -201,15 +210,13 @@ apply eq_foc_endo => //=.
             cast_lens (lens_basis (lens_cat H')) Hm.
     apply/lens_inj/eq_filter => /= i.
     by rewrite !mem_cat orbC.
-  move: (f_m + g_m)%N Hm => q Hm.
-  case: q / Hm; apply eq_JMeq.
+  case: _ / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
 - rewrite lens_perm_left_right.
   have -> : lens_perm_right H = cast_lens_ord (lens_perm_left H') Hm.
     rewrite (lens_perm_left_right  H' H (esym Hm)).
     by eq_lens; apply/eqP; rewrite -!map_comp /=; apply eq_map.
-  move: (f_m + g_m)%N Hm => q Hm.
-  case: q / Hm; apply eq_JMeq.
+  case: _ / Hm; apply eq_JMeq.
   apply/morP => T v.
   by rewrite !cast_lens_ordE focusC // disjoint_sym lens_perm_disjoint.
 Qed.
@@ -221,27 +228,19 @@ Lemma comp_fendoef (f : foc_endo) : comp_fendo err_fendo f = err_fendo.
 Proof.
 rewrite /comp_fendo /=.
 case: Bool.bool_dec => //.
-case/boolP: (foc_m f == 0%N :> nat); last first.
-  move=> Hm H; elimtype False.
-  case: (foc_l f) H => -[] [|a t] Hsz Hu.
-    by rewrite -(eqP Hsz) eqxx in Hm.
+case: f => -[|m] l Sl e Nf /= H; last first.
+  elimtype False; case: l {Sl e Nf} H => -[] [] //= a t Hsz Hu.
   by rewrite disjoint_sym disjoint_has /= mem_enum.
-case: f => fm l Sl e Nf /= /eqP Hl H.
-have Hn : (n = n + fm)%N by rewrite Hl addn0.
+have Hn : (n = n + 0)%N by rewrite addn0.
 apply eq_foc_endo => //=.
 - have -> : lens_basis (lens_cat H) = cast_lens (lens_id n) Hn.
     apply/lens_inj; rewrite -[RHS]enum_filterP.
     by apply eq_filter => i; rewrite mem_cat mem_lens_full.
-  move: (n + fm)%N Hn => q Hn.
-  case: q / Hn; apply eq_JMeq.
+  case: _ / Hn; apply eq_JMeq.
   by rewrite cast_lensE.
-- set cmp := _ \v _.
-  have -> : cmp = nullmor (n+fm) (n+fm).
-    subst cmp; apply/morP => T v.
-    apply/ffunP => vi.
-    by rewrite !focusE !ffunE.
-  move: (n + fm)%N Hn => q Hn.
-  by case: q / Hn.
+- rewrite (_ : _ \v _ = nullmor (n+0) (n+0)); last first.
+    by apply/morP => T v; apply/ffunP => vi; rewrite !focusE !ffunE.
+  by case: _ / Hn.
 Qed.
 
 Lemma comp_fendoA : associative comp_fendo.
@@ -281,8 +280,7 @@ apply eq_foc_endo => /=.
             cast_lens (lens_basis (lens_cat Hfg_h)) Hm.
     apply/lens_inj/eq_filter => i.
     by rewrite !(mem_cat,mem_lens_basis,orbA).
-  move: (foc_m f + (foc_m g + foc_m h))%N Hm => q Hm.
-  case: q / Hm; apply eq_JMeq.
+  case: _ / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
 - case: f g h Hg_h Hf_g Hf_gh Hfg_h Hm =>
         fm fl fS fe fN [] gm gl gS ge gN [] hm hl hS he hN /=
@@ -291,8 +289,7 @@ apply eq_foc_endo => /=.
   set rhs := _ \v _.
   suff -> : lhs = cast_mor rhs Hm Hm.
     clear lhs; subst rhs.
-    move: (fm + (gm + hm))%N Hm => q Hm.
-    case: q / Hm.
+    case: _ / Hm.
     apply/eq_JMeq/morP => T v /=.
     by rewrite !tpcastE.
   apply/morP => T v /= {lhs rhs}.
@@ -331,8 +328,7 @@ apply eq_foc_endo => /=.
     by rewrite !(mem_cat,mem_lens_basis) orbA.
   have HK := tpcastK (esym Hm); rewrite esymK in HK; apply (can_inj (HK _ _)).
   rewrite {HK} tpcastK.
-  move: (fm + gm + hm)%N (esym Hm) => q {}Hm.
-  case: q / Hm.
+  case: _ / (esym Hm).
   by rewrite !tpcastE !cast_lens_ordE.
 Qed.
 
@@ -367,11 +363,8 @@ have -> : enum 'I_m = take h (enum 'I_m).
 have : (h <= m)%N by [].
 elim: h => [|h IH] Hh.
   rewrite take0 !big_nil.
-  split.
-    apply/morP => T v.
-    by rewrite /fendo_mor focusE /focus_fun /= curryK.
-  move=> j. rewrite inE.
-  by apply/esym/existsP => -[].
+  split. by rewrite fendo_mor_id.
+  move=> j; rewrite inE; by apply/esym/existsP => -[].
 case/(_ (ltnW Hh)): IH => IHe IHl.
 rewrite (take_nth (Ordinal Hh)); last by rewrite size_enum_ord.
 rewrite -cats1 2!big_cat.
@@ -446,7 +439,7 @@ Hypothesis cardI_gt1 : (#|I| > 1)%N.
 Lemma err_fendo_notU : ~ unitary_endo (fendo_mor (@err_fendo C n)).
 Proof.
 move => /(_ [ffun _ => 1%:R] [ffun _ => 1%:R]) /=.
-rewrite /fendo_mor focusE /tinner /=.
+rewrite fendo_mor_err /tinner /=.
 under eq_bigr do rewrite !ffunE.
 rewrite big1 ?mulr0 //.
 under eq_bigr do (rewrite !ffunE conjc_nat mulr1).
