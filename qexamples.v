@@ -247,29 +247,24 @@ Qed.
 
 Lemma middle_half n (i : 'I_n) : i = rev_ord i -> i = n./2 :> nat.
 Proof.
-move/(f_equal val)/(f_equal (addn^~ i.+1)) => /=.
-rewrite subnK // addnS => /(f_equal half).
-by rewrite addnn -add1n (_ : 1%N = true) // half_bit_double.
+move/(f_equal (half \o addn^~ i.+1 \o val)) => /=.
+by rewrite subnK // addnS addnn /= uphalf_double.
 Qed.
 
 Lemma rev_circuit_ok n (i : 'I_n.+2) v :
   proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
   proj ord0 (lens_single i) v.
 Proof.
-rewrite rev_circuit_fendo /compn_fendo.
+rewrite rev_circuit_fendo.
 (* Special case: no swapping for the middle element (n is odd) *)
 case/boolP: (i == rev_ord i) => [/eqP|] Hir.
-  rewrite -Hir.
   have Hi' := middle_half Hir.
-  rewrite proj_focusE //.
-  - apply/disjointP => j.
-    rewrite inE => /eqP -> {j}.
-    rewrite compn_mor_lens //=; last by apply all_disjoint_swap.
-    rewrite inE => /existsP [k].
-    rewrite !inE => /orP[] /eqP /(f_equal val) Hk; move: (ltn_ord k).
-    + rewrite Hk /= in Hi'; by rewrite Hi' ltnn.
-    + move/val_inj/(f_equal (@rev_ord _))/(f_equal val): Hk.
-      rewrite -Hir rev_ordK => /= <-. by rewrite Hi' ltnn.
+  rewrite -Hir proj_focusE //.
+  - rewrite disjoint_has /= orbF.
+    rewrite compn_mor_lens ?inE; last by apply all_disjoint_swap.
+    apply/existsP => /= -[k].
+    rewrite !inE {2}Hir (inj_eq rev_ord_inj) orbb => /eqP/(f_equal val)/= Hk.
+    by move: (ltn_ord k); rewrite -Hk Hi' ltnn.
   - exact/foc_n.
   - exact/swap_asym_focusU.
 have := Hir; rewrite eq_sym => Hri.
@@ -280,7 +275,7 @@ pose lens_roi := lens_single (lens_index Hroi).
 (* Main case: i < rev_ord i *)
 case/boolP: (i < n.+2./2)%N => Hi.
 + have Hdisj := disjoint_compn_lens_swap Hi.
-  rewrite (bigD1 (Ordinal Hi)) //= comp_fendoC fendo_mor_comp //=.
+  rewrite /compn_fendo (bigD1 (Ordinal Hi)) //= comp_fendoC fendo_mor_comp //.
   rewrite proj_focusE; first last.
   - exact/swap_asym_focusU.
   - exact/foc_n.
@@ -299,20 +294,18 @@ case/boolP: (i < n.+2./2)%N => Hi.
   have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
     by apply/lens_inj/eq_lothers => j; rewrite !inE orbC.
   rewrite extract_lothers_merge [in RHS]merge_indices_pair.
-  have Hris : lens_basis (lens_pair Hri) = lens_pair Hir.
-    apply/lens_inj/eq_lens_sorted.
-    - move=> /= j; rewrite mem_lensE /= /seq_basis !inE.
-      by rewrite mem_filter mem_enum !inE andbT orbC.
+  have Hris : lens_basis (lens_pair Hri) = lens_pair Hir :> seq _.
+    apply/eq_lens_sorted.
+    - by move=> /= j; rewrite mem_lensE mem_filter mem_enum !inE andbT orbC.
     - exact/lens_sorted_basis.
-    - rewrite /lens_sorted /= /ord_ltn /= -{2}(odd_double_half n.+2).
+    - rewrite /lens_sorted /ord_ltn /= -{2}(odd_double_half n.+2).
       by rewrite -addnn addnA -addnBA // addnC addnA ltn_addl.
   have Hpri : lens_perm (lens_pair Hri) = [lens 1; 0].
-    eq_lens; rewrite -map_comp /= !(tnth_nth i) /=.
-    move/(f_equal (val \o val)): Hris => /= -> /=.
+    eq_lens; rewrite -map_comp /= !(tnth_nth i) [seq_basis _]Hris /=.
     by rewrite (negbTE Hir) !eqxx.
   rewrite -[in LHS](lens_basis_perm (lens_pair Hri)).  
-  rewrite Hris !extract_comp extract_merge.
-  rewrite -Hris merge_indices_basis Hpri.
+  rewrite (lens_inj Hris) !extract_comp extract_merge.
+  rewrite -(lens_inj Hris) merge_indices_basis Hpri.
   set ee := extract _ _.
   have -> // : ee = [tuple of vj ++ vi].
   apply/val_inj => /=; rewrite !(tnth_nth ord0) /= !(tnth_nth ord0) /=.
@@ -329,7 +322,7 @@ case/boolP: (i < n.+2./2)%N => Hi.
     rewrite -Hi -{2}(odd_double_half n.+2) /=.
     by rewrite negbK -addnn addSnnS addnA addnK Hodd.
   have Hdisj := disjoint_compn_lens_swap Hi'.
-  rewrite (bigD1 (Ordinal Hi')) //= comp_fendoC fendo_mor_comp //=.
+  rewrite /compn_fendo (bigD1 (Ordinal Hi')) //= comp_fendoC fendo_mor_comp //.
   rewrite proj_focusE; first last.
   - exact/swap_asym_focusU.
   - exact/foc_n.
