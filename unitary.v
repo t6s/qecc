@@ -94,13 +94,13 @@ Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
 Section unitary_endo.
 Definition tinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
-Definition unitary_endo n (f : endo n) :=
+Definition unitary_endo m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 
 Lemma idmorU n : unitary_endo (idmor I n).
 Proof. done. Qed.
 
-Lemma unitary_endoP n M : reflect (@unitary_endo n (tsmor M)) (unitaryts M).
+Lemma unitary_endoP n M : reflect (@unitary_endo n n (tsmor M)) (unitaryts M).
 Proof.
 rewrite /unitaryts /unitary_endo.
 apply/(iffP idP).
@@ -122,7 +122,7 @@ apply/(iffP idP).
   by rewrite sum_muleqr [LHS]conjc_nat.
 Qed.
 
-Lemma unitary_comp n (f g : endo n) :
+Lemma unitary_comp m n p (f : mor n p) (g : mor m n) :
   unitary_endo f -> unitary_endo g -> unitary_endo (f \v g).
 Proof. move=> Hf Hg s t /=; by rewrite Hf. Qed.
 
@@ -133,9 +133,9 @@ rewrite /unitary_endo /tinner => /= Nf Uf s t.
 rewrite 2!(reindex_merge_indices _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
-pose sel s : tpower I m Co := map_tpower (tpsel C vj) (curry dI l s).
+pose sel s : tpower I m Co := map_tpower (tpsel vj) (curry dI l s).
 transitivity (\sum_i (sel s i)^* * sel t i); last first.
-  by apply eq_bigr => vi _; rewrite !ffunE /= !ffunE.
+  apply eq_bigr => vi _; by rewrite !ffunE /tpsel !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
 rewrite focusE /= /focus_fun.
 rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.

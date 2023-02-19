@@ -44,6 +44,7 @@ Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE. Qed.
 
 Definition mor_tpcast n m (H : n = m) : mor n m :=
   fun T : lmodType R => Linear (tpcast_linear (T:=T) H).
+Canonical mor_tpcast.
 
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
@@ -60,6 +61,7 @@ Definition naturality m n (f : mor m n) :=
 Lemma map_tpower_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
   linear (map_tpower (m:=m) f).
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
+Canonical map_tpower_lin m T1 T2 f := Linear (@map_tpower_linear m T1 T2 f).
 
 Lemma map_tpcastE T m n (H : n = n) v :
   map_tpower (m:=m) (tpcast (T:=T) H) v = v.
@@ -70,11 +72,6 @@ Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
 
 Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
-
-Lemma tpsel_is_linear m vi : linear (fun v : tpower m R^o => v vi).
-Proof. by move=> x y z; rewrite !ffunE. Qed.
-Definition tpsel m vi : {linear tpower m R^o -> R^o} :=
-  Linear (@tpsel_is_linear m vi).
 
 Definition tsmor_fun m n (M : tmatrix n m) : morfun m n :=
   fun T v =>
@@ -87,8 +84,10 @@ rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
+Canonical tsmorfun m n (M : tmatrix n m) : mor m n :=
+  fun T => Linear (@tsmor_is_linear m n M T).
 Definition tsmor m n (M : tmatrix n m) : mor m n :=
-  locked (fun T => Linear (@tsmor_is_linear m n M T)).
+  locked (tsmorfun M).
 
 Lemma tsmorE m n (M : tmatrix n m) T v vi :
   tsmor M T v vi = \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj.
@@ -243,9 +242,11 @@ Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_indices_extract. Qed.
 
 Lemma curry_is_linear : linear curry.
 Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
+Canonical curry_lin := Linear curry_is_linear.
 
 Lemma uncurry_is_linear : linear uncurry.
 Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
+Canonical uncurry_lin := Linear uncurry_is_linear.
 
 (* Special cases of curry/uncurry *)
 Definition curry0 (v : T) : tpower 0 T := [ffun _ => v].
@@ -263,7 +264,11 @@ Lemma curryn0_is_linear : linear curryn0.
 Proof. move=> x y z. apply/ffunP=> vi. apply/ffunP=> vj. by rewrite !ffunE. Qed.
 Lemma uncurry0_is_linear : linear uncurry0.
 Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
+Canonical curry0_lin := Linear curry0_is_linear.
+Canonical curryn0_lin := Linear curryn0_is_linear.
+Canonical uncurry0_lin := Linear uncurry0_is_linear.
 End curry.
+
 
 Section inner_prod_coprod.
 Variable n : nat.
@@ -275,6 +280,52 @@ Definition M_inner_coprod (M : tsquare n) :=
 Definition inner_prod : mor (n+n) 0 := M_inner_prod (idts _).
 Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (idts _).
 End inner_prod_coprod.
+
+Section tpaux.
+Variables (k : nat) (T : lmodType R).
+
+Definition tpall (v : T) : tpower k T := [ffun => v].
+Lemma tpall_linear : linear tpall.
+Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE. Qed.
+Canonical tpall_lin := Linear tpall_linear.
+
+Definition tpsum (v : tpower k T) : T := \sum_i v i.
+Lemma tpsum_linear : linear tpsum.
+Proof.
+rewrite/tpsum => a x y /=. rewrite scaler_sumr -big_split /=.
+apply eq_bigr=> i _; by rewrite !ffunE.
+Qed.
+Canonical tpsum_lin := Linear tpsum_linear.
+
+Variable vi : k.-tuple I.
+Definition tpsingle (v : T) : tpower k T :=
+  [ffun vj => (vi == vj)%:R *: v].
+Lemma tpsingle_linear : linear tpsingle.
+Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE /= linearP. Qed.
+Canonical tpsingle_lin := Linear tpsingle_linear.
+
+Definition tpsel (v : tpower k T) := v vi.
+Lemma tpsel_is_linear : linear tpsel.
+Proof. by move=> x y z; rewrite /tpsel !ffunE. Qed.
+Canonical tpsel_lin := Linear tpsel_is_linear.
+End tpaux.
+
+Section partial_trace.
+Variables (n m : nat) (l : lens n m) (f : endo n).
+
+Definition ptracefun (T : lmodType R) (v : tpower m T) : tpower m T :=
+  \sum_(vi : (n-m).-tuple I)
+    (map_tpower (tpsel vi) \o curry l \o f T
+       \o uncurry l \o map_tpower (tpsingle vi)) v.
+
+Lemma ptrace_is_linear T : linear (@ptracefun T).
+Proof.
+move=> a x y; rewrite /ptracefun !linear_sum -big_split /=.
+apply eq_bigr => vi _; by rewrite !linearP.
+Qed.
+
+Definition ptrace : endo m := fun T => Linear (@ptrace_is_linear T).
+End partial_trace.
 
 Section focus.
 Variables (n m : nat) (l : lens n m) (tr : endo m).
