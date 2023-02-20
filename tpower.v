@@ -63,6 +63,10 @@ Lemma map_tpower_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
 Canonical map_tpower_lin m T1 T2 f := Linear (@map_tpower_linear m T1 T2 f).
 
+Lemma map_tpower_comp m (T1 T2 T3 : lmodType R) (f : T2 -> T3) (g : T1 -> T2) :
+  map_tpower (m:=m) (f \o g) =1 map_tpower f \o map_tpower g.
+Proof. by move=> v; apply/ffunP => vi; rewrite !ffunE. Qed.
+
 Lemma map_tpcastE T m n (H : n = n) v :
   map_tpower (m:=m) (tpcast (T:=T) H) v = v.
 Proof. by apply/ffunP => w /=; rewrite !ffunE tpcastE. Qed.
@@ -325,6 +329,28 @@ apply eq_bigr => vi _; by rewrite !linearP.
 Qed.
 
 Definition ptrace : endo m := fun T => Linear (@ptrace_is_linear T).
+
+Definition antifocus T := [linear of curry l \o f T \o uncurry l].
+(* Lemma antifocus_naturality :
+  naturality f -> naturality antifocus. *)
+
+Lemma uncurry_tpsingle_naturality vi :
+ naturality (fun T => [linear of uncurry (T:=T) l \o map_tpower (tpsingle vi)]).
+Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite !ffunE linearE. Qed.
+
+Lemma tpsel_curry_naturality vi :
+  naturality (fun T => [linear of map_tpower (tpsel vi) \o curry (T:=T) l]).
+Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite /tpsel !ffunE. Qed.
+
+Lemma ptrace_naturality : naturality f -> naturality ptrace.
+Proof.
+move=> Nf T1 T2 h v.
+rewrite /= /ptracefun linear_sum.
+apply eq_bigr => vi _ /=.
+move: (tpsel_curry_naturality vi h) => /= ->.
+rewrite Nf.
+by move: (uncurry_tpsingle_naturality vi h v) => ->.
+Qed.
 End partial_trace.
 
 Section focus.
