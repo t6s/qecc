@@ -117,6 +117,34 @@ Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 
+Lemma bit_flip_id i :
+  bit_flip_code (idmor I 3) Co (tpbasis C [tuple of [:: i; 0%O; 0%:O]]) =
+    tpbasis C [tuple of [:: i; 0%O; 0%:O]].
+Proof.
+have := mem_enum2 i.
+rewrite !inE => /orP[] /eqP ->.
+- rewrite /bit_flip_code /=.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 0; 1] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
+  rewrite (_ : tsmor _ _ _ =  ¦ 0, 0 ⟩); last first.
+    apply/ffunP => vi.
+    rewrite !ffunE tsmorE.
+    by rewrite sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 [LHS]mulr1.
+  rewrite (_ : uncurry _ _ =  ¦ 0, 0, 0 ⟩ ); last first.
+    apply/ffunP => vi.
+    rewrite !ffunE.
+    case/boolP: (_ == vi) => /eqP Hvi.
+      by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+    case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+    case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+    elim Hvi.
+    rewrite -(merge_indices_extract 0%:O [lens 0; 1] vi) -Hvi1 -Hvi2.
+    by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+Abort.  
+
+Lemma shor_code_id : shor_code (idmor I 9) =e idmor I 9.
+Abort.
+
 (* Semantics of rev_circuit *)
 Lemma swapU : unitary_endo (tsmor swap).
 Proof.

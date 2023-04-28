@@ -370,6 +370,28 @@ Definition focus : endo n := locked (fun T => Linear (@focus_is_linear T)).
 
 Lemma focusE : focus = fun T => Linear (@focus_is_linear T).
 Proof. by rewrite /focus; unlock. Qed.
+
+Lemma curry_tpbasis (vi : n.-tuple I) :
+  curry l (tpbasis vi) =
+  map_tpower (tpsingle (extract (lothers l) vi)) (tpbasis (extract l vi)).
+Proof.
+apply/ffunP => vj; apply/ffunP => vk; rewrite !ffunE.
+case/boolP: (vi == _) => /eqP Hvi.
+  by rewrite Hvi extract_lothers_merge extract_merge !eqxx /= scale1r.
+case/boolP: (_ == vk) => /eqP Hvk; last by rewrite scale0r.
+case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
+by elim Hvi; rewrite -Hvk -Hvj merge_indices_extract.
+Qed.
+
+Lemma focus_tpbasis (vi : n.-tuple I) :
+  naturality tr ->
+  focus _ (tpbasis vi) =
+  uncurry l (map_tpower (tpsingle (extract (lothers l) vi))
+                        (tr _ (tpbasis (extract l vi)))).
+Proof.
+move=> Ntr; apply/ffunP => v.
+by rewrite focusE /= /focus_fun !ffunE curry_tpbasis -Ntr !ffunE.
+Qed.
 End focus.
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
