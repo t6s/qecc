@@ -117,6 +117,35 @@ Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 
+Definition flip (i : I) := rev_ord i.
+
+Lemma tsmor_cnot0 i :
+  tsmor cnot Co (tpbasis C [tuple 0%:O; i]) = tpbasis C [tuple 0%:O; i].
+Proof.
+apply/ffunP => vi; rewrite !ffunE tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /=.
+have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
+by rewrite !scaler0 !linE [LHS]mulr1.
+Qed.
+
+Lemma tsmor_cnot1 i :
+  tsmor cnot Co (tpbasis C [tuple 1%:O; i]) = tpbasis C [tuple 1%:O; flip i].
+Proof.
+apply/ffunP => vi; rewrite !ffunE tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /=.
+have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
+by rewrite !scaler0 !linE [LHS]mulr1.
+Qed.
+
+Lemma tsmor_toffoli i :
+  tsmor toffoli Co (tpbasis C [tuple 0%:O; 0%:O; i]) =
+  tpbasis C [tuple 0%:O; 0%:O; i].
+Proof.
+apply/ffunP => vi.
+rewrite !ffunE tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+rewrite BigOp.bigopE /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
+by rewrite !scaler0 !linE [LHS]mulr1.
+Qed.
+
 Lemma bit_flip_id i :
   bit_flip_code (idmor I 3) Co (tpbasis C [tuple of [:: i; 0%O; 0%:O]]) =
     tpbasis C [tuple of [:: i; 0%O; 0%:O]].
@@ -124,13 +153,10 @@ Proof.
 have := mem_enum2 i.
 rewrite !inE => /orP[] /eqP ->.
 - rewrite /bit_flip_code /=.
-  rewrite focus_tpbasis; last by apply tsmorN.
-  rewrite (_ : extract [lens 0; 1] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
-  rewrite (_ : tsmor _ _ _ =  ¦ 0, 0 ⟩); last first.
-    apply/ffunP => vi.
-    rewrite !ffunE tsmorE.
-    by rewrite sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 [LHS]mulr1.
-  rewrite (_ : uncurry _ _ =  ¦ 0, 0, 0 ⟩ ); last first.
+  have tsapp01_cnot0 : tsapp [lens 0; 1] cnot Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
+    rewrite focus_tpbasis; last by apply tsmorN.
+    rewrite (_ : extract [lens 0; 1] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
+    rewrite tsmor_cnot0.
     apply/ffunP => vi.
     rewrite !ffunE.
     case/boolP: (_ == vi) => /eqP Hvi.
@@ -140,9 +166,108 @@ rewrite !inE => /orP[] /eqP ->.
     elim Hvi.
     rewrite -(merge_indices_extract 0%:O [lens 0; 1] vi) -Hvi1 -Hvi2.
     by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
-Abort.  
+  rewrite tsapp01_cnot0.
+  have tsapp02_cnot0 : tsapp [lens 0; 2] cnot Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
+    rewrite focus_tpbasis; last by apply tsmorN.
+    rewrite (_ : extract [lens 0; 2] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
+    rewrite tsmor_cnot0.
+    apply/ffunP => vi.
+    rewrite !ffunE.
+    case/boolP: (_ == vi) => /eqP Hvi.
+      by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+    case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+    case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+    elim Hvi.
+    rewrite -(merge_indices_extract 0%:O [lens 0; 2] vi) -Hvi1 -Hvi2.
+    by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+  rewrite tsapp02_cnot0 tsapp01_cnot0 tsapp02_cnot0.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; 0%:O]);
+    last by eq_lens.
+  rewrite tsmor_toffoli.
+  apply/ffunP => vi.
+  rewrite !ffunE.
+  case/boolP: (_ == vi) => /eqP Hvi.
+    by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+  case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+  case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+  elim Hvi.
+  rewrite -(merge_indices_extract 0%:O [lens 1; 2; 0] vi) -Hvi1 -Hvi2.
+  by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+- rewrite /bit_flip_code /=.
+  have tsapp01_cnot1 : tsapp [lens 0; 1] cnot Co ¦ 1, 0, 0 ⟩ = ¦ 1, 1, 0 ⟩.
+    rewrite focus_tpbasis; last by apply tsmorN.
+    rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; 0%:O]); last by eq_lens.
+    rewrite tsmor_cnot1.
+    apply/ffunP => vi.
+    rewrite !ffunE.
+    case/boolP: (_ == vi) => /eqP Hvi.
+      by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+    case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+    case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+    elim Hvi.
+    rewrite -(merge_indices_extract 0%:O [lens 0; 1] vi) -Hvi1 -Hvi2.
+    by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+  rewrite tsapp01_cnot1.
+  have tsapp02_cnot1 : tsapp [lens 0; 2] cnot Co ¦ 1, 1, 0 ⟩ = ¦ 1, 1, 1 ⟩.
+    rewrite focus_tpbasis; last by apply tsmorN.
+    rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; 0%:O]); last by eq_lens.
+    rewrite tsmor_cnot1.
+    apply/ffunP => vi.
+    rewrite !ffunE.
+    case/boolP: (_ == vi) => /eqP Hvi.
+      by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+    case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+    case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+    elim Hvi.
+    rewrite -(merge_indices_extract 0%:O [lens 0; 2] vi) -Hvi1 -Hvi2.
+    by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+  rewrite tsapp02_cnot1.
+  have -> : tsapp [lens 0; 1] cnot Co ¦ 1, 1, 1 ⟩ = ¦ 1, 0, 1 ⟩.
+    rewrite focus_tpbasis; last by apply tsmorN.
+    rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; 1%:O]); last by eq_lens.
+    rewrite tsmor_cnot1.
+    apply/ffunP => vi.
+    rewrite !ffunE.
+    case/boolP: (_ == vi) => /eqP Hvi.
+      by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+    case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+    case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+    elim Hvi.
+    rewrite -(merge_indices_extract 0%:O [lens 0; 1] vi) -Hvi1 -Hvi2.
+    by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+  have -> : tsapp [lens 0; 2] cnot Co ¦ 1, 0, 1 ⟩ = ¦ 1, 0, 0 ⟩.
+    rewrite focus_tpbasis; last by apply tsmorN.
+    rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; 1%:O]); last by eq_lens.
+    rewrite tsmor_cnot1.
+    apply/ffunP => vi.
+    rewrite !ffunE.
+    case/boolP: (_ == vi) => /eqP Hvi.
+      by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+    case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+    case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+    elim Hvi.
+    rewrite -(merge_indices_extract 0%:O [lens 0; 2] vi) -Hvi1 -Hvi2.
+    by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; 1%:O]);
+    last by eq_lens.
+  rewrite tsmor_toffoli.
+  apply/ffunP => vi.
+  rewrite !ffunE.
+  case/boolP: (_ == vi) => /eqP Hvi.
+    by rewrite -Hvi !eq_ord_tuple /= /others enum_ordinalE /= scale1r.
+  case/boolP: (_ == extract _ _) => /eqP Hvi1; last by rewrite scale0r.
+  case/boolP: (_ == _) => /eqP Hvi2; last by rewrite scaler0.
+  elim Hvi.
+  rewrite -(merge_indices_extract 0%:O [lens 1; 2; 0] vi) -Hvi1 -Hvi2.
+  by apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+Qed.
 
 Lemma shor_code_id : shor_code (idmor I 9) =e idmor I 9.
+Proof.
+rewrite /shor_code /shor_dec /shor_enc => T v.
+rewrite !comp_morE.
 Abort.
 
 (* Semantics of rev_circuit *)
