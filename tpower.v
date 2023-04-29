@@ -392,6 +392,19 @@ Proof.
 move=> Ntr; apply/ffunP => v.
 by rewrite focusE /= /focus_fun !ffunE curry_tpbasis -Ntr !ffunE.
 Qed.
+
+Lemma uncurry_tpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
+  uncurry l (map_tpower (tpsingle vi) (tpbasis vj)) =
+  tpbasis (merge_indices l vj vi).
+Proof.
+apply/ffunP => vk.
+rewrite !ffunE.
+case/boolP: (_ == vk) => /eqP Hvk.
+  by rewrite -Hvk extract_lothers_merge extract_merge !eqxx scale1r.
+case/boolP: (_ == extract _ _) => /eqP Hvi; last by rewrite scale0r.
+case/boolP: (_ == _) => /eqP Hvj; last by rewrite scaler0.
+elim Hvk; by rewrite Hvi Hvj merge_indices_extract.
+Qed.
 End focus.
 
 Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
