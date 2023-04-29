@@ -150,6 +150,65 @@ Local Definition uncurry_tpsingle := uncurry_tpsingle (0%:O : I).
 Ltac eq_basis :=
   congr tpbasis; apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
 
+Lemma bit_flip_enc0 : bit_flip_enc Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
+Proof.
+rewrite /bit_flip_enc /=.
+have -> : tsapp [lens 0; 1] cnot Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 0; 1] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
+  rewrite tsmor_cnot0 uncurry_tpsingle.
+  by eq_basis.
+rewrite focus_tpbasis; last by apply tsmorN.
+rewrite (_ : extract [lens 0; 2] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
+rewrite tsmor_cnot0 uncurry_tpsingle.
+by eq_basis.
+Qed.
+
+Lemma bit_flip_dec0 : bit_flip_dec Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
+Proof.
+rewrite /bit_flip_dec /= [tsapp [lens 0; 2] _ _ _]bit_flip_enc0.
+rewrite focus_tpbasis; last by apply tsmorN.
+rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; 0%:O]);
+  last by eq_lens.
+rewrite tsmor_toffoli uncurry_tpsingle.
+by congr tpbasis; apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+Qed.
+
+Lemma bit_flip_enc1 : bit_flip_enc Co ¦ 1, 0, 0 ⟩ = ¦ 1, 1, 1 ⟩.
+Proof.
+rewrite /bit_flip_enc /=.
+have -> : tsapp [lens 0; 1] cnot Co ¦ 1, 0, 0 ⟩ = ¦ 1, 1, 0 ⟩.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; 0%:O]); last by eq_lens.
+  rewrite tsmor_cnot1 uncurry_tpsingle.
+  by eq_basis.
+rewrite focus_tpbasis; last by apply tsmorN.
+rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; 0%:O]); last by eq_lens.
+rewrite tsmor_cnot1 uncurry_tpsingle.
+by eq_basis.
+Qed.
+
+Lemma bit_flip_dec1 : bit_flip_dec Co ¦ 1, 1, 1 ⟩ = ¦ 1, 0, 0 ⟩.
+Proof.
+rewrite /bit_flip_dec /=.
+have -> : tsapp [lens 0; 1] cnot Co ¦ 1, 1, 1 ⟩ = ¦ 1, 0, 1 ⟩.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; 1%:O]); last by eq_lens.
+  rewrite tsmor_cnot1 uncurry_tpsingle.
+  by eq_basis.
+have -> : tsapp [lens 0; 2] cnot Co ¦ 1, 0, 1 ⟩ = ¦ 1, 0, 0 ⟩.
+  rewrite focus_tpbasis; last by apply tsmorN.
+  rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; 1%:O]); last by eq_lens.
+  rewrite tsmor_cnot1 uncurry_tpsingle.
+  by eq_basis.
+rewrite focus_tpbasis; last by apply tsmorN.
+rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; 1%:O]);
+  last by eq_lens.
+rewrite tsmor_toffoli uncurry_tpsingle.
+by eq_basis.
+Qed.
+
+
 Lemma bit_flip_id i :
   bit_flip_code (idmor I 3) Co (tpbasis C [tuple of [:: i; 0%O; 0%:O]]) =
     tpbasis C [tuple of [:: i; 0%O; 0%:O]].
@@ -157,55 +216,68 @@ Proof.
 have := mem_enum2 i.
 rewrite !inE => /orP[] /eqP ->.
 - rewrite /bit_flip_code /=.
-  have tsapp01_cnot0 : tsapp [lens 0; 1] cnot Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
-    rewrite focus_tpbasis; last by apply tsmorN.
-    rewrite (_ : extract [lens 0; 1] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
-    rewrite tsmor_cnot0 uncurry_tpsingle.
-    by eq_basis.
-  rewrite tsapp01_cnot0.
-  have tsapp02_cnot0 : tsapp [lens 0; 2] cnot Co ¦ 0, 0, 0 ⟩ = ¦ 0, 0, 0 ⟩.
-    rewrite focus_tpbasis; last by apply tsmorN.
-    rewrite (_ : extract [lens 0; 2] _ = [tuple 0%:O; 0%:O]); last by eq_lens.
-    rewrite tsmor_cnot0 uncurry_tpsingle.
-    by eq_basis.
-  rewrite tsapp02_cnot0 tsapp01_cnot0 tsapp02_cnot0.
-  rewrite focus_tpbasis; last by apply tsmorN.
-  rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; 0%:O]);
-    last by eq_lens.
-  rewrite tsmor_toffoli uncurry_tpsingle.
-  by congr tpbasis; apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
+  rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc0.
+  exact: bit_flip_dec0.
 - rewrite /bit_flip_code /=.
-  have -> : tsapp [lens 0; 1] cnot Co ¦ 1, 0, 0 ⟩ = ¦ 1, 1, 0 ⟩.
-    rewrite focus_tpbasis; last by apply tsmorN.
-    rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; 0%:O]); last by eq_lens.
-    rewrite tsmor_cnot1 uncurry_tpsingle.
-    by eq_basis.
-  have -> : tsapp [lens 0; 2] cnot Co ¦ 1, 1, 0 ⟩ = ¦ 1, 1, 1 ⟩.
-    rewrite focus_tpbasis; last by apply tsmorN.
-    rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; 0%:O]); last by eq_lens.
-    rewrite tsmor_cnot1 uncurry_tpsingle.
-    by eq_basis.
-  have -> : tsapp [lens 0; 1] cnot Co ¦ 1, 1, 1 ⟩ = ¦ 1, 0, 1 ⟩.
-    rewrite focus_tpbasis; last by apply tsmorN.
-    rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; 1%:O]); last by eq_lens.
-    rewrite tsmor_cnot1 uncurry_tpsingle.
-    by eq_basis.
-  have -> : tsapp [lens 0; 2] cnot Co ¦ 1, 0, 1 ⟩ = ¦ 1, 0, 0 ⟩.
-    rewrite focus_tpbasis; last by apply tsmorN.
-    rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; 1%:O]); last by eq_lens.
-    rewrite tsmor_cnot1 uncurry_tpsingle.
-    by eq_basis.
-  rewrite focus_tpbasis; last by apply tsmorN.
-  rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; 1%:O]);
-    last by eq_lens.
-  rewrite tsmor_toffoli uncurry_tpsingle.
-  by eq_basis.
+  rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc1.
+  exact: bit_flip_dec1.
 Qed.
 
-Lemma shor_code_id : shor_code (idmor I 9) =e idmor I 9.
+Lemma tsmor_hadamard0 :
+  tsmor hadamard Co ¦ 0 ⟩ =
+  (1 / Num.sqrt 2%:R)%:C *: \sum_(vi : 1.-tuple I) (tpbasis C vi).
 Proof.
-rewrite /shor_code /shor_dec /shor_enc => T v.
-rewrite !comp_morE.
+apply/ffunP => vi.
+rewrite tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 !subr0.
+rewrite ![_ *: 1]mulr1.
+rewrite !linE /= sum_ffun ffunE.
+have -> : \sum_i tpbasis C i vi = \sum_i [ffun _ => 1] i *: tpbasis C vi i.
+  by apply eq_bigr=> i _; rewrite ffunE scale1r tpbasisC.
+rewrite sum_tpbasisKo ffunE.
+have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=;
+by rewrite linE [_ *: 1]mulr1.
+Qed.
+
+Definition parity n (vi : n.-tuple I) : nat :=
+  \sum_(i <- vi) i.
+
+Lemma tsmor_hadamard1 :
+  tsmor hadamard Co ¦ 1 ⟩ =
+  (1 / Num.sqrt 2%:R)%:C *:
+  \sum_(vi : 1.-tuple I) (-1)^+ (parity vi) *: tpbasis C vi.
+Proof.
+apply/ffunP => vi.
+rewrite tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !linE.
+rewrite ![_ *: 1]mulr1.
+rewrite /= sum_ffun ffunE.
+have -> : \sum_i ((-1) ^+ parity i *: tpbasis C i) vi
+          = \sum_i [ffun i => (-1) ^+ parity i] i *: tpbasis C vi i.
+  under eq_bigr do rewrite ffunE.
+  by under [RHS]eq_bigr do rewrite ffunE tpbasisC.
+rewrite sum_tpbasisKo ffunE /parity.
+have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=.
+- by rewrite BigOp.bigopE /= expr0 subr0 [_ *: 1]mulr1.
+- by rewrite BigOp.bigopE /= expr1 sub0r.
+Qed.
+
+Lemma sign_flip_enc0 :
+  sign_flip_enc Co ¦ 0, 0, 0 ⟩ = 
+  (1 / (2%:R * Num.sqrt 2%:R))%:C *: \sum_(vi : 3.-tuple I) (tpbasis C vi).
+Proof.
+rewrite /sign_flip_enc /=.
+rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc0.
+rewrite focus_tpbasis; last by apply tsmorN.
+rewrite (_ : extract [lens 0] _ = [tuple 0%:O]); last by eq_lens.
+rewrite tsmor_hadamard0.
+rewrite 2!linearZ_LR scaler_sumr 2!linear_sum /=.
+under eq_bigr do rewrite uncurry_tpsingle merge_indices_extract_others.
+rewrite linearZ_LR linear_sum.
+Abort.
+
+Lemma shor_code_id i :
+  shor_code (idmor I 9) Co
+    (tpbasis C [tuple of [:: i; 0%O; 0%:O; 0%O; 0%:O; 0%O; 0%:O; 0%O; 0%:O]])
+  = tpbasis C [tuple of [:: i; 0%O; 0%:O; 0%O; 0%:O; 0%O; 0%:O; 0%O; 0%:O]].
 Abort.
 
 (* Semantics of rev_circuit *)
