@@ -128,6 +128,28 @@ apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
 
+Let Ro := [lmodType R of R^o].
+Lemma lift_mor_eq m n (f g : mor m n) :
+  naturality f -> naturality g ->
+  f Ro =1 g Ro -> f =e g.
+Proof.
+move=> Nf Ng fg T v.
+rewrite (decompose_tpower v) !linear_sum.
+apply eq_bigr => i _.
+set scl := *:%R^~ _.
+have Hlin : linear ( scl : Ro -> T).
+  by move=> x y z /=; rewrite /scl !scalerDl scalerA.
+by rewrite -(Nf Ro T (Linear Hlin)) -(Ng Ro T (Linear Hlin)) fg.
+Qed.
+
+Lemma decompose_scaler n (v : tpower n Ro) :
+  v = \sum_i v i *: tpbasis i.
+Proof.
+apply/ffunP => vi; rewrite !sum_ffunE.
+rewrite -[LHS]sum_tpbasisKo.
+by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
+Qed.
+
 Definition morts m n (f : mor m n) : tmatrix n m :=
   [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
 
@@ -477,6 +499,10 @@ Qed.
 (* Equality *)
 Lemma focus_eq (f1 f2 : endo m) : f1 =e f2 -> focus l f1 =e focus l f2.
 Proof. move=> Heq T v /=; by rewrite 2!focusE /= /focus_fun Heq. Qed.
+
+(* Identity morphism *)
+Lemma focus_idmor : focus l (idmor m) =e idmor n.
+Proof. by move=> T v; rewrite focusE /= /focus_fun /= curryK. Qed.
 
 (* Vertical composition of morphisms *)
 Section comp_mor.
