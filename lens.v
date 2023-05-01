@@ -1310,7 +1310,8 @@ by rewrite map_comp -IH (iotaDl 1 0 n).
 Qed.
 
 Ltac eq_lens :=
-  apply/val_inj/eqP; rewrite ?eq_ord_tuple /= /others /= ?enum_ordinalE.
+  apply/val_inj/eqP;
+  rewrite ?eq_ord_tuple /= /others /= ?enum_ordinalE /= ?(tnth_nth ord0).
 
 Section ordinal_examples.
 Eval compute in uniq [tuple 0%:O; 1%:O; 2%:O]. (* = true *)
