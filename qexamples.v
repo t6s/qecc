@@ -150,6 +150,26 @@ Local Definition uncurry_tpsingle := uncurry_tpsingle (0%:O : I).
 Ltac eq_basis :=
   congr tpbasis; apply/eqP; rewrite eq_ord_tuple /= /others enum_ordinalE.
 
+Ltac simpl_lens1 x :=
+  let y := fresh "y" in
+  set y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
+  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); last (by eq_lens); subst y.
+
+Ltac simpl_lens_comp :=
+  match goal with
+    |- context [ lens_comp ?a ?b ] => simpl_lens1 (lens_comp a b)
+  end.
+
+Ltac simpl_tuple1 x :=
+  let y := fresh "y" in
+  set y := val x; rewrite /= ?(tnth_nth 0) /= in y;
+  rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
+
+Ltac simpl_extract :=
+  match goal with
+    |- context [ extract ?a ?b ] => simpl_tuple1 (extract a b)
+  end.
+
 Lemma bit_flip_enc0 j k :
   bit_flip_enc Co (tpbasis C [tuple 0%:O; j; k]) =
   tpbasis C [tuple 0%:O; j; k].
@@ -158,11 +178,11 @@ rewrite /bit_flip_enc /=.
 rewrite (_ : tsapp _ _ _ (tpbasis _ _) = tpbasis C [tuple 0%:O; j; k]);
   last first.
   rewrite focus_tpbasis; last by apply tsmorN.
-  rewrite (_ : extract [lens 0; 1] _ = [tuple 0%:O; j]); last by eq_lens.
+  simpl_extract.
   rewrite tsmor_cnot0 uncurry_tpsingle.
   by eq_basis.
 rewrite focus_tpbasis; last by apply tsmorN.
-rewrite (_ : extract [lens 0; 2] _ = [tuple 0%:O; k]); last by eq_lens.
+simpl_extract.
 rewrite tsmor_cnot0 uncurry_tpsingle.
 by eq_basis.
 Qed.
@@ -175,11 +195,11 @@ rewrite /bit_flip_enc /=.
 rewrite (_ : tsapp _ _ _ (tpbasis _ _) = tpbasis C [tuple 1%:O; flip j; k]);
   last first.
   rewrite focus_tpbasis; last by apply tsmorN.
-  rewrite (_ : extract [lens 0; 1] _ = [tuple 1%:O; j]); last by eq_lens.
+  simpl_extract.
   rewrite tsmor_cnot1 uncurry_tpsingle.
   by eq_basis.
 rewrite focus_tpbasis; last by apply tsmorN.
-rewrite (_ : extract [lens 0; 2] _ = [tuple 1%:O; k]); last by eq_lens.
+simpl_extract.
 rewrite tsmor_cnot1 uncurry_tpsingle.
 by eq_basis.
 Qed.
@@ -338,14 +358,11 @@ rewrite [focus [lens 0; 1; 2] _ _ _]HT.
 rewrite [focus [lens 3; 4; 5] _ _ _]HT.
 rewrite {}[focus [lens 6; 7; 8] _ _ _]HT.
 do 3!(rewrite -focusM; last exact/tsmorN).
-rewrite (_ : lens_comp _ _ = [lens 1; 2; 0]); last by eq_lens.
-rewrite (_ : lens_comp _ _ = [lens 4; 5; 3]); last by eq_lens.
-rewrite (_ : lens_comp _ _ = [lens 7; 8; 6]); last by eq_lens.
+do 3!simpl_lens_comp.
 rewrite focus_tpbasis; last exact/sign_flip_encN.
-rewrite (_ : extract [lens 0; 3; 6] _ = [tuple i; 0%:O; 0%:O]); last by eq_lens.
+simpl_extract.
 set sfe := sign_flip_enc _ _.
-rewrite [sfe]decompose_scaler.
-rewrite 5!linear_sum /=.
+rewrite (decompose_scaler sfe) 5!linear_sum /=.
 set res := fun j : 3.-tuple I =>
   [tuple tnth j 0; 0%:O; 0%:O; tnth j 1; 0%:O; 0%:O; tnth j 2; 0%:O; O%:O].
 under eq_bigr => j _.
@@ -356,21 +373,17 @@ under eq_bigr => j _.
   rewrite (_ : merge_indices _ _ _ _ = res j); last by eq_lens.
   (* 7 8 6 *)
   rewrite focus_tpbasis; last exact/tsmorN.
-  have -> : extract [lens 7; 8; 6] (res j) = [tuple 0%:O; 0%:O; tnth j 2]
-    by rewrite /res; eq_lens.
-  rewrite tsmor_toffoli.
-  rewrite uncurry_tpsingle.
+  simpl_extract.
+  rewrite tsmor_toffoli uncurry_tpsingle.
   rewrite (_ : merge_indices _ _ _ _ = res j); last by rewrite /res; eq_lens.
   (* 4 5 3 *)
   rewrite focus_tpbasis; last exact/tsmorN.
-  have -> : extract [lens 4; 5; 3] (res j) = [tuple 0%:O; 0%:O; tnth j 1]
-    by rewrite /res; eq_lens.
+  simpl_extract.
   rewrite tsmor_toffoli uncurry_tpsingle.
   rewrite (_ : merge_indices _ _ _ _ = res j); last by rewrite /res; eq_lens.
   (* 1 2 0 *)
   rewrite focus_tpbasis; last exact/tsmorN.
-  have -> : extract [lens 1; 2; 0] (res j) = [tuple 0%:O; 0%:O; tnth j 0]
-    by rewrite /res; eq_lens.
+  simpl_extract.
   rewrite tsmor_toffoli uncurry_tpsingle.
   rewrite (_ : merge_indices _ _ _ _ = res j); last by rewrite /res; eq_lens.
 over.
@@ -379,24 +392,20 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   rewrite [RHS]focus_comp /=.
   congr (focus _ _ _ _).
   rewrite focus_tpbasis; last by apply/sign_flip_encN.
-  rewrite (_ : extract [lens 0; 3; 6] _ = [tuple i; 0%:O; 0%:O]);
-    last by eq_lens.
+  simpl_extract.
   rewrite -/sfe {2}[sfe]decompose_scaler 2!linear_sum /=.
   apply eq_bigr => j _.
   rewrite 2!linearZ_LR /= uncurry_tpsingle.
   congr (_ *: tpbasis _ _).
   by eq_lens; rewrite (tuple_map_ord j) /= enum_ordinalE.
-rewrite focus_tpbasis; last first.
-  exact/comp_naturality/sign_flip_encN/sign_flip_decN.
-rewrite (_ : extract [lens 0; 3; 6] _ = [tuple i; 0%:O; 0%:O]);
-  last by eq_lens.
+rewrite focus_tpbasis; last exact/comp_naturality/sign_flip_encN/sign_flip_decN.
+simpl_extract.
 rewrite sign_flip_toffoli focus_tpbasis; last exact/tsmorN.
-rewrite (_ : extract [lens 1; 2; 0] _ = [tuple 0%:O; 0%:O; i]);
-  last by eq_lens.
+simpl_extract.
 rewrite tsmor_toffoli uncurry_tpsingle.
 rewrite (_ : merge_indices _ _ _ _ = [tuple i; 0%:O; 0%:O]); last by eq_lens.
 rewrite uncurry_tpsingle.
-by congr tpbasis; eq_lens.
+by eq_basis.
 Qed.
 
 (* Semantics of rev_circuit *)
