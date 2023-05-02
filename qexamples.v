@@ -118,8 +118,12 @@ Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 Local Definition uncurry_tpsingle := uncurry_tpsingle (0%:O : I).
 
+
+(* Proof of correctness for Shor code *)
+
 Definition flip (i : I) := rev_ord i.
 
+(* behavior of gates on basis vectors *)
 Lemma tsmor_cnot0 i :
   tsmor cnot Co (tpbasis C [tuple 0%:O; i]) = tpbasis C [tuple 0%:O; i].
 Proof.
@@ -147,6 +151,7 @@ have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
+(* a bit of automation to avoid stalling on dependent types *)
 Ltac simpl_lens1 x :=
   let y := fresh "y" in
   set y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
@@ -165,6 +170,7 @@ Ltac simpl_extract :=
   match goal with |- context [ extract ?a ?b ] => simpl_tuple1 (extract a b)
   end.
 
+(* bit flip code *)
 Lemma bit_flip_enc0 j k :
   bit_flip_enc Co (tpbasis C [tuple 0%:O; j; k]) =
   tpbasis C [tuple 0%:O; j; k].
@@ -253,6 +259,7 @@ have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=.
 Qed.
 *)
 
+(* naturality proofs *)
 Lemma bit_flip_encN : naturality bit_flip_enc.
 Proof.
 exact/comp_naturality/focus_naturality/tsmorN/focus_naturality/tsmorN.
@@ -271,6 +278,7 @@ apply/comp_naturality/focus_naturality/tsmorN.
 apply/comp_naturality; exact/focus_naturality/tsmorN.
 Qed.
 
+(* Hadamard gate is involutive *)
 Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 
@@ -293,6 +301,7 @@ all: simpc.
 all: by rewrite Hnn mul0r scale1r.
 Qed.
 
+(* sign flip code *)
 Lemma sign_flip_toffoli :
   (sign_flip_dec \v sign_flip_enc) Co =1 tsapp [lens 1; 2; 0] toffoli Co.
 Proof.
@@ -315,6 +324,7 @@ rewrite (HK [lens 1]) (HK [lens 0]).
 exact: bit_flip_toffoli.
 Qed.
 
+(* Shor code on a perfect channel *)
 Let shor_input i : 9.-tuple I :=
   [tuple of [:: i; 0%:O; 0%:O; 0%O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O]].
 Lemma shor_code_id i :
@@ -369,7 +379,9 @@ simpl_extract.
 by rewrite tsmor_toffoli.
 Qed.
 
+
 (* Semantics of rev_circuit *)
+
 Lemma swapU : unitary_endo (tsmor swap).
 Proof.
 rewrite /unitary_endo /tinner /= => s t.
