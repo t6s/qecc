@@ -315,15 +315,6 @@ rewrite (HK [lens 1]) (HK [lens 0]).
 exact: bit_flip_toffoli.
 Qed.
 
-Lemma focus_extract_id n m (l : lens n m) (f : endo m) v :
-  naturality f ->
-  f _ (tpbasis C (extract l v)) = tpbasis C (extract l v) ->
-  focus l f _ (tpbasis C v) = tpbasis C v.
-Proof.
-move=> Nf Hf.
-by rewrite focus_tpbasis // Hf uncurry_tpsingle merge_indices_extract.
-Qed.
-
 Let shor_input i : 9.-tuple I :=
   [tuple of [:: i; 0%:O; 0%:O; 0%O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O]].
 Lemma shor_code_id i :
@@ -367,13 +358,12 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   rewrite [focus [lens 6; 7; 8] _ _ _]HT.
   do 3!(rewrite -focusM; last exact/tsmorN).
   do 3!simpl_lens_comp.
-  by do !(rewrite focus_extract_id; try exact/tsmorN;
+  by do !(rewrite focus_tpbasis_id; try exact/tsmorN;
           last by simpl_extract; rewrite tsmor_toffoli).
-rewrite focus_extract_id //.
+rewrite focus_tpbasis_id //.
   exact/comp_naturality/sign_flip_encN/sign_flip_decN.
 simpl_extract.
-rewrite sign_flip_toffoli.
-rewrite focus_extract_id //.
+rewrite sign_flip_toffoli focus_tpbasis_id //.
   exact/tsmorN.
 simpl_extract.
 by rewrite tsmor_toffoli.

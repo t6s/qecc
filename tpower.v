@@ -405,13 +405,14 @@ case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
 by elim Hvi; rewrite -Hvk -Hvj merge_indices_extract.
 Qed.
 
+Hypothesis Ntr : naturality tr.
+
 Lemma focus_tpbasis (vi : n.-tuple I) :
-  naturality tr ->
   focus _ (tpbasis vi) =
   uncurry l (map_tpower (tpsingle (extract (lothers l) vi))
                         (tr _ (tpbasis (extract l vi)))).
 Proof.
-move=> Ntr; apply/ffunP => v.
+apply/ffunP => v.
 by rewrite focusE /= /focus_fun !ffunE curry_tpbasis -Ntr !ffunE.
 Qed.
 
@@ -426,6 +427,14 @@ case/boolP: (_ == vk) => /eqP Hvk.
 case/boolP: (_ == extract _ _) => /eqP Hvi; last by rewrite scale0r.
 case/boolP: (_ == _) => /eqP Hvj; last by rewrite scaler0.
 elim Hvk; by rewrite Hvi Hvj merge_indices_extract.
+Qed.
+
+Lemma focus_tpbasis_id v :
+  tr _ (tpbasis (extract l v)) = tpbasis (extract l v) ->
+  focus _ (tpbasis v) = tpbasis v.
+Proof.
+move=> Htr.
+by rewrite focus_tpbasis // Htr uncurry_tpsingle merge_indices_extract.
 Qed.
 End focus.
 
