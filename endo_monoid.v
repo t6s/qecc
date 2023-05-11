@@ -188,7 +188,7 @@ Lemma lens_perm_left_right m p (f : lens n m) (g : lens n p)
   lens_perm_left H = cast_lens_ord (lens_perm_right H') Hm.
 Proof.
 eq_lens; apply/eqP.
-rewrite -[RHS]map_comp [RHS](eq_map (f2:=@nat_of_ord _)) //.
+rewrite -[RHS]map_comp [RHS](eq_map (g:=@nat_of_ord _)) //.
 rewrite -2!map_comp -2![RHS]map_comp.
 apply eq_map => i /=.
 rewrite !tnth_mktuple /= tnth_lshift tnth_rshift.

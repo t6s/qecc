@@ -1240,7 +1240,7 @@ Variables (I : Type) (dI : I) (n : nat).
 
 Lemma uniq_lens_rev : uniq [tuple rev_ord i | i < n].
 Proof.
-rewrite (map_uniq (f:=@rev_ord n)) // -map_comp (eq_map (f2:=id)).
+rewrite (map_uniq (f:=@rev_ord n)) // -map_comp (eq_map (g:=id)).
   by rewrite map_id enum_uniq.
 by move=> x /=; rewrite rev_ordK.
 Qed.
@@ -1305,7 +1305,7 @@ Proof.
 apply/(@inj_map _ _ (val : 'I_n -> nat)). exact val_inj.
 rewrite val_enum_ord.
 elim: n => //= n IH.
-rewrite -map_comp -(eq_map (f1:=S \o nat_of_ord (n:=n))) //.
+rewrite -map_comp -(eq_map (f:=S \o nat_of_ord (n:=n))) //.
 by rewrite map_comp -IH (iotaDl 1 0 n).
 Qed.
 
