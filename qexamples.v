@@ -340,14 +340,6 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   case: j => -[|a [|b [|c []]]] Hj //=.
   rewrite (_ : merge_indices _ _ _ _ =
          [tuple a; 0%:O; 0%:O; b; 0%:O; 0%:O; c; 0%:O; 0%:O]); last by eq_lens.
-  (*set enc := focus _ bit_flip_enc _ _.
-  pose dec1 := @mkFoc _ _ 9 _ [lens 0; 1; 2] erefl _ bit_flip_decN.
-  pose dec2 := @mkFoc _ _ 9 _ [lens 3; 4; 5] erefl _ bit_flip_decN.
-  pose dec3 := @mkFoc _ _ 9 _ [lens 6; 7; 8] erefl _ bit_flip_decN.
-  transitivity
-    (fendo_mor dI (comp_fendo dI dec3 (comp_fendo dI dec2 dec1)) Co enc).
-    rewrite comp_fendoA comp_fendoC (comp_fendoC _ dec3).
-    by rewrite !fendo_mor_comp // ?disjoint_comp_fendo // !disjoint_has.*)
   do 2 (rewrite [focus [lens 0; 1; 2] _ _ _]focusC /= ;
    try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
   do 3 (rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ;
