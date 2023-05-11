@@ -18,6 +18,7 @@ Variable R : rcfType.
 Let C := [comRingType of R[i]].
 Let Co := [lmodType C of C^o].
 Let I := [finType of 'I_2].
+Let dI : I := 0%:O.
 
 Notation "¦ x1 , .. , xn ⟩" :=
   (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
@@ -154,7 +155,7 @@ Qed.
 (* a bit of automation to avoid stalling on dependent types *)
 Ltac simpl_lens1 x :=
   let y := fresh "y" in
-  set y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
+  pose y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
   rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); last (by eq_lens); subst y.
 
 Ltac simpl_lens_comp :=
@@ -163,12 +164,31 @@ Ltac simpl_lens_comp :=
 
 Ltac simpl_tuple1 x :=
   let y := fresh "y" in
-  set y := val x; rewrite /= ?(tnth_nth 0) /= in y;
+  pose y := val x; rewrite /= ?(tnth_nth 0) /= in y;
   rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
 
 Ltac simpl_extract :=
   match goal with |- context [ extract ?a ?b ] => simpl_tuple1 (extract a b)
   end.
+
+(* naturality proofs *)
+Lemma bit_flip_encN : naturality bit_flip_enc.
+Proof.
+exact/comp_naturality/focus_naturality/tsmorN/focus_naturality/tsmorN.
+Qed.
+Lemma bit_flip_decN : naturality bit_flip_dec.
+Proof. exact/comp_naturality/bit_flip_encN/focus_naturality/tsmorN. Qed.
+Lemma sign_flip_encN : naturality sign_flip_enc.
+Proof.
+apply/comp_naturality/bit_flip_encN/comp_naturality/focus_naturality/tsmorN.
+apply/comp_naturality; exact/focus_naturality/tsmorN.
+Qed.
+Lemma sign_flip_decN : naturality sign_flip_dec.
+Proof.
+apply/comp_naturality. exact/bit_flip_decN.
+apply/comp_naturality/focus_naturality/tsmorN.
+apply/comp_naturality; exact/focus_naturality/tsmorN.
+Qed.
 
 (* bit flip code *)
 Lemma bit_flip_enc0 j k :
@@ -204,20 +224,21 @@ Lemma map_tpower_scale n (x : Co) (v : tpower n Co) :
 Proof. apply/ffunP => i; by rewrite !ffunE [LHS]mulrC. Qed.
 
 Lemma bit_flip_toffoli :
-  (bit_flip_dec \v bit_flip_enc) Co =1 tsapp [lens 1; 2; 0] toffoli Co.
+  (bit_flip_dec \v bit_flip_enc) =e tsapp [lens 1; 2; 0] toffoli.
 Proof.
+apply/lift_mor_eq.
+- exact/comp_naturality/bit_flip_encN/bit_flip_decN.
+- exact/focus_naturality/tsmorN.
 move=> vi.
 rewrite (decompose_tpower vi) !linear_sum.
 apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
 have -> : Tuple Hi = [tuple i; j; k] by apply/val_inj.
 have := mem_enum2 i.
 rewrite !inE => /orP[] /eqP ->.
-- rewrite /bit_flip_code /=.
-  rewrite map_tpower_scale 4!linearZ_LR.
+- rewrite /bit_flip_code /= map_tpower_scale 4!linearZ_LR.
   rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc0.
   by rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc0.
-- rewrite /bit_flip_code /=.
-  rewrite map_tpower_scale 4!linearZ_LR.
+- rewrite /bit_flip_code /= map_tpower_scale 4!linearZ_LR.
   rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc1.
   rewrite [tsapp _ _ _ (tsapp _ _ _ (tpbasis _ _))]bit_flip_enc1.
   by rewrite ![flip _]rev_ordK.
@@ -259,25 +280,6 @@ have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=.
 Qed.
 *)
 
-(* naturality proofs *)
-Lemma bit_flip_encN : naturality bit_flip_enc.
-Proof.
-exact/comp_naturality/focus_naturality/tsmorN/focus_naturality/tsmorN.
-Qed.
-Lemma bit_flip_decN : naturality bit_flip_dec.
-Proof. exact/comp_naturality/bit_flip_encN/focus_naturality/tsmorN. Qed.
-Lemma sign_flip_encN : naturality sign_flip_enc.
-Proof.
-apply/comp_naturality/bit_flip_encN/comp_naturality/focus_naturality/tsmorN.
-apply/comp_naturality; exact/focus_naturality/tsmorN.
-Qed.
-Lemma sign_flip_decN : naturality sign_flip_dec.
-Proof.
-apply/comp_naturality. exact/bit_flip_decN.
-apply/comp_naturality/focus_naturality/tsmorN.
-apply/comp_naturality; exact/focus_naturality/tsmorN.
-Qed.
-
 (* Hadamard gate is involutive *)
 Lemma sqrt_nat_unit n : (Num.sqrt n.+1%:R : R) \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
@@ -303,24 +305,19 @@ Qed.
 
 (* sign flip code *)
 Lemma sign_flip_toffoli :
-  (sign_flip_dec \v sign_flip_enc) Co =1 tsapp [lens 1; 2; 0] toffoli Co.
+  (sign_flip_dec \v sign_flip_enc) =e tsapp [lens 1; 2; 0] toffoli.
 Proof.
-rewrite /sign_flip_dec /sign_flip_enc => v /=.
+rewrite /sign_flip_dec /sign_flip_enc => T v /=.
 have FC := fun (l l' : lens 3 1) M1 M2 (D : [disjoint l & l']) =>
-             focusC 0%:O D (tsmorN M1) (tsmorN M2).
-rewrite /comp_mor /eq_mor /eqfun /= in FC.
-rewrite (FC _ _ [lens 2] [lens 1]); last by rewrite disjoint_has.
-rewrite (FC _ _ [lens 2] [lens 0]); last by rewrite disjoint_has.
-have HK : forall l : lens 3 1, 
-    tsapp l hadamard \v tsapp l hadamard =e idmor I 3.
-  move=> l T w.
-  rewrite -focus_comp (focus_eq 0%:O l (f2:=idmor I 1)); last first.
-    by move=> {T w} T w /=; rewrite hadamardK.
-  by rewrite focus_idmor.
-rewrite /comp_mor /eq_mor /eqfun /= in HK.
-rewrite (HK [lens 2]).
-rewrite (FC _ _ [lens 1] [lens 0]); last by rewrite disjoint_has.
-rewrite (HK [lens 1]) (HK [lens 0]).
+             focusC dI D (tsmorN M1) (tsmorN M2).
+have HK : forall l:lens 3 1, tsapp l hadamard \v tsapp l hadamard =e idmor I 3.
+  move=> l U w.
+  rewrite -focus_comp (focus_eq dI l (f2:=idmor I 1)) ?focus_idmor //.
+  by move=> {U w} U w /=; rewrite hadamardK.
+do 2!(rewrite [tsapp [lens 2] _ _ _]FC /=; last by rewrite disjoint_has).
+rewrite [tsapp [lens 2] _ _ _]HK /=.
+rewrite [tsapp [lens 1] _ _ _]FC /=; last by rewrite disjoint_has.
+rewrite [tsapp [lens 1] _ _ _]HK [tsapp [lens 0] _ _ _]HK.
 exact: bit_flip_toffoli.
 Qed.
 
@@ -343,31 +340,24 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   case: j => -[|a [|b [|c []]]] Hj //=.
   rewrite (_ : merge_indices _ _ _ _ =
          [tuple a; 0%:O; 0%:O; b; 0%:O; 0%:O; c; 0%:O; 0%:O]); last by eq_lens.
-  rewrite [focus [lens 0; 1; 2] _ _ _]focusC /= ;
-    try exact/bit_flip_decN; last by rewrite disjoint_has.
-  rewrite [focus [lens 0; 1; 2] _ _ _]focusC /= ;
-    try exact/bit_flip_decN; last by rewrite disjoint_has.
-  rewrite -[focus [lens 0; 1; 2] _ _ _]focus_comp.
-  rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ;
-    try exact/bit_flip_decN; last by rewrite disjoint_has.
-  rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ;
-    try (exact/bit_flip_decN || by rewrite disjoint_has ||
-       exact/comp_naturality/bit_flip_encN/bit_flip_decN).
-  rewrite -[focus [lens 3; 4; 5] _ _ _]focus_comp.
-  do 2!(rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ;
-        try (exact/bit_flip_decN || by rewrite disjoint_has ||
-             exact/comp_naturality/bit_flip_encN/bit_flip_decN)).
-  rewrite -[focus [lens 6; 7; 8] _ _ _]focus_comp.
-  have HT : forall l, focus l (bit_flip_dec \v bit_flip_enc) =e
-                      focus l (tsapp [lens 1; 2; 0] toffoli).
-    move=> *.
-    apply/focus_eq/lift_mor_eq/bit_flip_toffoli/focus_naturality/tsmorN.
-    exact/comp_naturality/bit_flip_encN/bit_flip_decN.
-  rewrite [focus [lens 0; 1; 2] _ _ _]HT.
-  rewrite [focus [lens 3; 4; 5] _ _ _]HT.
-  rewrite [focus [lens 6; 7; 8] _ _ _]HT.
-  do 3!(rewrite -focusM; last exact/tsmorN).
-  do 3!simpl_lens_comp.
+  (*set enc := focus _ bit_flip_enc _ _.
+  pose dec1 := @mkFoc _ _ 9 _ [lens 0; 1; 2] erefl _ bit_flip_decN.
+  pose dec2 := @mkFoc _ _ 9 _ [lens 3; 4; 5] erefl _ bit_flip_decN.
+  pose dec3 := @mkFoc _ _ 9 _ [lens 6; 7; 8] erefl _ bit_flip_decN.
+  transitivity
+    (fendo_mor dI (comp_fendo dI dec3 (comp_fendo dI dec2 dec1)) Co enc).
+    rewrite comp_fendoA comp_fendoC (comp_fendoC _ dec3).
+    by rewrite !fendo_mor_comp // ?disjoint_comp_fendo // !disjoint_has.*)
+  do 2 (rewrite [focus [lens 0; 1; 2] _ _ _]focusC /= ;
+   try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
+  do 3 (rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ;
+   try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
+  do 4 (rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ;
+   try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
+  do 3 rewrite -[focus _ bit_flip_dec _ _]focus_comp.
+  rewrite 3![focus _ (_ \v _) _ _](focus_eq _ _ bit_flip_toffoli).
+  rewrite -!focusM; try exact/tsmorN.
+  do 3 simpl_lens_comp.
   by do !(rewrite focus_tpbasis_id; try exact/tsmorN;
           last by simpl_extract; rewrite tsmor_toffoli).
 rewrite focus_tpbasis_id //.

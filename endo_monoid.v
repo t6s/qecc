@@ -334,6 +334,19 @@ Qed.
 
 Canonical compf_monoid := Monoid.Law comp_fendoA comp_fendo1f comp_fendof1.
 Canonical compf_comoid := Monoid.ComLaw comp_fendoC.
+
+Lemma disjoint_comp_fendo m (l : lens n m) g h :
+  [disjoint l & foc_l g] -> [disjoint l & foc_l h] ->
+  [disjoint foc_l g & foc_l h] -> [disjoint l & foc_l (comp_fendo g h)].
+Proof.
+move=> lg lh gh; rewrite /comp_fendo /=.
+case: Bool.bool_dec => //= H.
+rewrite disjoint_sym disjoint_has -all_predC.
+apply/allP => i.
+rewrite mem_lens_basis mem_lensE /= mem_cat => /orP[] Hi.
+- by move: lg; rewrite disjoint_sym disjoint_has -all_predC => /allP /(_ _ Hi).
+- by move: lh; rewrite disjoint_sym disjoint_has -all_predC => /allP /(_ _ Hi).
+Qed.
 End comoid.
 
 Section compn_mor_disjoint.
