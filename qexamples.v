@@ -55,7 +55,7 @@ Definition swap : tsquare 2 :=
   ket_bra ¦1,0⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩.
 Definition swap' : tsquare 2 :=
   [ffun vi => [ffun vj =>
-     (tnth vi 0%O == tnth vj 1%O)%:R * (tnth vi 1%O == tnth vj 0%O)%:R]].
+     (tnth vi 0 == tnth vj 1)%:R * (tnth vi 1 == tnth vj 0)%:R]].
 
 Definition bit_flip_enc : endo 3 :=
   tsapp [lens 0; 2] cnot \v  tsapp [lens 0; 1] cnot.
@@ -219,10 +219,6 @@ rewrite tsmor_cnot1 uncurry_tpsingle.
 by congr tpbasis; eq_lens.
 Qed.
 
-Lemma map_tpower_scale n (x : Co) (v : tpower n Co) :
-  map_tpower ( *:%R^~ x) v = x *: v.
-Proof. apply/ffunP => i; by rewrite !ffunE [LHS]mulrC. Qed.
-
 Lemma bit_flip_toffoli :
   (bit_flip_dec \v bit_flip_enc) =e tsapp [lens 1; 2; 0] toffoli.
 Proof.
@@ -323,7 +319,7 @@ Qed.
 
 (* Shor code on a perfect channel *)
 Let shor_input i : 9.-tuple I :=
-  [tuple of [:: i; 0%:O; 0%:O; 0%O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O]].
+  [tuple of [:: i; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O]].
 Lemma shor_code_id i :
  shor_code (idmor I 9) Co (tpbasis C (shor_input i)) = tpbasis C (shor_input i).
 Proof.

@@ -67,6 +67,10 @@ Lemma map_tpower_comp m (T1 T2 T3 : lmodType R) (f : T2 -> T3) (g : T1 -> T2) :
   map_tpower (m:=m) (f \o g) =1 map_tpower f \o map_tpower g.
 Proof. by move=> v; apply/ffunP => vi; rewrite !ffunE. Qed.
 
+Lemma map_tpower_scale n (x : R^o) (v : tpower n R^o) :
+  map_tpower ( *:%R^~ x) v = x *: v.
+Proof. apply/ffunP => i; by rewrite !ffunE [LHS]mulrC. Qed.
+
 Lemma map_tpcastE T m n (H : n = n) v :
   map_tpower (m:=m) (tpcast (T:=T) H) v = v.
 Proof. by apply/ffunP => w /=; rewrite !ffunE tpcastE. Qed.
