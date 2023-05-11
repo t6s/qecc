@@ -340,12 +340,10 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   case: j => -[|a [|b [|c []]]] Hj //=.
   rewrite (_ : merge_indices _ _ _ _ =
          [tuple a; 0%:O; 0%:O; b; 0%:O; 0%:O; c; 0%:O; 0%:O]); last by eq_lens.
-  do 2 (rewrite [focus [lens 0; 1; 2] _ _ _]focusC /= ;
+  do 2 (rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ;
    try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
-  do 3 (rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ;
-   try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
-  do 4 (rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ;
-   try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has)).
+  rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ;
+   try (exact/bit_flip_decN || exact/bit_flip_encN || by rewrite disjoint_has).
   do 3 rewrite -[focus _ bit_flip_dec _ _]focus_comp.
   rewrite 3![focus _ (_ \v _) _ _](focus_eq _ _ bit_flip_toffoli).
   rewrite -!focusM; try exact/tsmorN.
