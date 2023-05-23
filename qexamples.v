@@ -286,15 +286,15 @@ Lemma sign_flip_toffoli :
   (sign_flip_dec \v sign_flip_enc) =e tsapp [lens 1; 2; 0] toffoli.
 Proof.
 rewrite /sign_flip_dec /sign_flip_enc => T v /=.
-have FC := fun (l l' : lens 3 1) M1 M2 (D : [disjoint l & l']) =>
-             focusC dI (tsmor M1) (tsmor M2) D.
 have HK (l : lens 3 1) : tsapp l hadamard \v tsapp l hadamard =e idmor I C 3.
   move=> {T v} T v.
   rewrite -focus_comp (focus_eq dI l (f2:=idmor I C 1)) ?focus_idmor //.
   by move=> {T v} T v /=; rewrite hadamardK.
-do 2!(rewrite [tsapp [lens 0] _ _ _]FC /=; last by rewrite disjoint_has).
-rewrite [tsapp [lens 1] _ _ _]FC /=; last by rewrite disjoint_has.
-rewrite [tsapp [lens 0] _ _ _]HK [tsapp [lens 1] _ _ _]HK.
+rewrite [tsapp [lens 0] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [tsapp [lens 0] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [tsapp [lens 1] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [tsapp [lens 0] _ _ _]HK.
+rewrite [tsapp [lens 1] _ _ _]HK.
 rewrite [tsapp [lens 2] _ _ _]HK.
 by rewrite -[RHS]bit_flip_toffoli.
 Qed.
@@ -319,11 +319,11 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   case: j => -[|a [|b [|c []]]] Hj //=.
   rewrite (_ : merge_indices _ _ _ _ =
          [tuple a; 0%:O; 0%:O; b; 0%:O; 0%:O; c; 0%:O; 0%:O]); last by eq_lens.
-  do 2 (rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ;
-        last by rewrite disjoint_has).
+  rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
+  rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
   rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ; last by rewrite disjoint_has.
-  do 3 rewrite -[focus _ bit_flip_dec _ _]focus_comp.
-  rewrite 3![focus _ (_ \v _) _ _](focus_eq _ _ bit_flip_toffoli).
+  rewrite -3![focus _ bit_flip_dec _ _]focus_comp.
+  rewrite 3!(focus_eq _ _ bit_flip_toffoli).
   rewrite -!focusM.
   do 3 simpl_lens_comp.
 (* rewrite focus_tpbasis_id; last first. simpl_extract. rewrite tsmor_toffoli00. *)
