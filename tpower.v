@@ -407,7 +407,7 @@ by rewrite !linearP !ffunE.
 Qed.
 
 Definition focuslin : morlin n n :=
-  locked (fun T => Linear (@focus_is_linear T)).
+  fun T => Linear (@focus_is_linear T).
 End focuslin.
 
 Lemma focusN f : naturality (focuslin f).
@@ -416,17 +416,17 @@ case/naturalityP: (morN f) => M NM.
 apply/naturalityP.
 exists (morts (focuslin (tsmor M))).
 move=> T /= v; apply/ffunP => /= vi.
-rewrite tsmorE /focuslin -!lock !ffunE NM tsmorE sum_ffunE.
+rewrite tsmorE !ffunE NM tsmorE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
-Canonical focus f := Mor (focusN f).
+Definition focus f := locked (Mor (focusN f)).
 
-Lemma focusE f : focuslin f = fun T => Linear (@focus_is_linear f T).
-Proof. by rewrite /focuslin /= -lock. Qed.
+Lemma focusE f T : focus f T = Linear (@focus_is_linear f T).
+Proof. by rewrite /focus -lock. Qed.
 
 Lemma curry_tpbasis (vi : n.-tuple I) :
   curry l (tpbasis vi) =
@@ -446,7 +446,7 @@ Lemma focus_tpbasis f (vi : n.-tuple I) :
                         (f _ (tpbasis (extract l vi)))).
 Proof.
 apply/ffunP => v.
-by rewrite /= focusE /focus_fun !ffunE curry_tpbasis -(morN f) !ffunE.
+by rewrite focusE !ffunE curry_tpbasis -(morN f) !ffunE.
 Qed.
 
 Lemma uncurry_tpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
@@ -510,8 +510,8 @@ Definition asym_focus n m p l l' tr := Mor (@asym_focusN n m p l l' tr).
 Lemma asym_focus_sym (m n : nat) (l : lens (m+n) m) (f : mor m m) :
   asym_focus l l f =e focus l f.
 Proof.
-move=> T v /=; rewrite /= /asym_focus_fun /focus_fun /=.
-by rewrite map_tpcastE /focuslin -lock.
+move=> T v /=; rewrite /= /asym_focus_fun /=.
+by rewrite map_tpcastE focusE.
 Qed.
 
 Section focus_props.

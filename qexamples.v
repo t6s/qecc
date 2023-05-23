@@ -207,10 +207,6 @@ rewrite tsmor_cnot1 uncurry_tpsingle.
 by congr tpbasis; eq_lens.
 Qed.
 
-Lemma mor_compE m n p (f : mor I C m n) (g : mor I C n p) (T : lmodType C) :
-  (g \v f) T =1 g T \o f T.
-Proof. done. Qed.
-
 Lemma bit_flip_toffoli :
   (bit_flip_dec \v bit_flip_enc) =e tsapp [lens 1; 2; 0] toffoli.
 Proof.
