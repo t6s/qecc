@@ -97,7 +97,7 @@ Definition tinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
 Definition unitary_endo m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 
-Lemma idmorU n : unitary_endo (idmor I n).
+Lemma idmorU n : unitary_endo (idmor I C n).
 Proof. done. Qed.
 
 Lemma unitary_endoP n M : reflect (@unitary_endo n n (tsmor M)) (unitaryts M).
@@ -127,9 +127,9 @@ Lemma unitary_comp m n p (f : mor n p) (g : mor m n) :
 Proof. move=> Hf Hg s t /=; by rewrite Hf. Qed.
 
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
-  naturality f -> unitary_endo f -> unitary_endo (focus l f).
+  unitary_endo f -> unitary_endo (focus l f).
 Proof.
-rewrite /unitary_endo /tinner => /= Nf Uf s t.
+rewrite /unitary_endo /tinner => /= Uf s t.
 rewrite 2!(reindex_merge_indices _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
@@ -139,7 +139,7 @@ transitivity (\sum_i (sel s i)^* * sel t i); last first.
 rewrite -Uf; apply eq_bigr => vi _.
 rewrite focusE /= /focus_fun.
 rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.
-by rewrite -!Nf !ffunE.
+by rewrite -!(morN f) !ffunE.
 Qed.
 End unitary_endo.
 
@@ -152,10 +152,10 @@ Definition proj (t : tpower I n Co) : tpower I m Co :=
   map_tpower (@norm _) (curry dI l t).
 
 Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : tpower I n Co) :
-  [disjoint l & l'] -> naturality f -> unitary_endo f ->
+  [disjoint l & l'] -> unitary_endo f ->
   proj (focus l' f Co t) = proj t.
 Proof.
-move=> Hdisj Nf Uf.
+move=> Hdisj Uf.
 rewrite /proj -(lmake_compE Hdisj) focus_others // uncurryK /=.
 apply/ffunP => vi.
 by rewrite !ffunE /norm unitary_focus.

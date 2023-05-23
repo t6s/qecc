@@ -22,29 +22,12 @@ Local Notation merge_indices := (merge_indices dI).
 
 Definition tpower n T := {ffun n.-tuple I -> T}.
 Definition morfun m n := forall T : lmodType R, tpower m T -> tpower n T.
-Definition mor m n :=
+Definition morlin m n :=
   forall T : lmodType R, {linear tpower m T -> tpower n T}.
 Definition tmatrix m n := tpower m (tpower n R^o).
 Notation tsquare n := (tmatrix n n).
-Notation endo n := (mor n n).
 Notation endofun n := (morfun n n).
-
-Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
-  [ffun vi => v (cast_tuple vi (esym H))].
-
-Lemma tpcastE T n v (H : n = n) : tpcast (T:=T) H v = v.
-Proof. by apply/ffunP => vi; rewrite !ffunE cast_tupleE. Qed.
-
-Lemma tpcastK T n m (H : n = m) (t : tpower n T) :
-  tpcast (esym H) (tpcast H t) = t.
-Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
-
-Lemma tpcast_linear (T : lmodType R) n m (H : n = m) : linear (tpcast (T:=T) H).
-Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE. Qed.
-
-Definition mor_tpcast n m (H : n = m) : mor n m :=
-  fun T : lmodType R => Linear (tpcast_linear (T:=T) H).
-Canonical mor_tpcast.
+Notation endolin n := (morlin n n).
 
 (* Actually, need the property (naturality)
  forall (f : endo m) (T1 T2 : lmodType R) (h : {linear T1 -> T2}),
@@ -54,9 +37,14 @@ which is equivalent to the fact f = nvendo M for a square matrix M : tsquare m.
 Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : tpower m T1)
   : tpower m T2 := [ffun v : m.-tuple I => f (nv v)].
 
-Definition naturality m n (f : mor m n) :=
+Definition naturality m n (f : morlin m n) :=
   forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}) (v : tpower m T1),
     map_tpower h (f T1 v) = f T2 (map_tpower h v).
+
+Structure mor m n := Mor { morf :> morlin m n ; morN : naturality morf}.
+Notation endo n := (mor n n).
+Definition appmorlin m n (f : morlin m n) := fun T => f T.
+Coercion appmorlin : morlin >-> Funclass.
 
 Lemma map_tpower_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
   linear (map_tpower (m:=m) f).
@@ -71,14 +59,33 @@ Lemma map_tpower_scale n (x : R^o) (v : tpower n R^o) :
   map_tpower ( *:%R^~ x) v = x *: v.
 Proof. apply/ffunP => i; by rewrite !ffunE [LHS]mulrC. Qed.
 
+Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
+  [ffun vi => v (cast_tuple vi (esym H))].
+
+Lemma tpcastE T n v (H : n = n) : tpcast (T:=T) H v = v.
+Proof. by apply/ffunP => vi; rewrite !ffunE cast_tupleE. Qed.
+
+Lemma tpcastK T n m (H : n = m) (t : tpower n T) :
+  tpcast (esym H) (tpcast H t) = t.
+Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
+
+Lemma tpcast_linear (T : lmodType R) n m (H : n = m) : linear (tpcast (T:=T) H).
+Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE. Qed.
+
 Lemma map_tpcastE T m n (H : n = n) v :
   map_tpower (m:=m) (tpcast (T:=T) H) v = v.
 Proof. by apply/ffunP => w /=; rewrite !ffunE tpcastE. Qed.
 
-Lemma tpcastN m n (H : n = m) : naturality (mor_tpcast H).
-Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
+Definition morlin_tpcast n m (H : n = m) : morlin n m :=
+  fun T : lmodType R => Linear (tpcast_linear (T:=T) H).
+Canonical morlin_tpcast.
 
-Definition eq_mor m n (f1 f2 : mor m n) := forall T : lmodType R, f1 T =1 f2 T.
+Lemma tpcastN m n (H : n = m) : naturality (morlin_tpcast H).
+Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
+Canonical mor_tpcast n m (H : n = m) := Mor (tpcastN H).
+
+Definition eq_mor m n (f1 f2 : mor m n) :=
+  forall T : lmodType R, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
 
 Definition tsmor_fun m n (M : tmatrix n m) : morfun m n :=
@@ -92,27 +99,33 @@ rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
-Canonical tsmorfun m n (M : tmatrix n m) : mor m n :=
+Canonical tsmorfun m n (M : tmatrix n m) : morlin m n :=
   fun T => Linear (@tsmor_is_linear m n M T).
-Definition tsmor m n (M : tmatrix n m) : mor m n :=
+Definition tsmorlin m n (M : tmatrix n m) : morlin m n :=
   locked (tsmorfun M).
+
+Lemma tsmorN m n M : naturality (@tsmorlin m n M).
+Proof.
+move=> T1 T2 h /= v; apply/ffunP => /= vi.
+rewrite /tsmorlin -lock !ffunE linear_sum; apply eq_bigr => vj _.
+by rewrite linearZ_LR !ffunE.
+Qed.
+
+Canonical tsmor m n (M : tmatrix n m) : mor m n :=
+  Mor (tsmorN M).
 
 Lemma tsmorE m n (M : tmatrix n m) T v vi :
   tsmor M T v vi = \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj.
-Proof. by rewrite /tsmor -lock !ffunE. Qed.
+Proof. by rewrite /tsmor /tsmorlin /= -lock !ffunE. Qed.
 
 Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
   [ffun vj => (vi == vj)%:R].
 
-Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
-Proof. by rewrite !ffunE eq_sym. Qed.
+Definition morts m n (f : morlin m n) : tmatrix n m :=
+  [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
 
-Lemma sum_tpbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
-  (\sum_vj (tpbasis vi vj *: F vj) = F vi).
-Proof.
-rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
-move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
-Qed.
+Lemma morts_eq m n (f g : mor m n) : f =e g -> morts f = morts g.
+Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
 Lemma sum_muleqr (A : finType) (S : comRingType) (F : A -> S) (v : A) :
   \sum_a F a * (v == a)%:R = F v.
@@ -125,6 +138,22 @@ Lemma sum_tpbasisKo n (vi : n.-tuple I) (F : tpower n R) :
   (\sum_vj (F vj *: tpbasis vi vj) = F vi).
 Proof. under eq_bigr do rewrite !ffunE. by rewrite sum_muleqr. Qed.
 
+Lemma tsmorK m n : cancel (@tsmor m n) (@morts m n).
+Proof.
+move=> M; apply/ffunP => vi; apply/ffunP=> vj.
+by rewrite !ffunE !tsmorE sum_tpbasisKo.
+Qed.
+
+Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
+Proof. by rewrite !ffunE eq_sym. Qed.
+
+Lemma sum_tpbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
+  (\sum_vj (tpbasis vi vj *: F vj) = F vi).
+Proof.
+rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
+move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
+Qed.
+
 Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
   v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i)).
 Proof.
@@ -132,18 +161,36 @@ apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
 
+Lemma mortsK n m (f : mor m n) : tsmor (morts f) =e f.
+Proof.
+move=> T v.
+rewrite [in RHS](decompose_tpower v) linear_sum.
+apply/ffunP => /= vi; rewrite tsmorE !ffunE sum_ffunE /=.
+apply eq_bigr => /= vj _; rewrite !ffunE.
+set h : R^o -> T := *:%R^~ _.
+have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
+by rewrite -(morN f (Linear hlin) (tpbasis vj)) ffunE.
+Qed.
+
+Lemma naturalityP m n (f : morlin m n) :
+  naturality f <-> exists M, forall T, f T =1 tsmor M T.
+Proof.
+split.
+- move=> Nf. by exists (morts f) => v T; rewrite (mortsK (Mor Nf)).
+- case=> M Nf T1 T2 h v. by rewrite !Nf tsmorN.
+Qed.
+
 Let Ro := [lmodType R of R^o].
 Lemma lift_mor_eq m n (f g : mor m n) :
-  naturality f -> naturality g ->
   f Ro =1 g Ro -> f =e g.
 Proof.
-move=> Nf Ng fg T v.
+move=> fg T v.
 rewrite (decompose_tpower v) !linear_sum.
 apply eq_bigr => i _.
 set scl := *:%R^~ _.
 have Hlin : linear ( scl : Ro -> T).
   by move=> x y z /=; rewrite /scl !scalerDl scalerA.
-by rewrite -(Nf Ro T (Linear Hlin)) -(Ng Ro T (Linear Hlin)) fg.
+by rewrite -(morN f (Linear Hlin)) -(morN g (Linear Hlin)) fg.
 Qed.
 
 Lemma decompose_scaler n (v : tpower n Ro) :
@@ -153,43 +200,6 @@ apply/ffunP => vi; rewrite !sum_ffunE.
 rewrite -[LHS]sum_tpbasisKo.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
 Qed.
-
-Definition morts m n (f : mor m n) : tmatrix n m :=
-  [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
-
-Lemma morts_eq m n (f g : mor m n) : f =e g -> morts f = morts g.
-Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
-
-Lemma tsmorK m n : cancel (@tsmor m n) (@morts m n).
-Proof.
-move=> M; apply/ffunP => vi; apply/ffunP=> vj.
-by rewrite !ffunE !tsmorE sum_tpbasisKo.
-Qed.
-
-Lemma mortsK n m (f : mor m n) :
-  naturality f -> tsmor (morts f) =e f.
-Proof.
-move=> Hf T v.
-rewrite [in RHS](decompose_tpower v) linear_sum.
-apply/ffunP => /= vi; rewrite tsmorE !ffunE sum_ffunE /=.
-apply eq_bigr => /= vj _; rewrite !ffunE.
-set h : R^o -> T := *:%R^~ _.
-have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-by rewrite -(Hf _ _ (Linear hlin) (tpbasis vj)) ffunE.
-Qed.
-
-Lemma naturalityP m n (f : mor m n) :
-  naturality f <-> exists M, f =e tsmor M.
-Proof.
-split => [Hf | [M] HM].
-- by exists (morts f) => v T; rewrite mortsK.
-- move=> T1 T2 h /= v; apply/ffunP => /= vi.
-  rewrite !HM !(tsmorE,ffunE) linear_sum; apply eq_bigr => vj _.
-  by rewrite linearZ_LR !ffunE.
-Qed.
-
-Lemma tsmorN m n M : naturality (@tsmor m n M).
-Proof. by apply/naturalityP; esplit. Qed.
 
 Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
   [ffun vi => ket vi *: bra].
@@ -209,7 +219,10 @@ by rewrite !ffunE big_distrr /=; apply eq_bigr => vl _; rewrite mulrA.
 Qed.
 
 Definition idts m : tsquare m := [ffun vi => tpbasis vi].
-Definition idmor n : endo n := fun T => GRing.idfun_linear _.
+Definition idmorlin n : morlin n n := fun T => GRing.idfun_linear _.
+Lemma idmorN n : naturality (idmorlin n).
+Proof. done. Qed.
+Definition idmor n := Mor (@idmorN n).
 
 Lemma idmorE n : idmor n =e tsmor (idts n).
 Proof.
@@ -217,9 +230,6 @@ move=> T v; apply/ffunP => vi.
 rewrite /idmor tsmorE.
 under eq_bigr do rewrite ffunE; by rewrite sum_tpbasisK.
 Qed.
-
-Lemma idmorN n : naturality (idmor n).
-Proof. done. Qed.
 
 Lemma mor_tpcastE n (H : n = n) : mor_tpcast H =e idmor n.
 Proof. by move=> T v; rewrite /mor_tpcast /= tpcastE. Qed.
@@ -354,11 +364,7 @@ move=> a x y; rewrite /ptracefun !linear_sum -big_split /=.
 apply eq_bigr => vi _; by rewrite !linearP.
 Qed.
 
-Definition ptrace : endo m := fun T => Linear (@ptrace_is_linear T).
-
-Definition antifocus T := [linear of curry l \o f T \o uncurry l].
-(* Lemma antifocus_naturality :
-  naturality f -> naturality antifocus. *)
+Definition ptracelin : morlin m m := fun T => Linear (@ptrace_is_linear T).
 
 Lemma uncurry_tpsingle_naturality vi :
  naturality (fun T => [linear of uncurry (T:=T) l \o map_tpower (tpsingle vi)]).
@@ -368,19 +374,27 @@ Lemma tpsel_curry_naturality vi :
   naturality (fun T => [linear of map_tpower (tpsel vi) \o curry (T:=T) l]).
 Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite /tpsel !ffunE. Qed.
 
-Lemma ptrace_naturality : naturality f -> naturality ptrace.
+Lemma ptrace_naturality : naturality ptracelin.
 Proof.
-move=> Nf T1 T2 h v.
+move=> T1 T2 h v.
 rewrite /= /ptracefun linear_sum.
 apply eq_bigr => vi _ /=.
 move: (tpsel_curry_naturality vi h) => /= ->.
-rewrite Nf.
+rewrite (morN f).
 by move: (uncurry_tpsingle_naturality vi h v) => ->.
 Qed.
+
+Definition ptrace : endo m := Mor ptrace_naturality.
+
+Definition antifocus T := [linear of curry l \o f T \o uncurry l].
+(* Lemma antifocus_naturality :
+  naturality f -> naturality antifocus. *)
 End partial_trace.
 
 Section focus.
-Variables (n m : nat) (l : lens n m) (tr : endo m).
+Variables (n m : nat) (l : lens n m).
+Section focuslin.
+Variable tr : endo m.
 Definition focus_fun : endofun n :=
   fun T (v : tpower n T) => uncurry l (tr _ (curry l v)).
 
@@ -392,10 +406,27 @@ have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
 
-Definition focus : endo n := locked (fun T => Linear (@focus_is_linear T)).
+Definition focuslin : morlin n n :=
+  locked (fun T => Linear (@focus_is_linear T)).
+End focuslin.
 
-Lemma focusE : focus = fun T => Linear (@focus_is_linear T).
-Proof. by rewrite /focus; unlock. Qed.
+Lemma focusN f : naturality (focuslin f).
+Proof.
+case/naturalityP: (morN f) => M NM.
+apply/naturalityP.
+exists (morts (focuslin (tsmor M))).
+move=> T /= v; apply/ffunP => /= vi.
+rewrite tsmorE /focuslin -!lock !ffunE NM tsmorE sum_ffunE.
+under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
+rewrite exchange_big /=; apply eq_bigr => vj _.
+rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
+by apply eq_bigr => i _; rewrite !ffunE !scalerA.
+Qed.
+
+Canonical focus f := Mor (focusN f).
+
+Lemma focusE f : focuslin f = fun T => Linear (@focus_is_linear f T).
+Proof. by rewrite /focuslin /= -lock. Qed.
 
 Lemma curry_tpbasis (vi : n.-tuple I) :
   curry l (tpbasis vi) =
@@ -409,15 +440,13 @@ case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
 by elim Hvi; rewrite -Hvk -Hvj merge_indices_extract.
 Qed.
 
-Hypothesis Ntr : naturality tr.
-
-Lemma focus_tpbasis (vi : n.-tuple I) :
-  focus _ (tpbasis vi) =
+Lemma focus_tpbasis f (vi : n.-tuple I) :
+  focus f _ (tpbasis vi) =
   uncurry l (map_tpower (tpsingle (extract (lothers l) vi))
-                        (tr _ (tpbasis (extract l vi)))).
+                        (f _ (tpbasis (extract l vi)))).
 Proof.
 apply/ffunP => v.
-by rewrite focusE /= /focus_fun !ffunE curry_tpbasis -Ntr !ffunE.
+by rewrite /= focusE /focus_fun !ffunE curry_tpbasis -(morN f) !ffunE.
 Qed.
 
 Lemma uncurry_tpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
@@ -433,26 +462,14 @@ case/boolP: (_ == _) => /eqP Hvj; last by rewrite scaler0.
 elim Hvk; by rewrite Hvi Hvj merge_indices_extract.
 Qed.
 
-Lemma focus_tpbasis_id v :
-  tr _ (tpbasis (extract l v)) = tpbasis (extract l v) ->
-  focus _ (tpbasis v) = tpbasis v.
+Lemma focus_tpbasis_id (f : endo m) v :
+  f _ (tpbasis (extract l v)) = tpbasis (extract l v) ->
+  focus f _ (tpbasis v) = tpbasis v.
 Proof.
 move=> Htr.
 by rewrite focus_tpbasis // Htr uncurry_tpsingle merge_indices_extract.
 Qed.
 End focus.
-
-Lemma focus_naturality n m l tr : naturality tr -> naturality (@focus n m l tr).
-Proof.
-case/naturalityP => M /= NM; apply/naturalityP.
-exists (morts (focus l (tsmor M))).
-move=> T /= v; apply/ffunP => /= vi.
-rewrite tsmorE !focusE !ffunE NM tsmorE sum_ffunE.
-under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
-rewrite exchange_big /=; apply eq_bigr => vj _.
-rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
-by apply eq_bigr => i _; rewrite !ffunE !scalerA.
-Qed.
 
 Section asym_focus.
 Variables (n m p : nat) (l : lens (m+n) m) (l' : lens (p+n) p) (tr : mor m p).
@@ -472,15 +489,15 @@ have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
 
-Definition asym_focus : mor (m + n) (p + n) :=
+Definition asym_focuslin : morlin (m + n) (p + n) :=
   fun T => Linear (@asym_focus_is_linear T).
 End asym_focus.
 
-Lemma asym_focus_naturality n m p l l' tr :
-  naturality tr -> naturality (@asym_focus n m p l l' tr).
+Lemma asym_focusN n m p l l' tr :
+  naturality (@asym_focuslin n m p l l' tr).
 Proof.
-case/naturalityP => M /= NM; apply/naturalityP.
-exists (morts (asym_focus l l' (tsmor M))).
+case/naturalityP: (morN tr) => M /= NM; apply/naturalityP.
+exists (morts (asym_focuslin l l' (tsmor M))).
 move=> T /= v; apply/ffunP => /= vi; rewrite tsmorE !ffunE NM tsmorE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
@@ -488,20 +505,23 @@ rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
+Definition asym_focus n m p l l' tr := Mor (@asym_focusN n m p l l' tr).
+
 Lemma asym_focus_sym (m n : nat) (l : lens (m+n) m) (f : mor m m) :
   asym_focus l l f =e focus l f.
 Proof.
-move=> T v /=; rewrite focusE /= /asym_focus_fun /focus_fun /=.
-by rewrite map_tpcastE.
+move=> T v /=; rewrite /= /asym_focus_fun /focus_fun /=.
+by rewrite map_tpcastE /focuslin -lock.
 Qed.
 
 Section focus_props.
 Variables (n m p : nat) (l : lens n m).
 
 (* Identity *)
-Lemma focusI tr : naturality tr -> focus (lens_id n) tr =e tr.
+Lemma focusI tr : focus (lens_id n) tr =e tr.
 Proof.
-rewrite focusE => /naturalityP [f Hf] /= T v.
+case/naturalityP: (morN tr) => [f Hf] T v.
+rewrite /= focusE /=.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf {tr} !ffunE !tsmorE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
@@ -515,15 +535,18 @@ Proof. move=> Heq T v /=; by rewrite 2!focusE /= /focus_fun Heq. Qed.
 
 (* Identity morphism *)
 Lemma focus_idmor : focus l (idmor m) =e idmor n.
-Proof. by move=> T v; rewrite focusE /= /focus_fun /= curryK. Qed.
+Proof. by move=> T v; rewrite /= focusE /= /focus_fun /= curryK. Qed.
 
 (* Vertical composition of morphisms *)
 Section comp_mor.
 Variables (r q s : nat) (tr : mor q s) (tr' : mor r q).
-Definition comp_mor : mor r s := fun A => GRing.comp_linear (tr A) (tr' A).
+Definition comp_morlin : morlin r s :=
+  fun A => GRing.comp_linear (tr A) (tr' A).
 
-Lemma comp_naturality : naturality tr -> naturality tr' -> naturality comp_mor.
-Proof. move=> N1 N2 T1 T2 f v; by rewrite N1 N2. Qed.
+Lemma comp_morN : naturality comp_morlin.
+Proof. move=> T1 T2 f v; by rewrite (morN tr) (morN tr'). Qed.
+
+Definition comp_mor := Mor comp_morN.
 End comp_mor.
 Notation "f \v g" := (comp_mor f g).
 
@@ -560,10 +583,11 @@ Qed.
 
 (* Horizontal composition of endomorphisms *)
 Lemma focusC (l' : lens n p) tr tr' :
-  [disjoint l & l'] -> naturality tr -> naturality tr' ->
+  [disjoint l & l'] ->
   focus l tr \v focus l' tr' =e focus l' tr' \v focus l tr.
 Proof.
-rewrite !focusE => Hdisj /naturalityP [f Hf] /naturalityP [f' Hf'] T v /=.
+case/naturalityP: (morN tr) (morN tr') => f Hf /naturalityP [f' Hf'].
+move => Hdisj T v /=; rewrite !focusE.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf !{}Hf' {tr tr'} !ffunE !tsmorE !sum_ffunE.
 under eq_bigr do rewrite !ffunE tsmorE !sum_ffunE scaler_sumr.
@@ -590,11 +614,12 @@ by rewrite scalerA inject_all // lens_left_right_disjoint.
 Qed.
 
 (* Associativity of actions of lenses *)
-Lemma focusM (l' : lens m p) tr : naturality tr ->
+Lemma focusM (l' : lens m p) tr :
   focus (lens_comp l l') tr =e focus l (focus l' tr).
 Proof.
-case/naturalityP => f Hf T v.
-rewrite !focusE /focus_fun /= !{}Hf {tr}.
+case/naturalityP: (morN tr) => f Hf T v.
+rewrite /= !focusE /focus_fun /= !Hf.
+rewrite /= !focusE /focus_fun /= !Hf {tr Hf}.
 apply/ffunP => /= vi.
 rewrite !ffunE !tsmorE (extract_lothers_comp dI) -!extract_comp.
 rewrite -[in RHS]lothers_in_l_comp -(lothers_notin_l_comp l l') !sum_ffunE.
@@ -606,14 +631,13 @@ Qed.
 (* Variant for disjoint lenses, used in unitary.v *)
 Variable T : lmodType R.
 Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : tpower n T) :
-  naturality f ->
   focus (lens_comp (lothers l) l') f T t =
   uncurry l (map_tpower (m:=m) (focus l' f T) (curry l t)).
   (* parametricity prevents writing it this way:
      focus l (fun _ => Linear (map_tpower_linear (focus l' f T))) T t. *)
 Proof.
-case/naturalityP => M Hf; apply/ffunP => vi.
-rewrite !focusE !ffunE /= -!extract_comp !Hf !tsmorE /= !sum_ffunE.
+case/naturalityP: (morN f) => M Hf; apply/ffunP => vi.
+rewrite /= !focusE !ffunE /= -!extract_comp !Hf !tsmorE /= !sum_ffunE.
 apply eq_bigr => vj _; by rewrite !ffunE merge_indices_comp_others.
 Qed.
 End focus_props.
@@ -630,11 +654,11 @@ Lemma asym_focusC n m p n' m' p' (l1 : lens (m+n) m) (l2 : lens (p+n) p)
 
 Lemma asym_focusC n m p (l1 : lens (m+n) m) (l2 : lens (p+n) p)
       (g : mor m p) (f : endo n) :
-  naturality f -> naturality g ->
   focus (cast_lens (lothers l2) (addKn _ _)) f \v asym_focus l1 l2 g =e
   asym_focus l1 l2 g \v focus (cast_lens (lothers l1) (addKn _ _)) f.
 Proof.
-rewrite !focusE => /naturalityP [Mf Hf] /naturalityP [Mg Hg] T v /=.
+case/naturalityP: (morN f) (morN g) => Mf Hf /naturalityP [Mg Hg] T v /=.
+rewrite !focusE /=.
 apply/ffunP => /= vi.
 rewrite /focus_fun /asym_focus_fun !{}Hf {f} !{}Hg {g}.
 rewrite !ffunE !tsmorE !sum_ffunE.
@@ -681,8 +705,7 @@ Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
   tsapp l M \v tsapp l' M' =e tsapp (lens_cat H) (tensor_tsquare M M').
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
-rewrite focusM; last by apply/tsmorN.
-rewrite -> focusM; last by apply/tsmorN.
+rewrite focusM (focusM _ _ (tsmor M')).
 have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.

@@ -24,23 +24,36 @@ Variable R : comRingType.
 Local Notation mor m n := (mor I R m n).
 Local Notation endo n := (mor n n).
 
+Lemma MorP m n (f g : mor m n) : morf f = morf g -> f = g.
+Proof.
+case: f g => ff fN [gf gN] /= fg.
+case: gf / fg gN => gN; exact/f_equal/proof_irrelevance.
+Qed.
+
 Lemma morP : forall m n (f g : mor m n), f =e g <-> f = g.
 Proof.
 split => [fg | -> //].
-apply functional_extensionality_dep => T /=.
+apply/MorP/functional_extensionality_dep => T.
 move/(_ T): fg.
-case f => /= {}f Hf.
-case g => /= {}g Hg /functional_extensionality fg.
-move: Hf Hg; case: g / fg => Hf Hg.
+case: f => /= f _.
+case: g => /= g _.
+set F := f T.
+rewrite (_ : (f T : _ -> _) = F) //.
+set G := g T.
+rewrite (_ : (g T : _ -> _) = G) //.
+move/functional_extensionality.
+case: F => {}f Hf.
+case: G => {}g Hg /= fg.
+case: g / fg Hg => Hg.
 by rewrite (proof_irrelevance (lmorphism f) Hf Hg).
 Qed.
 
 Section mor_monoid.
 Variable n : nat.
 
-Lemma comp_mor1f (f : endo n) : idmor I n \v f = f.
+Lemma comp_mor1f (f : endo n) : idmor I R n \v f = f.
 Proof. by apply/morP. Qed.
-Lemma comp_morf1 (f : endo n) : f \v idmor I n = f.
+Lemma comp_morf1 (f : endo n) : f \v idmor I R n = f.
 Proof. by apply/morP . Qed.
 Lemma comp_morA' : associative (@comp_mor I R n n n).
 Proof. move=> f g h; apply/morP/comp_morA. Qed.
@@ -48,21 +61,21 @@ Canonical comp_monoid :=
   Monoid.Law comp_morA' comp_mor1f comp_morf1.
 
 Definition compn_mor m (F : 'I_n -> endo m) (P : pred 'I_n) :=
-  \big[@comp_mor I R m m m/idmor I m]_(i < n | P i) F i.
+  \big[@comp_mor I R m m m/idmor I R m]_(i < n | P i) F i.
 End mor_monoid.
 
 Section foc_endo.
 Variable n : nat.
 Record foc_endo : Type :=
   mkFoc { foc_m : nat; foc_l : lens n foc_m; foc_s : lens_sorted foc_l;
-          foc_e :> endo foc_m; foc_n : naturality foc_e }.
+          foc_e :> endo foc_m }.
 
 Definition fendo_mor f := focus (foc_l f) f.
 
 Section mkFendo.
-Variables (m : nat) (l : lens n m) (f : endo m) (Nf : naturality f).
+Variables (m : nat) (l : lens n m) (f : endo m).
 Definition mkFendo :=
-  mkFoc (lens_sorted_basis l) (focus_naturality dI (lens_perm l) Nf).
+  mkFoc (lens_sorted_basis l) (focus (lens_perm l) f).
 
 Lemma mkFendoE : fendo_mor mkFendo = focus l f.
 Proof.
@@ -73,21 +86,22 @@ End mkFendo.
 Lemma null_lin p q (T : lmodType R) :
   linear (fun v : tpower p T => (0 : tpower q T)).
 Proof. move=> x y z; by rewrite scaler0 add0r. Qed.
-Definition nullmor p q : mor p q := fun T => Linear (@null_lin p q T).
-Lemma nullmorN p q : naturality (nullmor p q).
+Definition nullmorlin p q : morlin _ _ p q := fun T => Linear (@null_lin p q T).
+Lemma nullmorN p q : naturality (nullmorlin p q).
 Proof. by move=> T1 T2 h v; apply/ffunP => vi; rewrite !ffunE linearE. Qed.
+Definition nullmor p q : mor p q := Mor (@nullmorN p q).
 
 Section comoid.
-Definition id_fendo := mkFoc (lens_sorted_empty n) (idmorN (I:=I) (n:=0)).
-Definition err_fendo := mkFoc (lens_sorted_id n) (nullmorN (p:=n) n).
+Definition id_fendo := mkFoc (lens_sorted_empty n) (idmor I R 0).
+Definition err_fendo := mkFoc (lens_sorted_id n) (nullmor n n).
 
-Lemma fendo_mor_id : fendo_mor id_fendo = idmor I n.
-Proof. by apply/morP => T v; rewrite /fendo_mor focusE /focus_fun/= curryK. Qed.
+Lemma fendo_mor_id : fendo_mor id_fendo = idmor I R n.
+Proof. by apply/morP => T v; rewrite /fendo_mor/=focusE /focus_fun/=curryK. Qed.
 
 Lemma fendo_mor_err : fendo_mor err_fendo = nullmor n n.
 Proof.
 apply/morP => T v; apply/ffunP => vi.
-by rewrite /fendo_mor focusE /= !ffunE.
+by rewrite /fendo_mor/= focusE /= !ffunE.
 Qed.
 
 Section comp_fendo.
@@ -95,9 +109,7 @@ Definition comp_fendo (f g : foc_endo) :=
   match Bool.bool_dec [disjoint foc_l f & foc_l g] true with
   | left H =>
       mkFoc (lens_sorted_basis (lens_cat H))
-       (comp_naturality
-        (focus_naturality dI (lens_perm_left H) (foc_n (f:=f)))
-        (focus_naturality dI (lens_perm_right H) (foc_n (f:=g))))
+        (focus (lens_perm_left H) f \v focus (lens_perm_right H) g)
   | right _ => err_fendo
   end.
 
@@ -136,36 +148,33 @@ End comp_fendo.
 Lemma eq_foc_endo (f g : foc_endo) (H : foc_m f = foc_m g) :
   JMeq (foc_l f) (foc_l g) -> JMeq (foc_e f) (foc_e g) -> f = g.
 Proof.
-case: f g H => f_m f_l f_s f_e f_n [] g_m g_l g_s g_e g_n /= H.
-move: f_l g_l f_e g_e f_s g_s f_n g_n.
-case: g_m / H => f_l g_l f_e g_e f_s g_s f_n g_n Hl He.
-move: f_s g_s f_n g_n.
+case: f g H => f_m f_l f_s f_e [] g_m g_l g_s g_e /= H.
+move: f_l g_l f_e g_e f_s g_s.
+case: g_m / H => f_l g_l f_e g_e f_s g_s Hl He.
+move: f_s g_s.
 have := JMeq_eq Hl => Hl'.
 have := JMeq_eq He => He'.
 case: g_l / Hl' Hl => _.
-case: g_e / He' He => _ f_s g_s f_n g_n.
-rewrite (eq_irrelevance f_s g_s).
-by rewrite (proof_irrelevance (naturality f_e) f_n g_n).
+case: g_e / He' He => _ f_s g_s.
+by rewrite (eq_irrelevance f_s g_s).
 Qed.
 
 Lemma eq_JMeq A (x y : A) : x = y -> JMeq x y.
 Proof. by move=> H; case: y / H. Qed.
 
 Lemma focus_left_idmor p q :
-  focus (R:=R) (lens_left p q) (idmor I p) = idmor I (p + q).
-Proof. by apply/morP => T v; rewrite focusE /= /focus_fun /= curryK. Qed.
+  focus (lens_left p q) (idmor I R p) = idmor I R (p + q).
+Proof. by apply/morP => T v; rewrite /= focusE /= /focus_fun /= curryK. Qed.
 
 Lemma focus_right_idmor p q :
-  focus (R:=R) (lens_right p q) (idmor I q) = idmor I (p + q).
-Proof. by apply/morP => T v; rewrite focusE /= /focus_fun /= curryK. Qed.
+  focus (lens_right p q) (idmor I R q) = idmor I R (p + q).
+Proof. by apply/morP => T v; rewrite /= focusE /= /focus_fun /= curryK. Qed.
 
 Lemma focus_lens_right0 fm (f : endo fm) (l : lens n fm) :
-  naturality f -> focus (lens_right 0 fm) f = f.
+  focus (lens_right 0 fm) f = f.
 Proof.
-move=> Nf.
 apply/morP => T v /=.
-rewrite -[LHS](focusI dI); last by apply focus_naturality.
-rewrite -focusM //.
+rewrite -[LHS](focusI dI) -focusM //.
 have Heid : [disjoint lens_empty fm & lens_id fm] by rewrite disjoint_has.
 have -> : lens_id (0 + fm) = lens_cat Heid by eq_lens.
 by rewrite -lens_comp_right focusI.
@@ -173,7 +182,7 @@ Qed.
 
 Lemma comp_fendo1f (f : foc_endo) : comp_fendo id_fendo f = f.
 Proof.
-case: f => fm l Sl f Nf.
+case: f => fm l Sl f.
 rewrite /comp_fendo /=.
 case: Bool.bool_dec; last by rewrite disjoint_has.
 move=> H; apply eq_foc_endo => //=; apply eq_JMeq.
@@ -203,7 +212,7 @@ case: Bool.bool_dec => H; last first.
   case: Bool.bool_dec => H' //.
   by elim H; rewrite disjoint_sym.
 case: Bool.bool_dec => H'; last by elim H'; rewrite disjoint_sym.
-case: f g H H' => f_m f_l f_s f_e f_n [] g_m g_l g_s g_e g_n /= H H'.
+case: f g H H' => f_m f_l f_s f_e [] g_m g_l g_s g_e /= H H'.
 have Hm : (g_m + f_m = f_m + g_m)%N by rewrite addnC.
 apply eq_foc_endo => //=.
 - have -> : lens_basis (lens_cat H) =
@@ -228,8 +237,8 @@ Lemma comp_fendoef (f : foc_endo) : comp_fendo err_fendo f = err_fendo.
 Proof.
 rewrite /comp_fendo /=.
 case: Bool.bool_dec => //.
-case: f => -[|m] l Sl e Nf /= H; last first.
-  elimtype False; case: l {Sl e Nf} H => -[] [] //= a t Hsz Hu.
+case: f => -[|m] l Sl e /= H; last first.
+  elimtype False; case: l {Sl e} H => -[] [] //= a t Hsz Hu.
   by rewrite disjoint_sym disjoint_has /= mem_enum.
 have Hn : (n = n + 0)%N by rewrite addn0.
 apply eq_foc_endo => //=.
@@ -239,7 +248,7 @@ apply eq_foc_endo => //=.
   case: _ / Hn; apply eq_JMeq.
   by rewrite cast_lensE.
 - rewrite (_ : _ \v _ = nullmor (n+0) (n+0)); last first.
-    by apply/morP => T v; apply/ffunP => vi; rewrite !focusE !ffunE.
+    by apply/morP => T v; apply/ffunP => vi; rewrite /= !focusE !ffunE.
   by case: _ / Hn.
 Qed.
 
@@ -283,7 +292,7 @@ apply eq_foc_endo => /=.
   case: _ / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
 - case: f g h Hg_h Hf_g Hf_gh Hfg_h Hm =>
-        fm fl fS fe fN [] gm gl gS ge gN [] hm hl hS he hN /=
+        fm fl fS fe [] gm gl gS ge [] hm hl hS he /=
           Hg_h Hf_g Hf_gh Hfg_h Hm.
   set lhs := _ \v _.
   set rhs := _ \v _.
@@ -451,7 +460,7 @@ Hypothesis cardI_gt1 : (#|I| > 1)%N.
 
 Lemma err_fendo_notU : ~ unitary_endo (fendo_mor (@err_fendo C n)).
 Proof.
-move => /(_ [ffun _ => 1%:R] [ffun _ => 1%:R]) /=.
+move => /(_ [ffun _ => 1%:R] [ffun _ => 1%:R]).
 rewrite fendo_mor_err /tinner /=.
 under eq_bigr do rewrite !ffunE.
 rewrite big1 ?mulr0 //.
@@ -473,7 +482,7 @@ Proof.
 apply: big_ind.
 - exact: idmorU.
 - exact: unitary_comp.
-- move=> i _. exact/unitary_focus/FU/foc_n.
+- move=> i _. exact/unitary_focus/FU.
 Qed.
 
 Lemma compn_fendo_unitary : unitary_endo (compn_fendo F P).
@@ -491,8 +500,8 @@ apply big_ind.
   case=> Hg; last by right; rewrite Hg comp_fendoC comp_fendoef.
   rewrite/comp_fendo.
   case: Bool.bool_dec => Hdisj' /=.
-  + left. apply/unitary_comp/unitary_focus => //; last exact/foc_n.
-    apply/unitary_focus => //; exact/foc_n.
+  + left. apply/unitary_comp/unitary_focus => //.
+    exact/unitary_focus.
   + by right.
 - move=> i _ /=; left; exact/FU.
 Qed.

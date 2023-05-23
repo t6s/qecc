@@ -15,7 +15,7 @@ Variables (R : comRingType).
 Let I := [finType of 'I_2].
 Let dI : I := ord0.
 
-Notation idmor n := (idmor I n).
+Notation idmor n := (idmor I R n).
 Notation tsquare m := (tmatrix I R m m).
 Notation endo n := (mor I R n n).
 
@@ -30,9 +30,9 @@ Section cap_cup.
 Variables (n : nat) (l : lens (2 + n) 2).
 
 Definition cap :=
-  asym_focus dI (R:=R) (p:=0) l (lens_empty n) (inner_prod I 1).
+  asym_focus dI (p:=0) l (lens_empty n) (inner_prod I R 1).
 Definition cup :=
-  asym_focus dI (R:=R) (m:=0) (lens_empty n) l (inner_coprod I 1).
+  asym_focus dI (m:=0) (lens_empty n) l (inner_coprod I R 1).
 End cap_cup.
 
 Lemma extract_rev A n m (l1 l2 : lens n m) (v : n.-tuple A) :
@@ -123,18 +123,16 @@ rewrite -{2}(transpose_tsquare_involutive M).
 move=> T v.
 rewrite -comp_morA comp_morE comp_morE.
 move: (transpose_cup (transpose_tsquare M) v) => /= <-.
-have NM : naturality (tsmor (transpose_tsquare M)) by apply/naturalityP; esplit.
-have NIP : naturality (inner_prod I 1 (R:=R)) by apply/naturalityP; esplit.
 set mycup := asym_focus_fun dI ([lens] : lens (0+1) 0)
-                  ([lens 0; 1] : lens (2+1) 2) (inner_coprod I 1) v.
+                  ([lens 0; 1] : lens (2+1) 2) (inner_coprod I R 1) v.
 move: (asym_focusC dI ([lens 1; 2] : lens (2+1) 2) ([lens] : lens (0+1) 0)
-                   NM NIP mycup).
+                   (inner_prod I R 1) (tsmor (transpose_tsquare M)) mycup).
 rewrite !cast_lensE.
 have -> : lothers [lens 1; 2] = [lens 0] by eq_lens.
 move=> /= <-.
 subst mycup.
 move: (straighten v) => /= ->.
 have <- : lens_id 1 = lothers [lens] by eq_lens.
-by rewrite (focusI dI NM v).
+by rewrite (focusI dI (tsmor (transpose_tsquare M)) v).
 Qed.
 End transpose.
