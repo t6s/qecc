@@ -428,8 +428,7 @@ f_equal; first last.
     have Hinl : i \notin lothers_notin_l l1 l2.
       by rewrite mem_lothers Hill.
     rewrite -mem_lothers in Hinl.
-    rewrite tnth_merge_indices_lothers.
-    rewrite tnth_extract.
+    rewrite tnth_merge_indices_lothers tnth_extract.
     have Hill' := Hill.
     rewrite -(lens_basis_perm (lothers_in_l l1 l2)) in Hill'.
     have Hilb : i \in lens_basis (lothers_in_l l1 l2).
@@ -437,8 +436,7 @@ f_equal; first last.
     rewrite mem_lens_comp in Hill'.
     have Hilll : lens_index Hill = lens_index Hill'.
       apply (tnth_lens_inj (l:=lothers_in_l l1 l2)).
-      rewrite tnth_lens_index.
-      rewrite -{1}(lens_basis_perm (lothers_in_l l1 l2)).
+      rewrite tnth_lens_index -{1}(lens_basis_perm (lothers_in_l l1 l2)).
       by rewrite tnth_comp !tnth_lens_index.
     rewrite Hilll tnth_lens_index.
     rewrite (tnth_nth (tnth vj (lens_index Hill))).
@@ -452,15 +450,11 @@ f_equal; first last.
                                                (lens_index Hill)))).
 f_equal.
 apply/ffunP => vh.
-rewrite !ffunE.
-rewrite -!extract_comp.
-rewrite scalerA -natrM mulnb.
+rewrite !ffunE -!extract_comp scalerA -natrM mulnb.
 congr ((_ : bool)%:R *: _).
 rewrite -[extract (lothers _) vh]
            (merge_indices_extract dI (lothers_notin_l l1 l2)).
-rewrite merge_indices_inj_eq.
-rewrite -extract_comp lothers_notin_l_comp.
-rewrite -extract_comp.
+rewrite merge_indices_inj_eq -extract_comp lothers_notin_l_comp -extract_comp.
 congr andb.
 rewrite -(inj_eq (f:=fun t => cast_tuple t cast)); last first.
   move=> x y /(f_equal val) => H; exact/val_inj.
@@ -469,8 +463,7 @@ rewrite -[in LHS]
          (inj_eq (extract_inj (l:=lens_perm (lothers_in_l l1 l2)) (T:=I))).
 congr (_ == _).
 apply eq_from_tnth => i.
-rewrite !tnth_extract.
-rewrite !(tnth_nth dI) /=.
+rewrite !tnth_extract !(tnth_nth dI) /=.
 rewrite (nth_map (tnth l1 (tnth (lothers l2) i))); last first.
   by rewrite size_map (eqP (size_others _)) cast.
 rewrite (tnth_nth dI).
@@ -481,8 +474,7 @@ rewrite (nth_map i1); last first.
 rewrite -[others (lothers_notin_l _ _)]lens_basis_lothers_in_l.
 set t := tnth (tuple_perm _) i.
 rewrite (_ : t = cast_ord (esym cast) t :> nat) //.
-rewrite -tnth_nth.
-rewrite -(tnth_comp (lothers (lens_comp l1 l2))).
+rewrite -tnth_nth -(tnth_comp (lothers (lens_comp l1 l2))).
 rewrite /t tnth_comp -(tnth_comp _ (lens_perm (lothers_in_l l1 l2))).
 by rewrite lens_basis_perm -tnth_comp lothers_in_l_comp tnth_comp.
 Qed.
