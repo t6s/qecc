@@ -30,22 +30,22 @@ case: f g => ff fN [gf gN] /= fg.
 case: gf / fg gN => gN; exact/f_equal/proof_irrelevance.
 Qed.
 
+Lemma LinP (T1 T2 : lmodType R) (f g : {linear T1 -> T2}) :
+  f =1 g -> f = g.
+Proof.
+move/functional_extensionality.
+case: f => /= f Hf.
+case: g => /= g Hg fg.
+subst g.
+by rewrite (proof_irrelevance _ Hf).
+Qed.
+
 Lemma morP : forall m n (f g : mor m n), f =e g <-> f = g.
 Proof.
 split => [fg | -> //].
 apply/MorP/functional_extensionality_dep => T.
-move/(_ T): fg.
-case: f => /= f _.
-case: g => /= g _.
-set F := f T.
-rewrite (_ : (f T : _ -> _) = F) //.
-set G := g T.
-rewrite (_ : (g T : _ -> _) = G) //.
-move/functional_extensionality.
-case: F => {}f Hf.
-case: G => {}g Hg /= fg.
-case: g / fg Hg => Hg.
-by rewrite (proof_irrelevance (lmorphism f) Hf Hg).
+apply/LinP => x.
+by rewrite fg.
 Qed.
 
 Section mor_monoid.
@@ -154,13 +154,12 @@ case: g_m / H => f_l g_l f_e g_e f_s g_s Hl He.
 move: f_s g_s.
 have := JMeq_eq Hl => Hl'.
 have := JMeq_eq He => He'.
-case: g_l / Hl' Hl => _.
-case: g_e / He' He => _ f_s g_s.
+subst => f_s g_s.
 by rewrite (eq_irrelevance f_s g_s).
 Qed.
 
 Lemma eq_JMeq A (x y : A) : x = y -> JMeq x y.
-Proof. by move=> H; case: y / H. Qed.
+Proof. by move=> H; subst. Qed.
 
 Lemma focus_left_idmor p q :
   focus (lens_left p q) (idmor I R p) = idmor I R (p + q).
@@ -197,7 +196,7 @@ Lemma lens_perm_left_right m p (f : lens n m) (g : lens n p)
   lens_perm_left H = cast_lens_ord (lens_perm_right H') Hm.
 Proof.
 eq_lens; apply/eqP.
-rewrite -[RHS]map_comp [RHS](eq_map (g:=@nat_of_ord _)) //.
+rewrite -[RHS]map_comp [RHS](@eq_map _ _ _ (@nat_of_ord _)) //.
 rewrite -2!map_comp -2![RHS]map_comp.
 apply eq_map => i /=.
 rewrite !tnth_mktuple /= tnth_lshift tnth_rshift.

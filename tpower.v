@@ -391,6 +391,102 @@ Definition antifocus T := [linear of curry l \o f T \o uncurry l].
   naturality f -> naturality antifocus. *)
 End partial_trace.
 
+Lemma ptrace_comp n m p (l1 : lens n m) (l2 : lens m p) (f : endo n) :
+  ptrace (lens_comp l1 l2) f =e ptrace l2 (ptrace l1 f).
+Proof.
+move=> T /= v.
+apply/ffunP => /= vi.
+rewrite /ptracefun !sum_ffunE /ptracefun.
+rewrite [LHS](reindex_merge_indices _ dI (lothers_notin_l l1 l2)) /=.
+rewrite exchange_big /=.
+have cast : ((n - p) - (n - m) = m - p)%N.
+  rewrite subnBA; last by apply lens_leq.
+  rewrite -addnABC; try apply/lens_leq => //; first last.
+    exact (lens_comp l1 l2).
+  by rewrite addKn.
+rewrite (reindex_inj (h:=extract (lens_perm (lothers_in_l l1 l2)))); last first.
+  set l := lens_perm _.
+  move=> x y H.
+  rewrite -(merge_indices_extract dI l x) H.
+  have -> : extract (lothers l) x = extract (lothers l) y.
+    apply eq_from_tnth => i. elimtype False.
+    have := ltn_ord i. by rewrite {2}subnn ltn0.
+  by rewrite merge_indices_extract.
+rewrite (reindex (fun t => cast_tuple t (esym cast))) /=; last first.
+  exists (fun t => cast_tuple t cast) => x y; exact/val_inj.
+apply eq_bigr => /= vj _.
+rewrite /= !linear_sum sum_ffunE.
+apply eq_bigr => /= vk _.
+rewrite /tpsel !ffunE.
+f_equal; first last.
+- rewrite -[RHS](merge_indices_comp dI l1 l2 _ _
+                  (vl:=cast_tuple vk (esym (cast_lothers_notin_l l1 l2)))) //.
+  congr merge_indices.
+  apply eq_from_tnth => i.
+  case/boolP: (i \in lothers_in_l l1 l2) => Hill.
+    rewrite (tnth_merge_indices _ _ _ Hill).
+    have Hinl : i \notin lothers_notin_l l1 l2.
+      by rewrite mem_lothers Hill.
+    rewrite -mem_lothers in Hinl.
+    rewrite tnth_merge_indices_lothers.
+    rewrite tnth_extract.
+    have Hill' := Hill.
+    rewrite -(lens_basis_perm (lothers_in_l l1 l2)) in Hill'.
+    have Hilb : i \in lens_basis (lothers_in_l l1 l2).
+      by apply/lens_comp_sub: Hill'.
+    rewrite mem_lens_comp in Hill'.
+    have Hilll : lens_index Hill = lens_index Hill'.
+      apply (tnth_lens_inj (l:=lothers_in_l l1 l2)).
+      rewrite tnth_lens_index.
+      rewrite -{1}(lens_basis_perm (lothers_in_l l1 l2)).
+      by rewrite tnth_comp !tnth_lens_index.
+    rewrite Hilll tnth_lens_index.
+    rewrite (tnth_nth (tnth vj (lens_index Hill))).
+    rewrite [RHS](tnth_nth (tnth vj (lens_index Hill))) /=.
+    by rewrite [seq_basis _]lens_basis_lothers_in_l.
+  rewrite -mem_lothers in Hill.
+  rewrite tnth_merge_indices tnth_merge_indices_lothers.
+  rewrite (tnth_nth (tnth vk (cast_ord (cast_lothers_notin_l l1 l2)
+                                       (lens_index Hill)))).
+  by rewrite [RHS](tnth_nth (tnth vk (cast_ord (cast_lothers_notin_l l1 l2)
+                                               (lens_index Hill)))).
+f_equal.
+apply/ffunP => vh.
+rewrite !ffunE.
+rewrite -!extract_comp.
+rewrite scalerA -natrM mulnb.
+congr ((_ : bool)%:R *: _).
+rewrite -[extract (lothers _) vh]
+           (merge_indices_extract dI (lothers_notin_l l1 l2)).
+rewrite merge_indices_inj_eq.
+rewrite -extract_comp lothers_notin_l_comp.
+rewrite -extract_comp.
+congr andb.
+rewrite -(inj_eq (f:=fun t => cast_tuple t cast)); last first.
+  move=> x y /(f_equal val) => H; exact/val_inj.
+rewrite (_ : cast_tuple _ _ = vj); last by apply val_inj.
+rewrite -[in LHS]
+         (inj_eq (extract_inj (l:=lens_perm (lothers_in_l l1 l2)) (T:=I))).
+congr (_ == _).
+apply eq_from_tnth => i.
+rewrite !tnth_extract.
+rewrite !(tnth_nth dI) /=.
+rewrite (nth_map (tnth l1 (tnth (lothers l2) i))); last first.
+  by rewrite size_map (eqP (size_others _)) cast.
+rewrite (tnth_nth dI).
+congr nth.
+pose i1 := tnth (lothers (lothers_notin_l l1 l2)) (cast_ord (esym cast) i).
+rewrite (nth_map i1); last first.
+  by rewrite (eqP (size_others _)) cast.
+rewrite -[others (lothers_notin_l _ _)]lens_basis_lothers_in_l.
+set t := tnth (tuple_perm _) i.
+rewrite (_ : t = cast_ord (esym cast) t :> nat) //.
+rewrite -tnth_nth.
+rewrite -(tnth_comp (lothers (lens_comp l1 l2))).
+rewrite /t tnth_comp -(tnth_comp _ (lens_perm (lothers_in_l l1 l2))).
+by rewrite lens_basis_perm -tnth_comp lothers_in_l_comp tnth_comp.
+Qed.
+
 Section focus.
 Variables (n m : nat) (l : lens n m).
 Section focuslin.

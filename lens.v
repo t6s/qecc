@@ -402,6 +402,13 @@ by rewrite !focus1_out.
 Qed.
 End lens_comp.
 
+Lemma lens_comp_inj n m p (l1 : lens n m) : injective (@lens_comp _ _ p l1).
+Proof.
+move=> l2 l3 H; apply eq_lens_tnth => i.
+move/(f_equal (fun l : lens n p => tnth l i)): H.
+rewrite !tnth_comp => /tnth_inj -> //; exact: lens_uniq.
+Qed.
+
 Section lens_comp_id.
 Variables (n m : nat) (l : lens n m).
 
@@ -611,6 +618,20 @@ by rewrite tnth_merge_indices_lothers tnth_extract tnth_lens_index.
 Qed.
 End merge_lens.
 
+Lemma merge_indices_inj_eq (I : eqType)(dI : I) n m (l : lens n m) v1 v2 v3 v4 :
+  (merge_indices dI l v1 v2 == merge_indices dI l v3 v4) =
+  ((v1 == v3) && (v2 == v4)).
+Proof.
+case/boolP: (merge_indices _ _ _ _ == _) => /eqP Hm.
+  rewrite -(extract_merge dI l v1 v2) Hm.
+  rewrite -{2}(extract_merge dI l v3 v4) eqxx.
+  rewrite -(extract_lothers_merge dI l v1 v2) Hm.
+  by rewrite -{2}(extract_lothers_merge dI l v3 v4) eqxx.
+case/boolP: (v1 == _) => // /eqP Hv1.
+case/boolP: (v2 == _) => // /eqP Hv2.
+by subst.
+Qed.
+
 Lemma eq_lothers n m m' (l : lens n m) (l' : lens n m') :
   l =i l' -> lothers l = lothers l' :> seq _.
 Proof. by move=> ll'; apply/eq_filter => i; rewrite ll'. Qed.
@@ -685,7 +706,9 @@ Proof. exact/lens_inj. Qed.
 End lens_empty.
 
 Section lens_full.
-Lemma mem_lens_full n i (l : lens n n) : i \in l.
+Variable (n : nat) (l : lens n n).
+
+Lemma mem_lens_full i : i \in l.
 Proof.
 move/card_uniqP: (lens_uniq l) (cardC (mem l)) ->.
 rewrite card_ord size_tuple => /(f_equal (subn^~ n)).
@@ -693,11 +716,40 @@ rewrite addKn subnn => /card0_eq/(_ i).
 by rewrite !inE => /negbFE.
 Qed.
 
-Lemma lothers_full n (l : lens n n) : lothers l = lens_empty n :> seq _.
+Lemma lens_inv_uniq : uniq [tuple lens_index (mem_lens_full i) | i < n].
+Proof.
+rewrite -(map_inj_uniq (tnth_lens_inj (l:=l))).
+rewrite -map_comp (@eq_map _ _ _ (@idfun _)).
+  by rewrite map_id enum_uniq.
+by move=> x; rewrite /= tnth_lens_index.
+Qed.
+
+Definition lens_inv : lens n n := mkLens lens_inv_uniq.
+
+Lemma lens_invE : lens_comp lens_inv l = lens_id n.
+Proof.
+apply eq_lens_tnth => i.
+by rewrite tnth_comp tnth_mktuple lens_indexK tnth_lens_id.
+Qed.
+
+Lemma lens_invE' : lens_comp l lens_inv = lens_id n.
+Proof.
+apply eq_lens_tnth => i.
+by rewrite tnth_comp tnth_mktuple tnth_lens_index tnth_lens_id.
+Qed.
+
+Lemma extract_inj T : injective (@extract T _ _ l).
+Proof.
+move=> x y. move/(f_equal (extract lens_inv)).
+by rewrite -!extract_comp lens_invE' !extract_lens_id.
+Qed.
+
+Lemma lothers_full : lothers l = lens_empty n :> seq _.
 Proof.
 rewrite /= /others (eq_filter (a2:=pred0)) ?filter_pred0 //= => i.
 by rewrite mem_lens_full.
 Qed.
+End lens_full.
 
 Lemma lothers_comp_full n m (l : lens n m) (l1 : lens m m) :
   lothers (lens_comp l l1) = lothers l.
@@ -706,7 +758,6 @@ apply/lens_inj/eq_lothers => i.
 case/boolP: (i \in l) => Hi. by rewrite mem_lens_comp mem_lens_full.
 apply/negbTE; apply: contra Hi. exact/lens_comp_sub.
 Qed.
-End lens_full.
 
 Section merge_indices_basis.
 Variables (I : Type) (dI : I) (n m : nat) (l : lens n m).
@@ -1106,6 +1157,15 @@ case/boolP: (i \in l) => /= Hi; apply/mapP.
   by rewrite tnth_lens_index tnth_map mem_tnth.
 Qed.
 
+Lemma lens_basis_lothers_in_l :
+  lens_basis lothers_in_l = lothers lothers_notin_l :> seq _.
+Proof.
+apply eq_lens_sorted.
+- move=> x; by rewrite !(mem_lothers,mem_lens_basis) negbK.
+- apply lens_sorted_basis.
+- apply lens_sorted_lothers.
+Qed.
+
 Lemma extract_lothers_comp (v : n.-tuple I) :
   extract lothers_comp v =
   merge_indices lothers_in_l
@@ -1240,7 +1300,7 @@ Variables (I : Type) (dI : I) (n : nat).
 
 Lemma uniq_lens_rev : uniq [tuple rev_ord i | i < n].
 Proof.
-rewrite (map_uniq (f:=@rev_ord n)) // -map_comp (eq_map (g:=id)).
+rewrite (map_uniq (f:=@rev_ord n)) // -map_comp (@eq_map _ _ _ id).
   by rewrite map_id enum_uniq.
 by move=> x /=; rewrite rev_ordK.
 Qed.
@@ -1305,7 +1365,7 @@ Proof.
 apply/(@inj_map _ _ (val : 'I_n -> nat)). exact val_inj.
 rewrite val_enum_ord.
 elim: n => //= n IH.
-rewrite -map_comp -(eq_map (f:=S \o nat_of_ord (n:=n))) //.
+rewrite -map_comp -(@eq_map _ _ (S \o nat_of_ord (n:=n))) //.
 by rewrite map_comp -IH (iotaDl 1 0 n).
 Qed.
 
