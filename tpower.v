@@ -439,15 +439,12 @@ f_equal; first last.
       rewrite tnth_lens_index -{1}(lens_basis_perm (lothers_in_l l1 l2)).
       by rewrite tnth_comp !tnth_lens_index.
     rewrite Hilll tnth_lens_index.
-    rewrite (tnth_nth (tnth vj (lens_index Hill))).
-    rewrite [RHS](tnth_nth (tnth vj (lens_index Hill))) /=.
-    by rewrite [seq_basis _]lens_basis_lothers_in_l.
+    pose i1 := tnth vj (lens_index Hill).
+    by rewrite !(tnth_nth i1) /= [seq_basis _]lens_basis_lothers_in_l.
   rewrite -mem_lothers in Hill.
   rewrite tnth_merge_indices tnth_merge_indices_lothers.
-  rewrite (tnth_nth (tnth vk (cast_ord (cast_lothers_notin_l l1 l2)
-                                       (lens_index Hill)))).
-  by rewrite [RHS](tnth_nth (tnth vk (cast_ord (cast_lothers_notin_l l1 l2)
-                                               (lens_index Hill)))).
+  pose i1 := tnth vk (cast_ord (cast_lothers_notin_l l1 l2) (lens_index Hill)).
+  by rewrite !(tnth_nth i1).
 f_equal.
 apply/ffunP => vh.
 rewrite !ffunE -!extract_comp scalerA -natrM mulnb.
