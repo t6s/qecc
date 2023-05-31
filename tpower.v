@@ -351,7 +351,7 @@ Canonical tpsel_lin := Linear tpsel_is_linear.
 End tpaux.
 
 Lemma tp_single_basis n (vi : n.-tuple I) : tpsingle vi (1:R^o) = tpbasis vi.
-Proof. apply/ffunP => vj. by rewrite !ffunE /GRing.scale /= mulr1. Qed.
+Proof. apply/ffunP => vj. by rewrite !ffunE [LHS]mulr1. Qed.
 
 Section partial_trace.
 Variables (n m : nat) (l : lens n m) (f : endo n).
@@ -407,14 +407,7 @@ have cast : ((n - p) - (n - m) = m - p)%N.
   rewrite -addnABC; try apply/lens_leq => //; first last.
     exact (lens_comp l1 l2).
   by rewrite addKn.
-rewrite (reindex_inj (h:=extract (lens_perm (lothers_in_l l1 l2)))); last first.
-  set l := lens_perm _.
-  move=> x y H.
-  rewrite -(merge_indices_extract dI l x) H.
-  have -> : extract (lothers l) x = extract (lothers l) y.
-    apply eq_from_tnth => i. elimtype False.
-    have := ltn_ord i. by rewrite {2}subnn ltn0.
-  by rewrite merge_indices_extract.
+rewrite (reindex_inj (@extract_inj _ (lens_perm (lothers_in_l l1 l2)) _)).
 rewrite (reindex (fun t => cast_tuple t (esym cast))) /=; last first.
   exists (fun t => cast_tuple t cast) => x y; exact/val_inj.
 apply eq_bigr => /= vj _.
@@ -428,8 +421,7 @@ f_equal; first last.
   apply eq_from_tnth => i.
   case/boolP: (i \in lothers_in_l l1 l2) => Hill.
     rewrite (tnth_merge_indices _ _ _ Hill).
-    have Hinl : i \notin lothers_notin_l l1 l2.
-      by rewrite mem_lothers Hill.
+    have Hinl : i \notin lothers_notin_l l1 l2 by rewrite mem_lothers Hill.
     rewrite -mem_lothers in Hinl.
     rewrite tnth_merge_indices_lothers tnth_extract.
     have Hill' := Hill.
@@ -437,11 +429,11 @@ f_equal; first last.
     have Hilb : i \in lens_basis (lothers_in_l l1 l2).
       by apply/lens_comp_sub: Hill'.
     rewrite mem_lens_comp in Hill'.
-    have Hilll : lens_index Hill = lens_index Hill'.
+    have -> : lens_index Hill = lens_index Hill'.
       apply (tnth_lens_inj (l:=lothers_in_l l1 l2)).
       rewrite tnth_lens_index -{1}(lens_basis_perm (lothers_in_l l1 l2)).
       by rewrite tnth_comp !tnth_lens_index.
-    rewrite Hilll tnth_lens_index.
+    rewrite tnth_lens_index.
     pose i1 := tnth vj (lens_index Hill).
     by rewrite !(tnth_nth i1) /= [seq_basis _]lens_basis_lothers_in_l.
   rewrite -mem_lothers in Hill.
