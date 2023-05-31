@@ -350,6 +350,9 @@ Proof. by move=> x y z; rewrite /tpsel !ffunE. Qed.
 Canonical tpsel_lin := Linear tpsel_is_linear.
 End tpaux.
 
+Lemma tp_single_basis n (vi : n.-tuple I) : tpsingle vi (1:R^o) = tpbasis vi.
+Proof. apply/ffunP => vj. by rewrite !ffunE /GRing.scale /= mulr1. Qed.
+
 Section partial_trace.
 Variables (n m : nat) (l : lens n m) (f : endo n).
 
