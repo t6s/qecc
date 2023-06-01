@@ -408,10 +408,9 @@ have cast : ((n - p) - (n - m) = m - p)%N.
     exact (lens_comp l1 l2).
   by rewrite addKn.
 rewrite (reindex_inj (@extract_inj _ (lens_perm (lothers_in_l l1 l2)) _)).
-rewrite (reindex (cast_tuple (esym cast))) /=; last first.
-  exists (cast_tuple cast) => x y; exact/val_inj.
+rewrite (reindex _ (onW_bij _ (cast_tuple_bij _ (esym cast)))) /=.
 apply eq_bigr => /= vj _.
-rewrite /= !linear_sum sum_ffunE.
+rewrite !linear_sum sum_ffunE.
 apply eq_bigr => /= vk _.
 rewrite /tpsel !ffunE.
 f_equal; first last.

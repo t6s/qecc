@@ -72,6 +72,9 @@ End tnth.
 Lemma cast_tupleE n T (v : n.-tuple T) (H : n = n) : cast_tuple H v = v.
 Proof. exact/val_inj. Qed.
 
+Lemma cast_tuple_bij T m n H : bijective (@cast_tuple T m n H).
+Proof. by exists (cast_tuple (esym H)); move => x; apply val_inj. Qed.
+
 Section tnth_eq.
 Variables (A : eqType) (n : nat).
 Lemma tnth_inj (t : n.-tuple A) : reflect (injective (tnth t)) (uniq t).
