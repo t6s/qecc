@@ -193,7 +193,7 @@ Qed.
 
 Lemma lens_perm_left_right m p (f : lens n m) (g : lens n p)
   (H : [disjoint f & g]) (H' : [disjoint g & f]) (Hm : (p + m = m + p)%N) :
-  lens_perm_left H = cast_lens_ord (lens_perm_right H') Hm.
+  lens_perm_left H = cast_lens_ord Hm (lens_perm_right H').
 Proof.
 eq_lens; apply/eqP.
 rewrite -[RHS]map_comp [RHS](@eq_map _ _ _ (@nat_of_ord _)) //.
@@ -215,13 +215,13 @@ case: f g H H' => f_m f_l f_s f_e [] g_m g_l g_s g_e /= H H'.
 have Hm : (g_m + f_m = f_m + g_m)%N by rewrite addnC.
 apply eq_foc_endo => //=.
 - have -> : lens_basis (lens_cat H) =
-            cast_lens (lens_basis (lens_cat H')) Hm.
+            cast_lens Hm (lens_basis (lens_cat H')).
     apply/lens_inj/eq_filter => /= i.
     by rewrite !mem_cat orbC.
   case: _ / Hm; apply eq_JMeq.
   by rewrite cast_lensE.
 - rewrite lens_perm_left_right.
-  have -> : lens_perm_right H = cast_lens_ord (lens_perm_left H') Hm.
+  have -> : lens_perm_right H = cast_lens_ord Hm (lens_perm_left H').
     rewrite (lens_perm_left_right  H' H (esym Hm)).
     by eq_lens; apply/eqP; rewrite -!map_comp /=; apply eq_map.
   case: _ / Hm; apply eq_JMeq.
@@ -241,7 +241,7 @@ case: f => -[|m] l Sl e /= H; last first.
   by rewrite disjoint_sym disjoint_has /= mem_enum.
 have Hn : (n = n + 0)%N by rewrite addn0.
 apply eq_foc_endo => //=.
-- have -> : lens_basis (lens_cat H) = cast_lens (lens_id n) Hn.
+- have -> : lens_basis (lens_cat H) = cast_lens Hn (lens_id n).
     apply/lens_inj; rewrite -[RHS]enum_filterP.
     by apply eq_filter => i; rewrite mem_cat mem_lens_full.
   case: _ / Hn; apply eq_JMeq.
@@ -285,7 +285,7 @@ have Hm := esym (addnA (foc_m f) (foc_m g) (foc_m h)).
 apply eq_foc_endo => /=.
 - by rewrite addnA.
 - have -> : lens_basis (lens_cat Hf_gh) =
-            cast_lens (lens_basis (lens_cat Hfg_h)) Hm.
+            cast_lens Hm (lens_basis (lens_cat Hfg_h)).
     apply/lens_inj/eq_filter => i.
     by rewrite !(mem_cat,mem_lens_basis,orbA).
   case: _ / Hm; apply eq_JMeq.
@@ -295,14 +295,14 @@ apply eq_foc_endo => /=.
           Hg_h Hf_g Hf_gh Hfg_h Hm.
   set lhs := _ \v _.
   set rhs := _ \v _.
-  suff -> : lhs = cast_mor rhs Hm Hm.
+  suff -> : lhs = cast_mor Hm Hm rhs.
     clear lhs; subst rhs.
     case: _ / Hm.
     apply/eq_JMeq/morP => T v /=.
     by rewrite !tpcastE.
   apply/morP => T v /= {lhs rhs}.
   rewrite !focus_comp /= -!focusM //.
-  have <- : cast_lens_ord (lens_perm_left Hf_gh) (esym Hm) =
+  have <- : cast_lens_ord (esym Hm) (lens_perm_left Hf_gh) =
             lens_comp (lens_perm_left Hfg_h) (lens_perm_left Hf_g).
     eq_lens. rewrite -6!map_comp.
     apply/eqP/eq_map => i /=.
@@ -310,9 +310,8 @@ apply eq_foc_endo => /=.
     rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hf_g))) tnth_lshift.
     congr index; apply eq_filter => j.
     by rewrite !(mem_cat,mem_lens_basis) orbA.
-  have <- : cast_lens_ord
-              (lens_comp (lens_perm_right Hf_gh) (lens_perm_left Hg_h))
-              (esym Hm) =
+  have <- : cast_lens_ord (esym Hm)
+              (lens_comp (lens_perm_right Hf_gh) (lens_perm_left Hg_h)) =
             lens_comp (lens_perm_left Hfg_h) (lens_perm_right Hf_g).
     eq_lens. rewrite -7!map_comp.
     apply/eqP/eq_map => i /=.
@@ -323,9 +322,8 @@ apply eq_foc_endo => /=.
     rewrite tnth_lshift tnth_rshift.
     congr index; apply eq_filter => j.
     by rewrite !(mem_cat,mem_lens_basis) orbA.
-  have <- : cast_lens_ord
-              (lens_comp (lens_perm_right Hf_gh) (lens_perm_right Hg_h))
-              (esym Hm) =
+  have <- : cast_lens_ord (esym Hm)
+              (lens_comp (lens_perm_right Hf_gh) (lens_perm_right Hg_h)) =
             lens_perm_right Hfg_h.
     eq_lens. rewrite -6!map_comp.
     apply/eqP/eq_map => i /=.

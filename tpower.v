@@ -60,7 +60,7 @@ Lemma map_tpower_scale n (x : R^o) (v : tpower n R^o) :
 Proof. apply/ffunP => i; by rewrite !ffunE [LHS]mulrC. Qed.
 
 Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
-  [ffun vi => v (cast_tuple vi (esym H))].
+  [ffun vi => v (cast_tuple (esym H) vi)].
 
 Lemma tpcastE T n v (H : n = n) : tpcast (T:=T) H v = v.
 Proof. by apply/ffunP => vi; rewrite !ffunE cast_tupleE. Qed.
@@ -408,15 +408,15 @@ have cast : ((n - p) - (n - m) = m - p)%N.
     exact (lens_comp l1 l2).
   by rewrite addKn.
 rewrite (reindex_inj (@extract_inj _ (lens_perm (lothers_in_l l1 l2)) _)).
-rewrite (reindex (fun t => cast_tuple t (esym cast))) /=; last first.
-  exists (fun t => cast_tuple t cast) => x y; exact/val_inj.
+rewrite (reindex (cast_tuple (esym cast))) /=; last first.
+  exists (cast_tuple cast) => x y; exact/val_inj.
 apply eq_bigr => /= vj _.
 rewrite /= !linear_sum sum_ffunE.
 apply eq_bigr => /= vk _.
 rewrite /tpsel !ffunE.
 f_equal; first last.
 - rewrite -[RHS](merge_indices_comp dI l1 l2 _ _
-                  (vl:=cast_tuple vk (esym (cast_lothers_notin_l l1 l2)))) //.
+                  (vl:=cast_tuple (esym (cast_lothers_notin_l l1 l2)) vk)) //.
   congr merge_indices.
   apply eq_from_tnth => i.
   case/boolP: (i \in lothers_in_l l1 l2) => Hill.
@@ -448,7 +448,7 @@ rewrite -[extract (lothers _) vh]
            (merge_indices_extract dI (lothers_notin_l l1 l2)).
 rewrite merge_indices_inj_eq -extract_comp lothers_notin_l_comp -extract_comp.
 congr andb.
-rewrite -(inj_eq (f:=fun t => cast_tuple t cast)); last first.
+rewrite -(inj_eq (f:=cast_tuple cast)); last first.
   move=> x y /(f_equal val) => H; exact/val_inj.
 rewrite (_ : cast_tuple _ _ = vj); last by apply val_inj.
 rewrite -[in LHS]
@@ -630,8 +630,8 @@ Definition comp_mor := Mor comp_morN.
 End comp_mor.
 Notation "f \v g" := (comp_mor f g).
 
-Definition cast_mor m2 n2 m1 n1 (f : mor m1 n1)
-           (Hm : m1 = m2) (Hn : n1 = n2) : mor m2 n2 :=
+Definition cast_mor m2 n2 m1 n1 (Hm : m1 = m2) (Hn : n1 = n2) (f : mor m1 n1)
+  : mor m2 n2 :=
   mor_tpcast Hn \v f \v mor_tpcast (esym Hm).
 
 Section comp_mor_facts.
@@ -734,8 +734,8 @@ Lemma asym_focusC n m p n' m' p' (l1 : lens (m+n) m) (l2 : lens (p+n) p)
 
 Lemma asym_focusC n m p (l1 : lens (m+n) m) (l2 : lens (p+n) p)
       (g : mor m p) (f : endo n) :
-  focus (cast_lens (lothers l2) (addKn _ _)) f \v asym_focus l1 l2 g =e
-  asym_focus l1 l2 g \v focus (cast_lens (lothers l1) (addKn _ _)) f.
+  focus (cast_lens (addKn _ _) (lothers l2)) f \v asym_focus l1 l2 g =e
+  asym_focus l1 l2 g \v focus (cast_lens (addKn _ _) (lothers l1)) f.
 Proof.
 case/naturalityP: (morN f) (morN g) => Mf Hf /naturalityP [Mg Hg] T v /=.
 rewrite !focusE /=.
@@ -765,13 +765,13 @@ congr (Mf _ vk * Mg _ vj *: v _).
   rewrite !nth_lens_out //.
   move/negbF: Hil1.
   rewrite -mem_others => /negbFE.
-  have -> : others l1 = cast_lens (lothers l1) (addKn _ _) by [].
+  have -> : others l1 = cast_lens (addKn _ _) (lothers l1) by [].
   move=> Hil1.
   rewrite !nth_lens_index (tnth_nth dI).
   congr nth.
-  have -> : others l2 = cast_lens (lothers l2) (addKn _ _) by [].
-  transitivity (map_tuple (tnth (inject (cast_lens (lothers l2) (addKn p n))
-                           vi vk)) (cast_lens (lothers l2) (addKn p n))) => //.
+  have -> : others l2 = cast_lens (addKn _ _) (lothers l2) by [].
+  transitivity (map_tuple (tnth (inject (cast_lens (addKn p n) (lothers l2))
+                           vi vk)) (cast_lens (addKn p n) (lothers l2))) => //.
   apply f_equal, eq_from_tnth => j.
   rewrite tnth_map /= tnth_mktuple nth_lens_index ?mem_tnth // => H.
   rewrite -(nth_lens_index H dI) nthK /=.

@@ -33,10 +33,10 @@ Proof. by rewrite {2}/enum_mem -enumT. Qed.
 Section tnth.
 Variables (T : Type) (m n : nat) (vl : m.-tuple T) (vr : n.-tuple T).
 
-Lemma cast_tuple_proof : m = n -> size vl == n.
-Proof. by rewrite size_tuple => ->. Qed.
+Lemma cast_tuple_proof (H : m = n) (v : m.-tuple T) : size v == n.
+Proof. by rewrite size_tuple H. Qed.
 
-Definition cast_tuple (H : m = n) : n.-tuple T := Tuple (cast_tuple_proof H).
+Definition cast_tuple H v : n.-tuple T := Tuple (cast_tuple_proof H v).
 
 Lemma eq_ord_tuple (t1 t2 : n.-tuple 'I_m) :
   (t1 == t2) = (map val t1 == map val t2).
@@ -69,7 +69,7 @@ exact (eq_from_nth Hsz (Heq a)).
 Qed.
 End tnth.
 
-Lemma cast_tupleE n T (v : n.-tuple T) (H : n = n) : cast_tuple v H = v.
+Lemma cast_tupleE n T (v : n.-tuple T) (H : n = n) : cast_tuple H v = v.
 Proof. exact/val_inj. Qed.
 
 Section tnth_eq.
@@ -239,17 +239,19 @@ End lens.
 
 (* Cast *)
 Section cast_lens.
-Variables (n n' m m' : nat) (l : lens n m) (l' : lens n m').
+Variables (n n' m m' : nat).
 
-Definition cast_lens_ord (H : n = n') : lens n' m.
+Definition cast_lens_ord (H : n = n') (l : lens n m) : lens n' m.
 exists (map_tuple (cast_ord H) l).  
 abstract (by rewrite map_inj_uniq ?lens_uniq // => i j /cast_ord_inj).
 Defined.
 
-Definition cast_lens (H : m' = m) : lens n m.
-exists (cast_tuple l' H).
+Definition cast_lens (H : m' = m) (l : lens n m') : lens n m.
+exists (cast_tuple H l).
 apply lens_uniq.
 Defined.
+
+Variables (l : lens n m) (l' : lens n m').
 
 Lemma eq_lens_sorted :
   l =i l' -> lens_sorted l -> lens_sorted l' -> l = l' :> seq _.
@@ -264,18 +266,18 @@ Hypothesis H : l = l' :> seq _.
 Lemma lens_size_eq : m' = m.
 Proof. by rewrite -(size_tuple l') -H size_tuple. Qed.
 
-Lemma lens_eq_cast : l = cast_lens lens_size_eq.
+Lemma lens_eq_cast : l = cast_lens lens_size_eq l'.
 Proof. exact/lens_inj. Qed.
 
 Lemma extract_eq_cast A (v : n.-tuple A) :
- extract l v = cast_tuple (extract l' v) lens_size_eq.
+ extract l v = cast_tuple lens_size_eq (extract l' v).
 Proof. apply val_inj => /=. by rewrite H. Qed.
 End cast_lens.
 
-Lemma cast_lens_ordE n m (l : lens n m) H : cast_lens_ord (n':=n) l H = l.
+Lemma cast_lens_ordE n m (l : lens n m) H : cast_lens_ord (n':=n) H l = l.
 Proof. apply/eq_lens_tnth => i; rewrite tnth_map; by apply/val_inj. Qed.
 
-Lemma cast_lensE n m (l : lens n m) H : cast_lens (m':=m) l H = l.
+Lemma cast_lensE n m (l : lens n m) H : cast_lens (m':=m) H l = l.
 Proof. exact/lens_inj. Qed.
 
 (* Identity *)
@@ -691,10 +693,10 @@ Lemma lothers_empty : lothers lens_empty = lens_id n :> seq _.
 Proof. by rewrite /lothers /others /= filter_predT. Qed.
 
 Lemma merge_indices_empty (T : eqType) (dI:T) v w :
-  merge_indices dI lens_empty v w = cast_tuple w (subn0 n).
+  merge_indices dI lens_empty v w = cast_tuple (subn0 n) w.
 Proof.
 rewrite /merge_indices.
-rewrite (eq_mktuple (tnth (cast_tuple w (subn0 n)))); last first.
+rewrite (eq_mktuple (tnth (cast_tuple (subn0 n) w))); last first.
   move => i.
   by rewrite nth_lens_out // lothers_empty index_lens_id (tnth_nth dI).
 by apply eq_from_tnth => i; rewrite tnth_mktuple.
