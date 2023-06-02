@@ -82,7 +82,7 @@ Canonical morlin_tpcast.
 
 Lemma tpcastN m n (H : n = m) : naturality (morlin_tpcast H).
 Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
-Canonical mor_tpcast n m (H : n = m) := Mor (tpcastN H).
+Definition mor_tpcast n m (H : n = m) := Mor (tpcastN H).
 
 Definition eq_mor m n (f1 f2 : mor m n) :=
   forall T : lmodType R, f1 T =1 f2 T.
@@ -99,7 +99,7 @@ rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 
-Canonical tsmorfun m n (M : tmatrix n m) : morlin m n :=
+Definition tsmorfun m n (M : tmatrix n m) : morlin m n :=
   fun T => Linear (@tsmor_is_linear m n M T).
 Definition tsmorlin m n (M : tmatrix n m) : morlin m n :=
   locked (tsmorfun M).
@@ -111,7 +111,7 @@ rewrite /tsmorlin -lock !ffunE linear_sum; apply eq_bigr => vj _.
 by rewrite linearZ_LR !ffunE.
 Qed.
 
-Canonical tsmor m n (M : tmatrix n m) : mor m n :=
+Definition tsmor m n (M : tmatrix n m) : mor m n :=
   Mor (tsmorN M).
 
 Lemma tsmorE m n (M : tmatrix n m) T v vi :
