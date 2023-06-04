@@ -184,7 +184,7 @@ rewrite focus_tpbasis.
 simpl_extract.
 rewrite tsmor_cnot0.
 rewrite uncurry_tpsingle.
-rewrite (_ : merge_indices _ _ _ _ = [tuple 0%:O; j; k]); last by eq_lens.
+rewrite (_ : merge _ _ _ _ = [tuple 0%:O; j; k]); last by eq_lens.
 rewrite focus_tpbasis.
 simpl_extract.
 rewrite tsmor_cnot0 uncurry_tpsingle.
@@ -200,7 +200,7 @@ rewrite focus_tpbasis.
 simpl_extract.
 rewrite tsmor_cnot1.
 rewrite uncurry_tpsingle.
-rewrite (_ : merge_indices _ _ _ _ = [tuple 1%:O; flip j; k]); last by eq_lens.
+rewrite (_ : merge _ _ _ _ = [tuple 1%:O; flip j; k]); last by eq_lens.
 rewrite focus_tpbasis.
 simpl_extract.
 rewrite tsmor_cnot1 uncurry_tpsingle.
@@ -317,7 +317,7 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   rewrite !linearZ_LR /= uncurry_tpsingle.
   congr (_ *: focus _ _ _ _).
   case: j => -[|a [|b [|c []]]] Hj //=.
-  rewrite (_ : merge_indices _ _ _ _ =
+  rewrite (_ : merge _ _ _ _ =
          [tuple a; 0%:O; 0%:O; b; 0%:O; 0%:O; c; 0%:O; 0%:O]); last by eq_lens.
   rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
   rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
@@ -499,14 +499,14 @@ case/boolP: (i < n.+2./2)%N => Hi.
   have -> : lens_pair (rev_ord_neq (Ordinal Hi)) = lens_pair Hir by eq_lens.
   rewrite (tsapp_swap_asym_focus Hir).
   apply/ffunP => vi; rewrite !ffunE; congr sqrtc.
-  rewrite [LHS](reindex_merge_indices _ ord0 lens_ior) //=.
-  rewrite [RHS](reindex_merge_indices _ ord0 lens_roi) //=.
+  rewrite [LHS](reindex_merge _ ord0 lens_ior) //=.
+  rewrite [RHS](reindex_merge _ ord0 lens_roi) //=.
   apply eq_bigr => vj _; apply eq_bigr => vk _; rewrite !ffunE.
   have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
-  rewrite !cast_tupleE merge_indices_pair.
+  rewrite !cast_tupleE merge_pair.
   have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
     by apply/lens_inj/eq_lothers => j; rewrite !inE orbC.
-  rewrite extract_lothers_merge [in RHS]merge_indices_pair.
+  rewrite extract_lothers_merge [in RHS]merge_pair.
   have Hris : lens_basis (lens_pair Hri) = lens_pair Hir :> seq _.
     apply/eq_lens_sorted.
     - by move=> /= j; rewrite mem_lensE mem_filter mem_enum !inE andbT orbC.
@@ -518,7 +518,7 @@ case/boolP: (i < n.+2./2)%N => Hi.
     by rewrite (negbTE Hir) !eqxx.
   rewrite -[in LHS](lens_basis_perm (lens_pair Hri)).  
   rewrite (lens_inj Hris) !extract_comp extract_merge.
-  rewrite -(lens_inj Hris) merge_indices_basis Hpri.
+  rewrite -(lens_inj Hris) merge_basis Hpri.
   set ee := extract _ _.
   have -> // : ee = [tuple of vj ++ vi].
   apply/val_inj => /=; rewrite !(tnth_nth ord0) /= !(tnth_nth ord0) /=.
@@ -547,11 +547,11 @@ case/boolP: (i < n.+2./2)%N => Hi.
     by eq_lens; move/(f_equal val): (rev_ordK i) => /= ->.
   rewrite (tsapp_swap_asym_focus Hri).
   apply/ffunP => vi; rewrite !ffunE; congr sqrtc.
-  rewrite [LHS](reindex_merge_indices _ ord0 lens_ior) //=.
-  rewrite [RHS](reindex_merge_indices _ ord0 lens_roi) //=.
+  rewrite [LHS](reindex_merge _ ord0 lens_ior) //=.
+  rewrite [RHS](reindex_merge _ ord0 lens_roi) //=.
   apply eq_bigr => vj _; apply eq_bigr => vk _; rewrite !ffunE.
   have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
-  rewrite !cast_tupleE 2!merge_indices_pair.
+  rewrite !cast_tupleE 2!merge_pair.
   by rewrite extract_lothers_merge extract_merge.
 Qed.
 
@@ -661,20 +661,18 @@ have Hroi : j \in lothers (lens_single i).
   by rewrite mem_lothers !inE.
 apply/ffunP => vi.
 rewrite /= focusE !ffunE /tinner; congr sqrtc.
-rewrite [LHS](reindex_merge_indices _ ord0
-                                    (lens_single (lens_index Hior))) //.
-rewrite [RHS](reindex_merge_indices _ ord0
-                                    (lens_single (lens_index Hroi))) //.
+rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
+rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
 apply eq_bigr => vj _.
 apply eq_bigr => vk _.
 rewrite !ffunE !tsmorE.
 under eq_bigr do rewrite !ffunE.
 rewrite sum_enum_indices /= /GRing.scale !(linE,ffunE) /= !(mulr1,mulr0,linE).
 rewrite /GRing.scale /=.
-rewrite (merge_indices_pair ord0 vi vj vk Hior) //.
+rewrite (merge_pair ord0 vi vj vk Hior) //.
 rewrite extract_merge extract_lothers_merge.
-rewrite (merge_indices_pair ord0 vi vj vk Hroi) //.
-rewrite (merge_indices_rev ord0 (l:=lens_pair Hri) (l':=lens_pair Hir)
+rewrite (merge_pair ord0 vi vj vk Hroi) //.
+rewrite (merge_rev ord0 (l:=lens_pair Hri) (l':=lens_pair Hir)
           (vi:=[tuple of vj ++ vi]) (vj:=[tuple of vi ++ vj])) //; first last.
   by case: vi vj => -[] // a [] // sza [] [] // b [].
 have := mem_enum_indices vi => /=.
@@ -770,18 +768,16 @@ case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
     move/eqP: rih => /= <-. by rewrite ltnS subSS leq_subr.
   apply/ffunP => vi.
   rewrite /= focusE !ffunE /tinner; congr sqrtc.
-  rewrite [LHS](reindex_merge_indices _ ord0
-                                      (lens_single (lens_index Hior))) //.
-  rewrite [RHS](reindex_merge_indices _ ord0
-                                      (lens_single (lens_index Hroi))) //.
+  rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
+  rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
   apply eq_bigr => vj _.
   apply eq_bigr => vk _.
   rewrite !ffunE !tsmorE.
   under eq_bigr do rewrite !ffunE.
   rewrite sum_enum_indices /= /GRing.scale !(linE,ffunE) /= !(mulr1,mulr0,linE).
-  rewrite (merge_indices_pair ord0 vi vj vk Hroi) //.
-  rewrite (merge_indices_pair ord0 vi vj vk Hior) //.
-  rewrite (merge_indices_rev ord0 (l:=lens_pair Hir) (l':=lens_pair Hri)
+  rewrite (merge_pair ord0 vi vj vk Hroi) //.
+  rewrite (merge_pair ord0 vi vj vk Hior) //.
+  rewrite (merge_rev ord0 (l:=lens_pair Hir) (l':=lens_pair Hri)
              (vi:=[tuple of vj ++ vi]) (vj:=[tuple of vi ++ vj])); first last.
   - by case: vi vj => -[] // a [] // sza [] [] // b [].
   - by rewrite /= rev_ordK.

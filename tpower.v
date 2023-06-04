@@ -18,7 +18,7 @@ Definition linE :=
 
 Section tensor_space.
 Variables (I : finType) (dI : I) (R : comRingType).
-Local Notation merge_indices := (merge_indices dI).
+Local Notation merge := (merge dI).
 
 Definition tpower n T := {ffun n.-tuple I -> T}.
 Definition morfun m n := forall T : lmodType R, tpower m T -> tpower n T.
@@ -266,7 +266,7 @@ Variables (T : lmodType R) (n m : nat) (l : lens n m).
 
 Definition curry (st : tpower n T) : tpower m (tpower (n-m) T) :=
   [ffun v : m.-tuple I =>
-   [ffun w : (n-m).-tuple I => st (merge_indices l v w)]].
+   [ffun w : (n-m).-tuple I => st (merge l v w)]].
 
 Definition uncurry (st : tpower m (tpower (n-m) T)) : tpower n T :=
   [ffun v : n.-tuple I => st (extract l v) (extract (lothers l) v)].
@@ -278,7 +278,7 @@ by rewrite !ffunE extract_merge extract_lothers_merge.
 Qed.
 
 Lemma curryK : cancel curry uncurry.
-Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_indices_extract. Qed.
+Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_extract. Qed.
 
 Lemma curry_is_linear : linear curry.
 Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
@@ -400,7 +400,7 @@ Proof.
 move=> T /= v.
 apply/ffunP => /= vi.
 rewrite /ptracefun !sum_ffunE /ptracefun.
-rewrite [LHS](reindex_merge_indices _ dI (lothers_notin_l l1 l2)) /=.
+rewrite [LHS](reindex_merge _ dI (lothers_notin_l l1 l2)) /=.
 rewrite exchange_big /=.
 have cast : ((n - p) - (n - m) = m - p)%N.
   rewrite subnBA; last by apply lens_leq.
@@ -414,15 +414,15 @@ rewrite !linear_sum sum_ffunE.
 apply eq_bigr => /= vk _.
 rewrite /tpsel !ffunE.
 f_equal; first last.
-- rewrite -[RHS](merge_indices_comp dI l1 l2 _ _
+- rewrite -[RHS](merge_comp dI l1 l2 _ _
                   (vl:=cast_tuple (esym (cast_lothers_notin_l l1 l2)) vk)) //.
-  congr merge_indices.
+  congr merge.
   apply eq_from_tnth => i.
   case/boolP: (i \in lothers_in_l l1 l2) => Hill.
-    rewrite (tnth_merge_indices _ _ _ Hill).
+    rewrite (tnth_merge _ _ _ Hill).
     have Hinl : i \notin lothers_notin_l l1 l2 by rewrite mem_lothers Hill.
     rewrite -mem_lothers in Hinl.
-    rewrite tnth_merge_indices_lothers tnth_extract.
+    rewrite tnth_merge_lothers tnth_extract.
     have Hill' := Hill.
     rewrite -(lens_basis_perm (lothers_in_l l1 l2)) in Hill'.
     have Hilb : i \in lens_basis (lothers_in_l l1 l2).
@@ -436,7 +436,7 @@ f_equal; first last.
     pose i1 := tnth vj (lens_index Hill).
     by rewrite !(tnth_nth i1) /= [seq_basis _]lens_basis_lothers_in_l.
   rewrite -mem_lothers in Hill.
-  rewrite tnth_merge_indices tnth_merge_indices_lothers.
+  rewrite tnth_merge tnth_merge_lothers.
   pose i1 := tnth vk (cast_ord (cast_lothers_notin_l l1 l2) (lens_index Hill)).
   by rewrite !(tnth_nth i1).
 f_equal.
@@ -444,8 +444,8 @@ apply/ffunP => vh.
 rewrite !ffunE -!extract_comp scalerA -natrM mulnb.
 congr ((_ : bool)%:R *: _).
 rewrite -[extract (lothers _) vh]
-           (merge_indices_extract dI (lothers_notin_l l1 l2)).
-rewrite merge_indices_inj_eq -extract_comp lothers_notin_l_comp -extract_comp.
+           (merge_extract dI (lothers_notin_l l1 l2)).
+rewrite merge_inj_eq -extract_comp lothers_notin_l_comp -extract_comp.
 congr andb.
 rewrite -(inj_eq (f:=cast_tuple cast)); last first.
   move=> x y /(f_equal val) => H; exact/val_inj.
@@ -516,7 +516,7 @@ case/boolP: (vi == _) => /eqP Hvi.
   by rewrite Hvi extract_lothers_merge extract_merge !eqxx /= scale1r.
 case/boolP: (_ == vk) => /eqP Hvk; last by rewrite scale0r.
 case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
-by elim Hvi; rewrite -Hvk -Hvj merge_indices_extract.
+by elim Hvi; rewrite -Hvk -Hvj merge_extract.
 Qed.
 
 Lemma focus_tpbasis f (vi : n.-tuple I) :
@@ -530,7 +530,7 @@ Qed.
 
 Lemma uncurry_tpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
   uncurry l (map_tpower (tpsingle vi) (tpbasis vj)) =
-  tpbasis (merge_indices l vj vi).
+  tpbasis (merge l vj vi).
 Proof.
 apply/ffunP => vk.
 rewrite !ffunE.
@@ -538,7 +538,7 @@ case/boolP: (_ == vk) => /eqP Hvk.
   by rewrite -Hvk extract_lothers_merge extract_merge !eqxx scale1r.
 case/boolP: (_ == extract _ _) => /eqP Hvi; last by rewrite scale0r.
 case/boolP: (_ == _) => /eqP Hvj; last by rewrite scaler0.
-elim Hvk; by rewrite Hvi Hvj merge_indices_extract.
+elim Hvk; by rewrite Hvi Hvj merge_extract.
 Qed.
 
 Lemma focus_tpbasis_id (f : endo m) v :
@@ -546,7 +546,7 @@ Lemma focus_tpbasis_id (f : endo m) v :
   focus f _ (tpbasis v) = tpbasis v.
 Proof.
 move=> Htr.
-by rewrite focus_tpbasis // Htr uncurry_tpsingle merge_indices_extract.
+by rewrite focus_tpbasis // Htr uncurry_tpsingle merge_extract.
 Qed.
 End focus.
 
@@ -676,7 +676,7 @@ rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (f _ vk * f' _ vj *: v _).
 - by rewrite extract_merge_disjoint // disjoint_sym.
 - by rewrite extract_merge_disjoint.
-- by rewrite !merge_indices_extract_others inject_disjointC.
+- by rewrite !merge_extract_others inject_disjointC.
 Qed.
 
 Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
@@ -687,7 +687,7 @@ move=> T v; apply/ffunP => /= vi.
 rewrite focusE !(ffunE,tsmorE) !sum_ffunE.
 under eq_bigr do rewrite !focusE !(ffunE,tsmorE) !sum_ffunE scaler_sumr.
 rewrite reindex_left_right.
-apply eq_bigr => /= vj _; rewrite !ffunE !merge_indices_extract_others.
+apply eq_bigr => /= vj _; rewrite !ffunE !merge_extract_others.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
 by rewrite scalerA inject_all // lens_left_right_disjoint.
 Qed.
@@ -704,7 +704,7 @@ rewrite !ffunE !tsmorE (extract_lothers_comp dI) -!extract_comp.
 rewrite -[in RHS]lothers_in_l_comp -(lothers_notin_l_comp l l') !sum_ffunE.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _).
-exact: merge_indices_comp.
+exact: merge_comp.
 Qed.
 
 (* Variant for disjoint lenses, used in unitary.v *)
@@ -717,7 +717,7 @@ Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : tpower n T) :
 Proof.
 case/naturalityP: (morN f) => M Hf; apply/ffunP => vi.
 rewrite /= !focusE !ffunE /= -!extract_comp !Hf !tsmorE /= !sum_ffunE.
-apply eq_bigr => vj _; by rewrite !ffunE merge_indices_comp_others.
+apply eq_bigr => vj _; by rewrite !ffunE merge_comp_others.
 Qed.
 End focus_props.
 Notation "f \v g" := (comp_mor f g).
@@ -754,7 +754,7 @@ congr (Mf _ vk * Mg _ vj *: v _).
   rewrite simpl_predE /= andbC /=.
   case Hi: (i \in l2) => //=.
   by rewrite mem_lensE /= mem_others Hi.
-- rewrite !merge_indices_extract_others.
+- rewrite !merge_extract_others.
   apply eq_from_tnth => i /=.
   rewrite !tnth_mktuple /=.
   case/boolP: (i \in l1) => Hil1. 

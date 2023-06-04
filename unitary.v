@@ -130,7 +130,7 @@ Lemma unitary_focus n m (l : lens n m) (f : endo m) :
   unitary_endo f -> unitary_endo (focus l f).
 Proof.
 rewrite /unitary_endo /tinner => /= Uf s t.
-rewrite 2!(reindex_merge_indices _ dI l) /=.
+rewrite 2!(reindex_merge _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
 pose sel s : tpower I m Co := map_tpower (tpsel vj) (curry dI l s).

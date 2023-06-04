@@ -64,7 +64,7 @@ rewrite -(lens_comp_rev_left Hrev) -(lens_comp_rev_left (l1:=l2) (l2:=l1));
   last by rewrite -Hrev revK.
 rewrite [in RHS]eq_sym.
 case H: (_ == _); last by rewrite !scale0r.
-rewrite !scale1r !merge_indices_empty.
+rewrite !scale1r !merge_empty.
 do 3!f_equal.
 apply/lens_inj/eq_filter => /= i.
 by rewrite !mem_lensE /= -Hrev mem_rev.
@@ -83,7 +83,7 @@ have -> : lothers [lens 0] = [lens 1] by eq_lens.
 rewrite !cast_tupleE /= -!extract_comp.
 have -> : lens_comp [lens 0; 1] [lens 0] = [lens 0] :> lens 3 1 by eq_lens.
 have -> : lens_comp [lens 0; 1] [lens 1] = [lens 1] :> lens 3 1 by eq_lens.
-rewrite !extract_merge !merge_indices_empty /= !extract_merge_disjoint.
+rewrite !extract_merge !merge_empty /= !extract_merge_disjoint.
 rewrite !scalerA -!scalerDl.
 f_equal.
 have := mem_enum_indices (extract [lens 0] vi).
