@@ -240,6 +240,13 @@ by rewrite tnth_inject tnth_extract tnth_lens_index.
 Qed.
 End lens.
 
+Lemma focus1_id T n m (l : lens n m) (v : n.-tuple T) : focus1 l id v = v.
+Proof.
+apply eq_from_tnth => i. case/boolP: (i \in l) => Hi.
+- by rewrite tnth_inject tnth_extract tnth_lens_index.
+- by rewrite focus1_out.
+Qed.
+
 (* Cast *)
 Section cast_lens.
 Variables (n n' m m' : nat).
