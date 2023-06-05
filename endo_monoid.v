@@ -1,6 +1,6 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
-Require Import lens tpower unitary.
+Require Import lens dpower unitary.
 Require Import JMeq ProofIrrelevance FunctionalExtensionality. (* Wooh *)
 
 Set Implicit Arguments.
@@ -16,7 +16,7 @@ Variables (I : finType) (dI : I).
 
 Notation focus := (focus dI).
 Notation tsapp l M := (focus l (tsmor M)).
-Notation tpower := (tpower I).
+Notation dpower := (dpower I).
 
 Section com_ring.
 Variable R : comRingType.
@@ -84,7 +84,7 @@ Qed.
 End mkFendo.
 
 Lemma null_lin p q (T : lmodType R) :
-  linear (fun v : tpower p T => (0 : tpower q T)).
+  linear (fun v : dpower p T => (0 : dpower q T)).
 Proof. move=> x y z; by rewrite scaler0 add0r. Qed.
 Definition nullmorlin p q : morlin _ _ p q := fun T => Linear (@null_lin p q T).
 Lemma nullmorN p q : naturality (nullmorlin p q).
@@ -299,7 +299,7 @@ apply eq_foc_endo => /=.
     clear lhs; subst rhs.
     case: _ / Hm.
     apply/eq_JMeq/morP => T v /=.
-    by rewrite !tpcastE.
+    by rewrite !dpcastE.
   apply/morP => T v /= {lhs rhs}.
   rewrite !focus_comp /= -!focusM //.
   have <- : cast_lens_ord (esym Hm) (lens_perm_left Hf_gh) =
@@ -332,10 +332,10 @@ apply eq_foc_endo => /=.
     rewrite (tnth_lens_index (l:=lens_basis (lens_cat Hg_h))) tnth_rshift.
     congr index; apply eq_filter => j.
     by rewrite !(mem_cat,mem_lens_basis) orbA.
-  have HK := tpcastK (esym Hm); rewrite esymK in HK; apply (can_inj (HK _ _)).
-  rewrite {HK} tpcastK.
+  have HK := dpcastK (esym Hm); rewrite esymK in HK; apply (can_inj (HK _ _)).
+  rewrite {HK} dpcastK.
   case: _ / (esym Hm).
-  by rewrite !tpcastE !cast_lens_ordE.
+  by rewrite !dpcastE !cast_lens_ordE.
 Qed.
 
 Canonical compf_monoid := Monoid.Law comp_fendoA comp_fendo1f comp_fendof1.
@@ -407,7 +407,7 @@ have Hd :
   have /Hdisj : k != Ordinal Hh.
     apply/negP => /eqP kh'.
     by rewrite kh' ltnn in kh.
-  by move/disjointP/(_ j); elim.
+    by move/disjointP/(_ j); elim.
 split.
   by rewrite fendo_mor_comp // IHe.
 move=> i.

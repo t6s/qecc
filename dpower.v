@@ -20,11 +20,11 @@ Section tensor_space.
 Variables (I : finType) (dI : I) (R : comRingType).
 Local Notation merge := (merge dI).
 
-Definition tpower n T := {ffun n.-tuple I -> T}.
-Definition morfun m n := forall T : lmodType R, tpower m T -> tpower n T.
+Definition dpower n T := {ffun n.-tuple I -> T}.
+Definition morfun m n := forall T : lmodType R, dpower m T -> dpower n T.
 Definition morlin m n :=
-  forall T : lmodType R, {linear tpower m T -> tpower n T}.
-Definition tmatrix m n := tpower m (tpower n R^o).
+  forall T : lmodType R, {linear dpower m T -> dpower n T}.
+Definition tmatrix m n := dpower m (dpower n R^o).
 Notation tsquare n := (tmatrix n n).
 Notation endofun n := (morfun n n).
 Notation endolin n := (morlin n n).
@@ -34,55 +34,55 @@ Notation endolin n := (morlin n n).
    map h \o f T1 = f T2 \o map h
 which is equivalent to the fact f = nvendo M for a square matrix M : tsquare m.
 *)
-Definition map_tpower m T1 T2 (f : T1 -> T2) (nv : tpower m T1)
-  : tpower m T2 := [ffun v : m.-tuple I => f (nv v)].
+Definition dpmap m T1 T2 (f : T1 -> T2) (nv : dpower m T1)
+  : dpower m T2 := [ffun v : m.-tuple I => f (nv v)].
 
 Definition naturality m n (f : morlin m n) :=
-  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}) (v : tpower m T1),
-    map_tpower h (f T1 v) = f T2 (map_tpower h v).
+  forall (T1 T2 : lmodType R) (h : {linear T1 -> T2}) (v : dpower m T1),
+    dpmap h (f T1 v) = f T2 (dpmap h v).
 
 Structure mor m n := Mor { morf :> morlin m n ; morN : naturality morf}.
 Notation endo n := (mor n n).
 Definition appmorlin m n (f : morlin m n) := fun T => f T.
 Coercion appmorlin : morlin >-> Funclass.
 
-Lemma map_tpower_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
-  linear (map_tpower (m:=m) f).
+Lemma dpmap_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
+  linear (dpmap (m:=m) f).
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
-Canonical map_tpower_lin m T1 T2 f := Linear (@map_tpower_linear m T1 T2 f).
+Canonical dpmap_lin m T1 T2 f := Linear (@dpmap_linear m T1 T2 f).
 
-Lemma map_tpower_comp m (T1 T2 T3 : lmodType R) (f : T2 -> T3) (g : T1 -> T2) :
-  map_tpower (m:=m) (f \o g) =1 map_tpower f \o map_tpower g.
+Lemma dpmap_comp m (T1 T2 T3 : lmodType R) (f : T2 -> T3) (g : T1 -> T2) :
+  dpmap (m:=m) (f \o g) =1 dpmap f \o dpmap g.
 Proof. by move=> v; apply/ffunP => vi; rewrite !ffunE. Qed.
 
-Lemma map_tpower_scale n (x : R^o) (v : tpower n R^o) :
-  map_tpower ( *:%R^~ x) v = x *: v.
+Lemma dpmap_scale n (x : R^o) (v : dpower n R^o) :
+  dpmap ( *:%R^~ x) v = x *: v.
 Proof. apply/ffunP => i; by rewrite !ffunE [LHS]mulrC. Qed.
 
-Definition tpcast n m T (H : n = m) (v : tpower n T) : tpower m T :=
+Definition dpcast n m T (H : n = m) (v : dpower n T) : dpower m T :=
   [ffun vi => v (cast_tuple (esym H) vi)].
 
-Lemma tpcastE T n v (H : n = n) : tpcast (T:=T) H v = v.
+Lemma dpcastE T n v (H : n = n) : dpcast (T:=T) H v = v.
 Proof. by apply/ffunP => vi; rewrite !ffunE cast_tupleE. Qed.
 
-Lemma tpcastK T n m (H : n = m) (t : tpower n T) :
-  tpcast (esym H) (tpcast H t) = t.
+Lemma dpcastK T n m (H : n = m) (t : dpower n T) :
+  dpcast (esym H) (dpcast H t) = t.
 Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
 
-Lemma tpcast_linear (T : lmodType R) n m (H : n = m) : linear (tpcast (T:=T) H).
+Lemma dpcast_linear (T : lmodType R) n m (H : n = m) : linear (dpcast (T:=T) H).
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE. Qed.
 
-Lemma map_tpcastE T m n (H : n = n) v :
-  map_tpower (m:=m) (tpcast (T:=T) H) v = v.
-Proof. by apply/ffunP => w /=; rewrite !ffunE tpcastE. Qed.
+Lemma map_dpcastE T m n (H : n = n) v :
+  dpmap (m:=m) (dpcast (T:=T) H) v = v.
+Proof. by apply/ffunP => w /=; rewrite !ffunE dpcastE. Qed.
 
-Definition morlin_tpcast n m (H : n = m) : morlin n m :=
-  fun T : lmodType R => Linear (tpcast_linear (T:=T) H).
-Canonical morlin_tpcast.
+Definition morlin_dpcast n m (H : n = m) : morlin n m :=
+  fun T : lmodType R => Linear (dpcast_linear (T:=T) H).
+Canonical morlin_dpcast.
 
-Lemma tpcastN m n (H : n = m) : naturality (morlin_tpcast H).
+Lemma dpcastN m n (H : n = m) : naturality (morlin_dpcast H).
 Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
-Definition mor_tpcast n m (H : n = m) := Mor (tpcastN H).
+Definition mor_dpcast n m (H : n = m) := Mor (dpcastN H).
 
 Definition eq_mor m n (f1 f2 : mor m n) :=
   forall T : lmodType R, f1 T =1 f2 T.
@@ -118,11 +118,11 @@ Lemma tsmorE m n (M : tmatrix n m) T v vi :
   tsmor M T v vi = \sum_(vj : m.-tuple I) (M vi vj : R) *: v vj.
 Proof. by rewrite /tsmor /tsmorlin /= -lock !ffunE. Qed.
 
-Definition tpbasis m (vi : m.-tuple I) : tpower m R^o :=
+Definition dpbasis m (vi : m.-tuple I) : dpower m R^o :=
   [ffun vj => (vi == vj)%:R].
 
 Definition morts m n (f : morlin m n) : tmatrix n m :=
-  [ffun vi => [ffun vj => f _ (tpbasis vj) vi]].
+  [ffun vi => [ffun vj => f _ (dpbasis vj) vi]].
 
 Lemma morts_eq m n (f g : mor m n) : f =e g -> morts f = morts g.
 Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
@@ -134,42 +134,42 @@ rewrite (bigD1 v) //= big1 ?(addr0,eqxx,mulr1) // => a av.
 by rewrite eq_sym (negbTE av) mulr0.
 Qed.
 
-Lemma sum_tpbasisKo n (vi : n.-tuple I) (F : tpower n R) :
-  (\sum_vj (F vj *: tpbasis vi vj) = F vi).
+Lemma sum_dpbasisKo n (vi : n.-tuple I) (F : dpower n R) :
+  (\sum_vj (F vj *: dpbasis vi vj) = F vi).
 Proof. under eq_bigr do rewrite !ffunE. by rewrite sum_muleqr. Qed.
 
 Lemma tsmorK m n : cancel (@tsmor m n) (@morts m n).
 Proof.
 move=> M; apply/ffunP => vi; apply/ffunP=> vj.
-by rewrite !ffunE !tsmorE sum_tpbasisKo.
+by rewrite !ffunE !tsmorE sum_dpbasisKo.
 Qed.
 
-Lemma tpbasisC m (vi vj : m.-tuple I) : tpbasis vi vj = tpbasis vj vi.
+Lemma dpbasisC m (vi vj : m.-tuple I) : dpbasis vi vj = dpbasis vj vi.
 Proof. by rewrite !ffunE eq_sym. Qed.
 
-Lemma sum_tpbasisK n (T : lmodType R) (vi : n.-tuple I) (F : tpower n T) :
-  (\sum_vj (tpbasis vi vj *: F vj) = F vi).
+Lemma sum_dpbasisK n (T : lmodType R) (vi : n.-tuple I) (F : dpower n T) :
+  (\sum_vj (dpbasis vi vj *: F vj) = F vi).
 Proof.
 rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
-Lemma decompose_tpower m (T : lmodType R) (v : tpower m T) :
-  v = (\sum_i map_tpower ( *:%R^~ (v i)) (tpbasis i)).
+Lemma decompose_dpower m (T : lmodType R) (v : dpower m T) :
+  v = (\sum_i dpmap ( *:%R^~ (v i)) (dpbasis i)).
 Proof.
-apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_tpbasisK /=.
-by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
+apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_dpbasisK /=.
+by apply eq_bigr => vj _; rewrite [RHS]ffunE dpbasisC.
 Qed.
 
 Lemma mortsK n m (f : mor m n) : tsmor (morts f) =e f.
 Proof.
 move=> T v.
-rewrite [in RHS](decompose_tpower v) linear_sum.
+rewrite [in RHS](decompose_dpower v) linear_sum.
 apply/ffunP => /= vi; rewrite tsmorE !ffunE sum_ffunE /=.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 set h : R^o -> T := *:%R^~ _.
 have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-by rewrite -(morN f (Linear hlin) (tpbasis vj)) ffunE.
+by rewrite -(morN f (Linear hlin) (dpbasis vj)) ffunE.
 Qed.
 
 Lemma naturalityP m n (f : morlin m n) :
@@ -185,7 +185,7 @@ Lemma lift_mor_eq m n (f g : mor m n) :
   f Ro =1 g Ro -> f =e g.
 Proof.
 move=> fg T v.
-rewrite (decompose_tpower v) !linear_sum.
+rewrite (decompose_dpower v) !linear_sum.
 apply eq_bigr => i _.
 set scl := *:%R^~ _.
 have Hlin : linear ( scl : Ro -> T).
@@ -193,15 +193,15 @@ have Hlin : linear ( scl : Ro -> T).
 by rewrite -(morN f (Linear Hlin)) -(morN g (Linear Hlin)) fg.
 Qed.
 
-Lemma decompose_scaler n (v : tpower n Ro) :
-  v = \sum_i v i *: tpbasis i.
+Lemma decompose_scaler n (v : dpower n Ro) :
+  v = \sum_i v i *: dpbasis i.
 Proof.
 apply/ffunP => vi; rewrite !sum_ffunE.
-rewrite -[LHS]sum_tpbasisKo.
-by apply eq_bigr => vj _; rewrite [RHS]ffunE tpbasisC.
+rewrite -[LHS]sum_dpbasisKo.
+by apply eq_bigr => vj _; rewrite [RHS]ffunE dpbasisC.
 Qed.
 
-Definition ket_bra m (ket : tpower m R^o) (bra : tpower m R^o) : tsquare m :=
+Definition ket_bra m (ket : dpower m R^o) (bra : dpower m R^o) : tsquare m :=
   [ffun vi => ket vi *: bra].
 
 Definition mults m n p (M1 : tmatrix n m) (M2 : tmatrix m p) : tmatrix n p :=
@@ -218,7 +218,7 @@ rewrite exchange_big /=; apply eq_bigr => vk _.
 by rewrite !ffunE big_distrr /=; apply eq_bigr => vl _; rewrite mulrA.
 Qed.
 
-Definition idts m : tsquare m := [ffun vi => tpbasis vi].
+Definition idts m : tsquare m := [ffun vi => dpbasis vi].
 Definition idmorlin n : morlin n n := fun T => GRing.idfun_linear _.
 Lemma idmorN n : naturality (idmorlin n).
 Proof. done. Qed.
@@ -228,11 +228,11 @@ Lemma idmorE n : idmor n =e tsmor (idts n).
 Proof.
 move=> T v; apply/ffunP => vi.
 rewrite /idmor tsmorE.
-under eq_bigr do rewrite ffunE; by rewrite sum_tpbasisK.
+under eq_bigr do rewrite ffunE; by rewrite sum_dpbasisK.
 Qed.
 
-Lemma mor_tpcastE n (H : n = n) : mor_tpcast H =e idmor n.
-Proof. by move=> T v; rewrite /mor_tpcast /= tpcastE. Qed.
+Lemma mor_dpcastE n (H : n = n) : mor_dpcast H =e idmor n.
+Proof. by move=> T v; rewrite /mor_dpcast /= dpcastE. Qed.
 
 Definition transpose_tsquare m (M : tsquare m) : tsquare m :=
   [ffun vi => [ffun vj => M vj vi]].
@@ -264,11 +264,11 @@ End tensor_tsquare.
 Section curry.
 Variables (T : lmodType R) (n m : nat) (l : lens n m).
 
-Definition curry (st : tpower n T) : tpower m (tpower (n-m) T) :=
+Definition curry (st : dpower n T) : dpower m (dpower (n-m) T) :=
   [ffun v : m.-tuple I =>
    [ffun w : (n-m).-tuple I => st (merge l v w)]].
 
-Definition uncurry (st : tpower m (tpower (n-m) T)) : tpower n T :=
+Definition uncurry (st : dpower m (dpower (n-m) T)) : dpower n T :=
   [ffun v : n.-tuple I => st (extract l v) (extract (lothers l) v)].
 
 Lemma uncurryK : cancel uncurry curry.
@@ -289,10 +289,10 @@ Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
 Canonical uncurry_lin := Linear uncurry_is_linear.
 
 (* Special cases of curry/uncurry *)
-Definition curry0 (v : T) : tpower 0 T := [ffun _ => v].
-Definition curryn0 : tpower n T -> tpower n (tpower 0 T) :=
-  map_tpower curry0.
-Definition uncurry0 (v : tpower 0 T) : T := v [tuple].
+Definition curry0 (v : T) : dpower 0 T := [ffun _ => v].
+Definition curryn0 : dpower n T -> dpower n (dpower 0 T) :=
+  dpmap curry0.
+Definition uncurry0 (v : dpower 0 T) : T := v [tuple].
 
 Lemma curryn0E :
   curryn0 = fun v => [ffun vi => [ffun _ => v vi]].
@@ -312,7 +312,7 @@ End curry.
 
 Section inner_prod_coprod.
 Variable n : nat.
-Let cast_uncurry T := map_tpower (m:=n) (tpcast (T:=T) (esym (addKn n n))).
+Let cast_uncurry T := dpmap (m:=n) (dpcast (T:=T) (esym (addKn n n))).
 Definition M_inner_prod (M : tsquare n) :=
   tsmor (curry0 (uncurry (lens_left n n) (cast_uncurry M))).
 Definition M_inner_coprod (M : tsquare n) :=
@@ -321,45 +321,45 @@ Definition inner_prod : mor (n+n) 0 := M_inner_prod (idts _).
 Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (idts _).
 End inner_prod_coprod.
 
-Section tpaux.
+Section dpaux.
 Variables (k : nat) (T : lmodType R).
 
-Definition tpall (v : T) : tpower k T := [ffun => v].
-Lemma tpall_linear : linear tpall.
+Definition dpall (v : T) : dpower k T := [ffun => v].
+Lemma dpall_linear : linear dpall.
 Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE. Qed.
-Canonical tpall_lin := Linear tpall_linear.
+Canonical dpall_lin := Linear dpall_linear.
 
-Definition tpsum (v : tpower k T) : T := \sum_i v i.
-Lemma tpsum_linear : linear tpsum.
+Definition dpsum (v : dpower k T) : T := \sum_i v i.
+Lemma dpsum_linear : linear dpsum.
 Proof.
-rewrite/tpsum => a x y /=. rewrite scaler_sumr -big_split /=.
+rewrite/dpsum => a x y /=. rewrite scaler_sumr -big_split /=.
 apply eq_bigr=> i _; by rewrite !ffunE.
 Qed.
-Canonical tpsum_lin := Linear tpsum_linear.
+Canonical dpsum_lin := Linear dpsum_linear.
 
 Variable vi : k.-tuple I.
-Definition tpsingle (v : T) : tpower k T :=
+Definition dpsingle (v : T) : dpower k T :=
   [ffun vj => (vi == vj)%:R *: v].
-Lemma tpsingle_linear : linear tpsingle.
+Lemma dpsingle_linear : linear dpsingle.
 Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE /= linearP. Qed.
-Canonical tpsingle_lin := Linear tpsingle_linear.
+Canonical dpsingle_lin := Linear dpsingle_linear.
 
-Definition tpsel (v : tpower k T) := v vi.
-Lemma tpsel_is_linear : linear tpsel.
-Proof. by move=> x y z; rewrite /tpsel !ffunE. Qed.
-Canonical tpsel_lin := Linear tpsel_is_linear.
-End tpaux.
+Definition dpsel (v : dpower k T) := v vi.
+Lemma dpsel_is_linear : linear dpsel.
+Proof. by move=> x y z; rewrite /dpsel !ffunE. Qed.
+Canonical dpsel_lin := Linear dpsel_is_linear.
+End dpaux.
 
-Lemma tp_single_basis n (vi : n.-tuple I) : tpsingle vi (1:R^o) = tpbasis vi.
+Lemma dp_single_basis n (vi : n.-tuple I) : dpsingle vi (1:R^o) = dpbasis vi.
 Proof. apply/ffunP => vj. by rewrite !ffunE [LHS]mulr1. Qed.
 
 Section partial_trace.
 Variables (n m : nat) (l : lens n m) (f : endo n).
 
-Definition ptracefun (T : lmodType R) (v : tpower m T) : tpower m T :=
+Definition ptracefun (T : lmodType R) (v : dpower m T) : dpower m T :=
   \sum_(vi : (n-m).-tuple I)
-    (map_tpower (tpsel vi) \o curry l \o f T
-       \o uncurry l \o map_tpower (tpsingle vi)) v.
+    (dpmap (dpsel vi) \o curry l \o f T
+       \o uncurry l \o dpmap (dpsingle vi)) v.
 
 Lemma ptrace_is_linear T : linear (@ptracefun T).
 Proof.
@@ -369,22 +369,22 @@ Qed.
 
 Definition ptracelin : morlin m m := fun T => Linear (@ptrace_is_linear T).
 
-Lemma uncurry_tpsingle_naturality vi :
- naturality (fun T => [linear of uncurry (T:=T) l \o map_tpower (tpsingle vi)]).
+Lemma uncurry_dpsingle_naturality vi :
+ naturality (fun T => [linear of uncurry (T:=T) l \o dpmap (dpsingle vi)]).
 Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite !ffunE linearE. Qed.
 
-Lemma tpsel_curry_naturality vi :
-  naturality (fun T => [linear of map_tpower (tpsel vi) \o curry (T:=T) l]).
-Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite /tpsel !ffunE. Qed.
+Lemma dpsel_curry_naturality vi :
+  naturality (fun T => [linear of dpmap (dpsel vi) \o curry (T:=T) l]).
+Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite /dpsel !ffunE. Qed.
 
 Lemma ptrace_naturality : naturality ptracelin.
 Proof.
 move=> T1 T2 h v.
 rewrite /= /ptracefun linear_sum.
 apply eq_bigr => vi _ /=.
-move: (tpsel_curry_naturality vi h) => /= ->.
+move: (dpsel_curry_naturality vi h) => /= ->.
 rewrite (morN f).
-by move: (uncurry_tpsingle_naturality vi h v) => ->.
+by move: (uncurry_dpsingle_naturality vi h v) => ->.
 Qed.
 
 Definition ptrace : endo m := Mor ptrace_naturality.
@@ -412,7 +412,7 @@ rewrite (reindex _ (onW_bij _ (cast_tuple_bij _ (esym cast)))) /=.
 apply eq_bigr => /= vj _.
 rewrite !linear_sum sum_ffunE.
 apply eq_bigr => /= vk _.
-rewrite /tpsel !ffunE.
+rewrite /dpsel !ffunE.
 f_equal; first last.
 - rewrite -[RHS](merge_comp dI l1 l2 _ _
                   (vl:=cast_tuple (esym (cast_lothers_notin_l l1 l2)) vk)) //.
@@ -475,7 +475,7 @@ Variables (n m : nat) (l : lens n m).
 Section focuslin.
 Variable tr : endo m.
 Definition focus_fun : endofun n :=
-  fun T (v : tpower n T) => uncurry l (tr _ (curry l v)).
+  fun T (v : dpower n T) => uncurry l (tr _ (curry l v)).
 
 Lemma focus_is_linear T : linear (@focus_fun T).
 Proof.
@@ -498,7 +498,7 @@ move=> T /= v; apply/ffunP => /= vi.
 rewrite tsmorE !ffunE NM tsmorE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
-rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
+rewrite [in LHS](decompose_dpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
@@ -507,9 +507,9 @@ Definition focus f := locked (Mor (focusN f)).
 Lemma focusE f T : focus f T = Linear (@focus_is_linear f T).
 Proof. by rewrite /focus -lock. Qed.
 
-Lemma curry_tpbasis (vi : n.-tuple I) :
-  curry l (tpbasis vi) =
-  map_tpower (tpsingle (extract (lothers l) vi)) (tpbasis (extract l vi)).
+Lemma curry_dpbasis (vi : n.-tuple I) :
+  curry l (dpbasis vi) =
+  dpmap (dpsingle (extract (lothers l) vi)) (dpbasis (extract l vi)).
 Proof.
 apply/ffunP => vj; apply/ffunP => vk; rewrite !ffunE.
 case/boolP: (vi == _) => /eqP Hvi.
@@ -519,18 +519,18 @@ case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
 by elim Hvi; rewrite -Hvk -Hvj merge_extract.
 Qed.
 
-Lemma focus_tpbasis f (vi : n.-tuple I) :
-  focus f _ (tpbasis vi) =
-  uncurry l (map_tpower (tpsingle (extract (lothers l) vi))
-                        (f _ (tpbasis (extract l vi)))).
+Lemma focus_dpbasis f (vi : n.-tuple I) :
+  focus f _ (dpbasis vi) =
+  uncurry l (dpmap (dpsingle (extract (lothers l) vi))
+                        (f _ (dpbasis (extract l vi)))).
 Proof.
 apply/ffunP => v.
-by rewrite focusE !ffunE curry_tpbasis -(morN f) !ffunE.
+by rewrite focusE !ffunE curry_dpbasis -(morN f) !ffunE.
 Qed.
 
-Lemma uncurry_tpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
-  uncurry l (map_tpower (tpsingle vi) (tpbasis vj)) =
-  tpbasis (merge l vj vi).
+Lemma uncurry_dpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
+  uncurry l (dpmap (dpsingle vi) (dpbasis vj)) =
+  dpbasis (merge l vj vi).
 Proof.
 apply/ffunP => vk.
 rewrite !ffunE.
@@ -541,12 +541,12 @@ case/boolP: (_ == _) => /eqP Hvj; last by rewrite scaler0.
 elim Hvk; by rewrite Hvi Hvj merge_extract.
 Qed.
 
-Lemma focus_tpbasis_id (f : endo m) v :
-  f _ (tpbasis (extract l v)) = tpbasis (extract l v) ->
-  focus f _ (tpbasis v) = tpbasis v.
+Lemma focus_dpbasis_id (f : endo m) v :
+  f _ (dpbasis (extract l v)) = dpbasis (extract l v) ->
+  focus f _ (dpbasis v) = dpbasis v.
 Proof.
 move=> Htr.
-by rewrite focus_tpbasis // Htr uncurry_tpsingle merge_extract.
+by rewrite focus_dpbasis // Htr uncurry_dpsingle merge_extract.
 Qed.
 End focus.
 
@@ -557,8 +557,8 @@ Lemma addKn_any : (m + n - m = p + n - p)%N.
 Proof. by rewrite !addKn. Qed.
 
 Definition asym_focus_fun : morfun (m + n) (p + n) :=
-  fun T (v : tpower (m + n) T) =>
-    uncurry l' (map_tpower (tpcast addKn_any) (tr _ (curry l v))).
+  fun T (v : dpower (m + n) T) =>
+    uncurry l' (dpmap (dpcast addKn_any) (tr _ (curry l v))).
 
 Lemma asym_focus_is_linear T : linear (@asym_focus_fun T).
 Proof.
@@ -580,7 +580,7 @@ exists (morts (asym_focuslin l l' (tsmor M))).
 move=> T /= v; apply/ffunP => /= vi; rewrite tsmorE !ffunE NM tsmorE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE tsmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
-rewrite [in LHS](decompose_tpower v) !ffunE sum_ffunE scaler_sumr.
+rewrite [in LHS](decompose_dpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
 Qed.
 
@@ -590,7 +590,7 @@ Lemma asym_focus_sym (m n : nat) (l : lens (m+n) m) (f : mor m m) :
   asym_focus l l f =e focus l f.
 Proof.
 move=> T v /=; rewrite /= /asym_focus_fun /=.
-by rewrite map_tpcastE focusE.
+by rewrite map_dpcastE focusE.
 Qed.
 
 Section focus_props.
@@ -631,7 +631,7 @@ Notation "f \v g" := (comp_mor f g).
 
 Definition cast_mor m2 n2 m1 n1 (Hm : m1 = m2) (Hn : n1 = n2) (f : mor m1 n1)
   : mor m2 n2 :=
-  mor_tpcast Hn \v f \v mor_tpcast (esym Hm).
+  mor_dpcast Hn \v f \v mor_dpcast (esym Hm).
 
 Section comp_mor_facts.
 Variables (q : nat) (f : mor m n) (g : mor n p) (h : mor p q).
@@ -709,11 +709,11 @@ Qed.
 
 (* Variant for disjoint lenses, used in unitary.v *)
 Variable T : lmodType R.
-Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : tpower n T) :
+Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : dpower n T) :
   focus (lens_comp (lothers l) l') f T t =
-  uncurry l (map_tpower (m:=m) (focus l' f T) (curry l t)).
+  uncurry l (dpmap (m:=m) (focus l' f T) (curry l t)).
   (* parametricity prevents writing it this way:
-     focus l (fun _ => Linear (map_tpower_linear (focus l' f T))) T t. *)
+     focus l (fun _ => Linear (dpmap_linear (focus l' f T))) T t. *)
 Proof.
 case/naturalityP: (morN f) => M Hf; apply/ffunP => vi.
 rewrite /= !focusE !ffunE /= -!extract_comp !Hf !tsmorE /= !sum_ffunE.
@@ -792,12 +792,12 @@ Qed.
 (*
 Section narrow.
 Variables (n m : nat) (l : lens n m).
-Definition narrow_in (T : lmodType R) (st : tpower m T) : tpower n T :=
+Definition narrow_in (T : lmodType R) (st : dpower m T) : dpower n T :=
   [ffun v : n.-tuple I => st (extract l v)].
-Definition narrow_out (T : lmodType R) (st : tpower n T) : tpower m T :=
+Definition narrow_out (T : lmodType R) (st : dpower n T) : dpower m T :=
   [ffun v : m.-tuple I => st (inject l [tuple of nseq n dI] v)].
 Definition narrow (f : endofun n) : endofun m :=
-  fun T (v : tpower m T) => narrow_out (f T (narrow_in v)).
+  fun T (v : dpower m T) => narrow_out (f T (narrow_in v)).
 End narrow.
 Lemma narrow_focus n m p (l : lens n m) (l' : lens n p)
       (H : [disjoint l & l']) f (T : lmodType R) v :
@@ -815,7 +815,7 @@ Notation "f \v g" := (comp_mor f g).
 Notation "M1 '*t' M2" := (mults M1 M2).
 Notation tsapp l M := (focus l (tsmor M)).
 
-(* Conversion between tpower and vector space *)
+(* Conversion between dpower and vector space *)
 
 Section index_of_vec_bij.
 Local Open Scope nat_scope.
@@ -910,7 +910,7 @@ exists (@index_of_vec m); [exact: vec_of_indexK | exact: index_of_vecK].
 Qed.
 End index_of_vec_bij.
 
-(* tpower n R^o forms a vector space of size #|I|^m *)
+(* dpower n R^o forms a vector space of size #|I|^m *)
 Section vector.
 Variable (I : finType) (R : comRingType) (dI : I).
 Let vsz m := (#|I| ^ m)%N.
@@ -975,19 +975,19 @@ Proof.
 by rewrite -[LHS]tmatrixmxK tmatrixmx_mul tmatrixmx_id mulmx1 tmatrixmxK.
 Qed.
 
-Definition vec_tpower m (X : 'rV[R]_(vsz m)) : tpower I m R^o :=
+Definition vec_dpower m (X : 'rV[R]_(vsz m)) : dpower I m R^o :=
   [ffun vi => X ord0 (index_of_vec vi)].
 
-Definition tpower_vec m (X : tpower I m R^o) : 'rV[R]_(vsz m) :=
+Definition dpower_vec m (X : dpower I m R^o) : 'rV[R]_(vsz m) :=
   \row_i X (vec_of_index dI i).
 
 Definition mxmor m n (M : 'M_(vsz m,vsz n)) := tsmor (mxtmatrix M).
 
-Lemma tpower_vector m : Vector.axiom (vsz m) (tpower I m R^o).
+Lemma dpower_vector m : Vector.axiom (vsz m) (dpower I m R^o).
 Proof.
-exists (@tpower_vec m).
+exists (@dpower_vec m).
 - move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
-- exists (@vec_tpower m).
+- exists (@vec_dpower m).
   + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.
@@ -1040,7 +1040,7 @@ apply (iffP idP).
 move=> H; by apply/allP.
 Qed.
 
-Lemma eq_from_indicesP n (T : eqType) (v w : tpower I n T) :
+Lemma eq_from_indicesP n (T : eqType) (v w : dpower I n T) :
   reflect (v = w) (all (fun x => v x == w x) (enum_indices n)).
 Proof.
 apply/(iffP (forall_indicesP _)) => [H | -> //].

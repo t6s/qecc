@@ -7,7 +7,7 @@
 -arg -async-proofs-tac-j -arg 16
 
 lens.v
-tpower.v
+dpower.v
 unitary.v
 endo_monoid.v
 kqm.v
