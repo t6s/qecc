@@ -1,6 +1,6 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
-Require Import lens tpower unitary endo_monoid.
+Require Import lens dpower unitary endo_monoid.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -21,11 +21,11 @@ Let I := [finType of 'I_2].
 Let dI : I := 0%:O.
 
 Notation "¦ x1 , .. , xn ⟩" :=
-  (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
+  (dpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 
 Notation focus := (focus 0%:O).
 Notation tsapp l M := (focus l (tsmor M)).
-Notation tpower := (tpower I).
+Notation dpower := (dpower I).
 Notation tsquare n := (tmatrix I C n n).
 Notation endo n := (mor I C n n).
 
@@ -117,7 +117,7 @@ Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
-Local Definition uncurry_tpsingle := uncurry_tpsingle (0%:O : I).
+Local Definition uncurry_dpsingle := uncurry_dpsingle (0%:O : I).
 
 
 (* Proof of correctness for Shor code *)
@@ -126,27 +126,27 @@ Definition flip (i : I) := rev_ord i.
 
 (* behavior of gates on basis vectors *)
 Lemma tsmor_cnot0 i :
-  tsmor cnot Co (tpbasis C [tuple 0%:O; i]) = tpbasis C [tuple 0%:O; i].
+  tsmor cnot Co (dpbasis C [tuple 0%:O; i]) = dpbasis C [tuple 0%:O; i].
 Proof.
-apply/ffunP => vi; rewrite !ffunE tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi; rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
 Lemma tsmor_cnot1 i :
-  tsmor cnot Co (tpbasis C [tuple 1%:O; i]) = tpbasis C [tuple 1%:O; flip i].
+  tsmor cnot Co (dpbasis C [tuple 1%:O; i]) = dpbasis C [tuple 1%:O; flip i].
 Proof.
-apply/ffunP => vi; rewrite !ffunE tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi; rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
 Lemma tsmor_toffoli00 i :
-  tsmor toffoli Co (tpbasis C [tuple 0%:O; 0%:O; i]) =
-  tpbasis C [tuple 0%:O; 0%:O; i].
+  tsmor toffoli Co (dpbasis C [tuple 0%:O; 0%:O; i]) =
+  dpbasis C [tuple 0%:O; 0%:O; i].
 Proof.
 apply/ffunP => vi.
-rewrite !ffunE tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
 rewrite BigOp.bigopE /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
@@ -171,50 +171,50 @@ Ltac simpl_extract :=
   match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
   end.
 
-Notation tpmerge l vi v :=
- (uncurry l (map_tpower (tpsingle (extract (lothers l) vi)) v)).
+Notation dpmerge l vi v :=
+ (uncurry l (dpmap (dpsingle (extract (lothers l) vi)) v)).
 
 (* bit flip code *)
 Lemma bit_flip_enc0 j k :
-  bit_flip_enc Co (tpbasis C [tuple 0%:O; j; k]) =
-  tpbasis C [tuple 0%:O; j; k].
+  bit_flip_enc Co (dpbasis C [tuple 0%:O; j; k]) =
+  dpbasis C [tuple 0%:O; j; k].
 Proof.
 rewrite /bit_flip_enc /=.
-rewrite focus_tpbasis.
+rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot0.
-rewrite uncurry_tpsingle.
+rewrite uncurry_dpsingle.
 rewrite (_ : merge _ _ _ _ = [tuple 0%:O; j; k]); last by eq_lens.
-rewrite focus_tpbasis.
+rewrite focus_dpbasis.
 simpl_extract.
-rewrite tsmor_cnot0 uncurry_tpsingle.
-by congr tpbasis; eq_lens.
+rewrite tsmor_cnot0 uncurry_dpsingle.
+by congr dpbasis; eq_lens.
 Qed.
 
 Lemma bit_flip_enc1 j k :
-  bit_flip_enc Co (tpbasis C [tuple 1%:O; j; k]) =
-  tpbasis C [tuple 1%:O; flip j; flip k].
+  bit_flip_enc Co (dpbasis C [tuple 1%:O; j; k]) =
+  dpbasis C [tuple 1%:O; flip j; flip k].
 Proof.
 rewrite /bit_flip_enc /=.
-rewrite focus_tpbasis.
+rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot1.
-rewrite uncurry_tpsingle.
+rewrite uncurry_dpsingle.
 rewrite (_ : merge _ _ _ _ = [tuple 1%:O; flip j; k]); last by eq_lens.
-rewrite focus_tpbasis.
+rewrite focus_dpbasis.
 simpl_extract.
-rewrite tsmor_cnot1 uncurry_tpsingle.
-by congr tpbasis; eq_lens.
+rewrite tsmor_cnot1 uncurry_dpsingle.
+by congr dpbasis; eq_lens.
 Qed.
 
 Lemma bit_flip_toffoli :
   (bit_flip_dec \v bit_flip_enc) =e tsapp [lens 1; 2; 0] toffoli.
 Proof.
 apply/lift_mor_eq => v.
-rewrite (decompose_tpower v) !linear_sum.
+rewrite (decompose_dpower v) !linear_sum.
 apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
 simpl_tuple (Tuple Hi).
-rewrite map_tpower_scale !linearZ_LR comp_morE.
+rewrite dpmap_scale !linearZ_LR comp_morE.
 have := mem_enum2 i.
 rewrite !inE => /orP[] /eqP ->.
 - by rewrite bit_flip_enc0 /bit_flip_dec comp_morE bit_flip_enc0.
@@ -225,14 +225,14 @@ Qed.
 (* Not used
 Lemma tsmor_hadamard0 :
   tsmor hadamard Co ¦ 0 ⟩ =
-  (1 / Num.sqrt 2%:R)%:C *: \sum_(vi : 1.-tuple I) (tpbasis C vi).
+  (1 / Num.sqrt 2%:R)%:C *: \sum_(vi : 1.-tuple I) (dpbasis C vi).
 Proof.
 apply/ffunP => vi.
-rewrite tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 !subr0.
+rewrite tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 !subr0.
 rewrite ![_ *: 1]mulr1 !linE /= sum_ffun ffunE.
-have -> : \sum_i tpbasis C i vi = \sum_i [ffun _ => 1] i *: tpbasis C vi i.
-  by apply eq_bigr=> i _; rewrite ffunE scale1r tpbasisC.
-rewrite sum_tpbasisKo ffunE.
+have -> : \sum_i dpbasis C i vi = \sum_i [ffun _ => 1] i *: dpbasis C vi i.
+  by apply eq_bigr=> i _; rewrite ffunE scale1r dpbasisC.
+rewrite sum_dpbasisKo ffunE.
 have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite linE [_ *: 1]mulr1.
 Qed.
@@ -243,15 +243,15 @@ Definition parity n (vi : n.-tuple I) : nat :=
 Lemma tsmor_hadamard1 :
   tsmor hadamard Co ¦ 1 ⟩ =
   (1 / Num.sqrt 2%:R)%:C *:
-  \sum_(vi : 1.-tuple I) (-1)^+ (parity vi) *: tpbasis C vi.
+  \sum_(vi : 1.-tuple I) (-1)^+ (parity vi) *: dpbasis C vi.
 Proof.
 apply/ffunP => vi.
-rewrite tsmorE sum_tpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !linE.
+rewrite tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !linE.
 rewrite ![_ *: 1]mulr1 /= sum_ffun ffunE.
-have -> : \sum_i ((-1) ^+ parity i *: tpbasis C i) vi
-          = \sum_i [ffun i => (-1) ^+ parity i] i *: tpbasis C vi i.
-  by apply eq_bigr => i _; rewrite 2!ffunE tpbasisC.
-rewrite sum_tpbasisKo ffunE /parity.
+have -> : \sum_i ((-1) ^+ parity i *: dpbasis C i) vi
+          = \sum_i [ffun i => (-1) ^+ parity i] i *: dpbasis C vi i.
+  by apply eq_bigr => i _; rewrite 2!ffunE dpbasisC.
+rewrite sum_dpbasisKo ffunE /parity.
 have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=.
 - by rewrite BigOp.bigopE /= expr0 subr0 [_ *: 1]mulr1.
 - by rewrite BigOp.bigopE /= expr1 sub0r.
@@ -303,18 +303,18 @@ Qed.
 Let shor_input i : 9.-tuple I :=
   [tuple of [:: i; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O]].
 Lemma shor_code_id i :
- shor_code (idmor I C 9) Co (tpbasis C (shor_input i)) =
- tpbasis C (shor_input i).
+ shor_code (idmor I C 9) Co (dpbasis C (shor_input i)) =
+ dpbasis C (shor_input i).
 Proof.
 rewrite /shor_code /=.
 transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
-                    (tpbasis C (shor_input i))).
-  rewrite [RHS]focus_comp /= focus_tpbasis.
+                    (dpbasis C (shor_input i))).
+  rewrite [RHS]focus_comp /= focus_dpbasis.
   simpl_extract.
   set sfe := sign_flip_enc _ _.
   rewrite (decompose_scaler sfe) !linear_sum /=.
   apply eq_bigr => j _.
-  rewrite !linearZ_LR /= uncurry_tpsingle.
+  rewrite !linearZ_LR /= uncurry_dpsingle.
   congr (_ *: focus _ _ _ _).
   case: j => -[|a [|b [|c []]]] Hj //=.
   rewrite (_ : merge _ _ _ _ =
@@ -326,12 +326,12 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   rewrite 3!(focus_eq _ _ bit_flip_toffoli).
   rewrite -!focusM.
   do 3 simpl_lens_comp.
-(*  rewrite focus_tpbasis_id; last first. simpl_extract. rewrite tsmor_toffoli00. *)
-  by do !(rewrite focus_tpbasis_id; last by simpl_extract;
+(*  rewrite focus_dpbasis_id; last first. simpl_extract. rewrite tsmor_toffoli00. *)
+  by do !(rewrite focus_dpbasis_id; last by simpl_extract;
           rewrite tsmor_toffoli00).
-rewrite focus_tpbasis_id //.
+rewrite focus_dpbasis_id //.
 simpl_extract.
-rewrite sign_flip_toffoli focus_tpbasis_id //.
+rewrite sign_flip_toffoli focus_dpbasis_id //.
 simpl_extract.
 by rewrite tsmor_toffoli00.
 Qed.
@@ -344,7 +344,7 @@ Proof.
 rewrite /unitary_endo /tinner /= => s t.
 rewrite !sum_enum_indices /= !tsmorE.
 time (rewrite !ffunE /= !linE).
-rewrite !sum_tpbasisK.
+rewrite !sum_dpbasisK.
 by rewrite !addrA -(addrA (_ * _)) (addrC (_ * _) (_ * _)) !addrA.
 Qed.
 
@@ -394,7 +394,7 @@ rewrite !inE.
 set F := curry _ _ _.
 have sumK : forall (vi : (0+2).-tuple I),
     \sum_vj (vi == vj)%:R *: F vj = F vi.
-  move=> vk; rewrite -[RHS]sum_tpbasisK.
+  move=> vk; rewrite -[RHS]sum_dpbasisK.
   apply eq_bigr => vj _; by rewrite !ffunE.
 do 2! (case/orP => /eqP ->);
  under eq_bigr do rewrite /= !linE; by rewrite sumK !ffunE.
@@ -606,7 +606,7 @@ do !(congr cons).
   by rewrite -addnn addnA leq_addl.
 Qed.
 
-Lemma proj_focusE_swap n (i : 'I_n.+2) (v : tpower n.+2 Co) h
+Lemma proj_focusE_swap n (i : 'I_n.+2) (v : dpower n.+2 Co) h
       (Hn : n./2.+1 = (n.+2)./2) :
   let f j := tsapp (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap in
   (h < n./2.+1)%N -> (n./2.+1 - h.+1)%N = i \/ (n./2.+1 - h.+1)%N = rev_ord i ->
@@ -650,7 +650,7 @@ rewrite -IH.
 - by case: ih => ih; [left|right]; move: ih; rewrite !ltn_subRL addSn => /ltnW.
 Qed.
 
-Lemma proj_swapE n (i j : 'I_n.+2) (v : tpower n.+2 Co) (Hir : i != j) :
+Lemma proj_swapE n (i j : 'I_n.+2) (v : dpower n.+2 Co) (Hir : i != j) :
   proj ord0 (lens_single j) (tsapp (lens_pair Hir) swap Co v) =
   proj ord0 (lens_single i) v.
 Proof.
@@ -816,22 +816,22 @@ Qed.
 Lemma cnotK : involutive (tsmor cnot Co).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(tsmorE,linE,sum_tpbasisK,ffunE)).
+all: time (by rewrite !(tsmorE,linE,sum_dpbasisK,ffunE)).
 (* 2.8s *)
 Qed.
 
 Lemma qnotK : involutive (tsmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(tsmorE,linE,sum_tpbasisK,ffunE).
+all: by rewrite !(tsmorE,linE,sum_dpbasisK,ffunE).
 Qed.
 
 Lemma qnotU : unitaryts qnot.
 Proof.
 apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: rewrite !(linE,sum_tpbasisK,ffunE).
+all: rewrite !(linE,sum_dpbasisK,ffunE).
 all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: rewrite !(linE,sum_tpbasisK,ffunE).
+all: rewrite !(linE,sum_dpbasisK,ffunE).
 all: time (rewrite !sum_enum_indices /= !ffunE /=).
 all: by rewrite !linE.
 Qed.
@@ -842,7 +842,7 @@ rewrite /unitary_endo /tinner /= => s t.
 rewrite !sum_enum_indices /=.
 rewrite !tsmorE.
 time (rewrite !ffunE /= !linE).
-rewrite !sum_tpbasisK.
+rewrite !sum_dpbasisK.
 by rewrite (addrC _ (_ * _)).
 Qed.
 
@@ -898,18 +898,18 @@ move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
 all: rewrite !(linE,tsmorE,ffunE,scalerDl,sum_enum_indices) /=.
 rewrite 50!(eq_ord_tuple,linE,ffunE,scalerDl) /=.
 rewrite !enum_ordinalE /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /=.
 rewrite !enum_ordinalE /= !tsmorE.
 rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite !sum_tpbasisK !tsmorE.
+rewrite !sum_dpbasisK !tsmorE.
 rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite !(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
 rewrite 50!ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite 50!(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
-rewrite !(linE,ffunE,scalerDl,sum_tpbasisK,sum_enum_indices) /=.
+rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
+rewrite !(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
 rewrite -!scalerA !linE.
 rewrite !(scalerA,addrA,scalerDr).

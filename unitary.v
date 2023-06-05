@@ -1,5 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra complex.
-Require Import lens tpower.
+Require Import lens dpower.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -93,7 +93,7 @@ Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtmatrix M).
 Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
 Section unitary_endo.
-Definition tinner n (s t : tpower I n Co) := \sum_i (s i)^* * (t i).
+Definition tinner n (s t : dpower I n Co) := \sum_i (s i)^* * (t i).
 Definition unitary_endo m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 
@@ -114,9 +114,9 @@ apply/(iffP idP).
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
 - move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
-  have := Uf (tpbasis C vi) (tpbasis C vj).
+  have := Uf (dpbasis C vi) (dpbasis C vj).
   rewrite /tinner.
-  under eq_bigr do rewrite !tsmorE !sum_tpbasisKo.
+  under eq_bigr do rewrite !tsmorE !sum_dpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
   by rewrite sum_muleqr [LHS]conjc_nat.
@@ -133,9 +133,9 @@ rewrite /unitary_endo /tinner => /= Uf s t.
 rewrite 2!(reindex_merge _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
-pose sel s : tpower I m Co := map_tpower (tpsel vj) (curry dI l s).
+pose sel s : dpower I m Co := dpmap (dpsel vj) (curry dI l s).
 transitivity (\sum_i (sel s i)^* * sel t i); last first.
-  apply eq_bigr => vi _; by rewrite !ffunE /tpsel !ffunE.
+  apply eq_bigr => vi _; by rewrite !ffunE /dpsel !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
 rewrite focusE /= /focus_fun.
 rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.
@@ -146,12 +146,12 @@ End unitary_endo.
 Section projection.
 Variables (n m : nat) (l : lens n m).
 
-Let norm p := fun s : tpower I p Co => (sqrtc (tinner s s) : Co).
+Let norm p := fun s : dpower I p Co => (sqrtc (tinner s s) : Co).
 
-Definition proj (t : tpower I n Co) : tpower I m Co :=
-  map_tpower (@norm _) (curry dI l t).
+Definition proj (t : dpower I n Co) : dpower I m Co :=
+  dpmap (@norm _) (curry dI l t).
 
-Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : tpower I n Co) :
+Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : dpower I n Co) :
   [disjoint l & l'] -> unitary_endo f ->
   proj (focus l' f Co t) = proj t.
 Proof.
