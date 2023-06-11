@@ -78,9 +78,7 @@ Definition mkFendo :=
   mkFoc (lens_sorted_basis l) (focus (lens_perm l) f).
 
 Lemma mkFendoE : fendo_mor mkFendo = focus l f.
-Proof.
-by apply/morP => T v; rewrite /fendo_mor /= -focusM // lens_basis_perm.
-Qed.
+Proof. by apply/morP => T v; rewrite -focusM // lens_basis_perm. Qed.
 End mkFendo.
 
 Lemma null_lin p q (T : lmodType R) :
@@ -96,22 +94,17 @@ Definition id_fendo := mkFoc (lens_sorted_empty n) (idmor I R 0).
 Definition err_fendo := mkFoc (lens_sorted_id n) (nullmor n n).
 
 Lemma fendo_mor_id : fendo_mor id_fendo = idmor I R n.
-Proof. by apply/morP => T v; rewrite /fendo_mor/=focusE /focus_fun/=curryK. Qed.
+Proof. by apply/morP => T v; rewrite focusE /focus_fun/=curryK. Qed.
 
 Lemma fendo_mor_err : fendo_mor err_fendo = nullmor n n.
-Proof.
-apply/morP => T v; apply/ffunP => vi.
-by rewrite /fendo_mor/= focusE /= !ffunE.
-Qed.
+Proof. by apply/morP => T v; apply/ffunP => vi; rewrite focusE /= !ffunE. Qed.
 
 Section comp_fendo.
 Definition comp_fendo (f g : foc_endo) :=
-  match Bool.bool_dec [disjoint foc_l f & foc_l g] true with
-  | left H =>
-      mkFoc (lens_sorted_basis (lens_cat H))
-        (focus (lens_perm_left H) f \v focus (lens_perm_right H) g)
-  | right _ => err_fendo
-  end.
+  if Bool.bool_dec [disjoint foc_l f & foc_l g] true is left H then
+    mkFoc (lens_sorted_basis (lens_cat H))
+          (focus (lens_perm_left H) f \v focus (lens_perm_right H) g)
+  else err_fendo.
 
 Variables f g : foc_endo.
 Lemma comp_fendo_sub : {subset foc_l f <= foc_l (comp_fendo f g)}.
@@ -138,7 +131,7 @@ Qed.
 Lemma fendo_mor_comp : fendo_mor (comp_fendo f g) = fendo_mor f \v fendo_mor g.
 Proof.
 apply/morP => T v.
-rewrite /fendo_mor /comp_fendo /=.
+rewrite /comp_fendo /=.
 case: Bool.bool_dec => H /=; last contradiction.
 rewrite focus_comp /= -!focusM; try exact/foc_n.
 by rewrite lens_perm_leftE lens_perm_rightE -lens_comp_left -lens_comp_right.

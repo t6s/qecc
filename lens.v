@@ -261,6 +261,10 @@ exists (cast_tuple H l).
 apply lens_uniq.
 Defined.
 
+Lemma cast_tuple_extract I (H : m' = m) (l : lens n m') (v : n.-tuple I) :
+  cast_tuple H (extract l v) = extract (cast_lens H l) v.
+Proof. exact/val_inj. Qed.
+
 Variables (l : lens n m) (l' : lens n m').
 
 Lemma eq_lens_sorted :
@@ -420,6 +424,14 @@ move=> l2 l3 H; apply eq_lens_tnth => i.
 move/(f_equal (fun l : lens n p => tnth l i)): H.
 rewrite !tnth_comp => /tnth_inj -> //; exact: lens_uniq.
 Qed.
+
+Lemma cast_lens_comp n m p p' (H : p = p') (l1 : lens n m) (l2 : lens m p) :
+  cast_lens H (lens_comp l1 l2)  = lens_comp l1 (cast_lens H l2).
+Proof. by apply/val_inj; rewrite /= cast_tuple_extract. Qed.
+
+Lemma lens_compA n m p q (l1 : lens n m) l2 (l3 : lens p q) :
+  lens_comp (lens_comp l1 l2) l3 = lens_comp l1 (lens_comp l2 l3).
+Proof. apply eq_lens_tnth => i; by rewrite !tnth_comp. Qed.
 
 Section lens_comp_id.
 Variables (n m : nat) (l : lens n m).
@@ -1139,6 +1151,41 @@ apply/eq_lens_tnth => i.
 by rewrite !tnth_map tnth_ord_tuple tnth_lens_index.
 Qed.
 
+Lemma cast_lothers_notin_l' : (n - p) - (n - m) = m - p.
+Proof.
+rewrite subnBA; last by apply lens_leq.
+rewrite -addnABC; try apply/lens_leq => //; first last.
+  exact (lens_comp l l').
+by rewrite addKn.
+Qed.
+
+Lemma lens_basis_lothers_in_l :
+  lens_basis lothers_in_l = lothers lothers_notin_l :> seq _.
+Proof.
+apply eq_lens_sorted.
+- move=> x; by rewrite !(mem_lothers,mem_lens_basis) negbK.
+- apply lens_sorted_basis.
+- apply lens_sorted_lothers.
+Qed.
+
+Lemma lothers_lothers_notin_l_perm :
+  lens_comp (cast_lens cast_lothers_notin_l' (lothers lothers_notin_l))
+            (lens_perm lothers_in_l) = lothers_in_l.
+Proof.
+apply eq_lens_tnth => i.
+rewrite !tnth_comp.
+pose i1 :=
+  tnth (lothers lothers_notin_l) (cast_ord (esym cast_lothers_notin_l') i).
+rewrite (tnth_nth i1) /=.
+rewrite -[others lothers_notin_l]lens_basis_lothers_in_l.
+set t := tnth (tuple_perm _) i.
+rewrite (_ : t = cast_ord (esym cast_lothers_notin_l') t :> nat) //.
+apply (@tnth_lens_inj _ _ lothers_comp).
+rewrite -tnth_nth -(tnth_comp (lothers (lens_comp l l'))).
+rewrite /t tnth_comp -(tnth_comp _ (lens_perm lothers_in_l)).
+by rewrite lens_basis_perm -tnth_comp lothers_in_l_comp tnth_comp.
+Qed.
+
 Lemma lothers_notin_l_comp :
   lens_comp lothers_comp lothers_notin_l = lothers l.
 Proof.
@@ -1164,15 +1211,6 @@ case/boolP: (i \in l) => /= Hi; apply/mapP.
   rewrite Hj => ->.
   have Hol := others_in_l_present k.
   by rewrite tnth_lens_index tnth_map mem_tnth.
-Qed.
-
-Lemma lens_basis_lothers_in_l :
-  lens_basis lothers_in_l = lothers lothers_notin_l :> seq _.
-Proof.
-apply eq_lens_sorted.
-- move=> x; by rewrite !(mem_lothers,mem_lens_basis) negbK.
-- apply lens_sorted_basis.
-- apply lens_sorted_lothers.
 Qed.
 
 Lemma extract_lothers_comp (v : n.-tuple I) :
@@ -1242,6 +1280,34 @@ case/boolP: (i \in l2) => Hl2.
 have := Hl2; rewrite mem_lens_comp => Hl1.
 rewrite -!mem_lothers in Hl1 Hl2.
 by rewrite !tnth_merge_lothers !tnth_extract !tnth_lens_index.
+Qed.
+
+Lemma merge_lothers_notin_l (vj : (m - p).-tuple I) (vk : (n - m).-tuple I) :
+  merge lothers_notin_l vk (cast_tuple (esym cast_lothers_notin_l') vj) =
+  merge lothers_in_l (extract (lens_perm lothers_in_l) vj)
+                     (cast_tuple (esym cast_lothers_notin_l) vk).
+Proof.
+apply eq_from_tnth => i.
+case/boolP: (i \in lothers_in_l) => Hill.
+rewrite (tnth_merge _ _ _ Hill).
+have Hinl : i \notin lothers_notin_l by rewrite mem_lothers Hill.
+  rewrite -mem_lothers in Hinl.
+  rewrite tnth_merge_lothers tnth_extract.
+  have Hill' := Hill.
+  rewrite -(lens_basis_perm lothers_in_l) in Hill'.
+  have Hilb : i \in lens_basis lothers_in_l by apply/lens_comp_sub: Hill'.
+  rewrite mem_lens_comp in Hill'.
+  have -> : lens_index Hill = lens_index Hill'.
+    apply (tnth_lens_inj (l:=lothers_in_l)).
+    rewrite tnth_lens_index -{1}(lens_basis_perm lothers_in_l).
+    by rewrite tnth_comp !tnth_lens_index.
+  rewrite tnth_lens_index.
+  pose i1 := tnth vj (lens_index Hill).
+  by rewrite !(tnth_nth i1) /= [seq_basis _]lens_basis_lothers_in_l.
+rewrite -mem_lothers in Hill.
+rewrite tnth_merge tnth_merge_lothers.
+pose i1 := tnth vk (cast_ord cast_lothers_notin_l (lens_index Hill)).
+by rewrite !(tnth_nth i1).
 Qed.
 
 Lemma merge_pair (i i' : 'I_n.+2) (vi vj : 1.-tuple I)

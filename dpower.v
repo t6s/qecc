@@ -400,74 +400,30 @@ Proof.
 move=> T /= v.
 apply/ffunP => /= vi.
 rewrite /ptracefun !sum_ffunE /ptracefun.
-rewrite [LHS](reindex_merge _ dI (lothers_notin_l l1 l2)) /=.
-rewrite exchange_big /=.
-have cast : ((n - p) - (n - m) = m - p)%N.
-  rewrite subnBA; last by apply lens_leq.
-  rewrite -addnABC; try apply/lens_leq => //; first last.
-    exact (lens_comp l1 l2).
-  by rewrite addKn.
+rewrite [LHS](reindex_merge _ dI (lothers_notin_l l1 l2)) exchange_big /=.
 rewrite (reindex_inj (@extract_inj _ (lens_perm (lothers_in_l l1 l2)) _)).
-rewrite (reindex _ (onW_bij _ (cast_tuple_bij _ (esym cast)))) /=.
+rewrite (reindex _
+    (onW_bij _ (cast_tuple_bij _ (esym (cast_lothers_notin_l' l1 l2))))) /=.
 apply eq_bigr => /= vj _.
 rewrite !linear_sum sum_ffunE.
 apply eq_bigr => /= vk _.
 rewrite /dpsel !ffunE.
-f_equal; first last.
-- rewrite -[RHS](merge_comp dI l1 l2 _ _
-                  (vl:=cast_tuple (esym (cast_lothers_notin_l l1 l2)) vk)) //.
-  congr merge.
-  apply eq_from_tnth => i.
-  case/boolP: (i \in lothers_in_l l1 l2) => Hill.
-    rewrite (tnth_merge _ _ _ Hill).
-    have Hinl : i \notin lothers_notin_l l1 l2 by rewrite mem_lothers Hill.
-    rewrite -mem_lothers in Hinl.
-    rewrite tnth_merge_lothers tnth_extract.
-    have Hill' := Hill.
-    rewrite -(lens_basis_perm (lothers_in_l l1 l2)) in Hill'.
-    have Hilb : i \in lens_basis (lothers_in_l l1 l2).
-      by apply/lens_comp_sub: Hill'.
-    rewrite mem_lens_comp in Hill'.
-    have -> : lens_index Hill = lens_index Hill'.
-      apply (tnth_lens_inj (l:=lothers_in_l l1 l2)).
-      rewrite tnth_lens_index -{1}(lens_basis_perm (lothers_in_l l1 l2)).
-      by rewrite tnth_comp !tnth_lens_index.
-    rewrite tnth_lens_index.
-    pose i1 := tnth vj (lens_index Hill).
-    by rewrite !(tnth_nth i1) /= [seq_basis _]lens_basis_lothers_in_l.
-  rewrite -mem_lothers in Hill.
-  rewrite tnth_merge tnth_merge_lothers.
-  pose i1 := tnth vk (cast_ord (cast_lothers_notin_l l1 l2) (lens_index Hill)).
-  by rewrite !(tnth_nth i1).
+f_equal; last by rewrite merge_lothers_notin_l; apply: merge_comp.
 f_equal.
 apply/ffunP => vh.
 rewrite !ffunE -!extract_comp scalerA -natrM mulnb.
 congr ((_ : bool)%:R *: _).
-rewrite -[extract (lothers _) vh]
-           (merge_extract dI (lothers_notin_l l1 l2)).
+rewrite -[extract (lothers _) vh](merge_extract dI (lothers_notin_l l1 l2)).
 rewrite merge_inj_eq -extract_comp lothers_notin_l_comp -extract_comp.
 congr andb.
-rewrite -(inj_eq (f:=cast_tuple cast)); last first.
+rewrite -(inj_eq (f:=cast_tuple (cast_lothers_notin_l' l1 l2))); last first.
   move=> x y /(f_equal val) => H; exact/val_inj.
 rewrite (_ : cast_tuple _ _ = vj); last by apply val_inj.
 rewrite -[in LHS]
          (inj_eq (extract_inj (l:=lens_perm (lothers_in_l l1 l2)) (T:=I))).
 congr (_ == _).
-apply eq_from_tnth => i.
-rewrite !tnth_extract !(tnth_nth dI) /=.
-rewrite (nth_map (tnth l1 (tnth (lothers l2) i))); last first.
-  by rewrite size_map (eqP (size_others _)) cast.
-rewrite (tnth_nth dI).
-congr nth.
-pose i1 := tnth (lothers (lothers_notin_l l1 l2)) (cast_ord (esym cast) i).
-rewrite (nth_map i1); last first.
-  by rewrite (eqP (size_others _)) cast.
-rewrite -[others (lothers_notin_l _ _)]lens_basis_lothers_in_l.
-set t := tnth (tuple_perm _) i.
-rewrite (_ : t = cast_ord (esym cast) t :> nat) //.
-rewrite -tnth_nth -(tnth_comp (lothers (lens_comp l1 l2))).
-rewrite /t tnth_comp -(tnth_comp _ (lens_perm (lothers_in_l l1 l2))).
-by rewrite lens_basis_perm -tnth_comp lothers_in_l_comp tnth_comp.
+rewrite cast_tuple_extract -extract_comp cast_lens_comp.
+by rewrite -lothers_in_l_comp lens_compA lothers_lothers_notin_l_perm.
 Qed.
 
 Section focus.
