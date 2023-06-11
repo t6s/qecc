@@ -387,7 +387,7 @@ Qed.
 Lemma bump0n n : bump 0 n = n.+1.
 Proof. by rewrite /bump leq0n. Qed.
 
-Lemma ghz_ok0 : tsmor hadamard Co (dpbasis C [tuple 0  | _ < 1]) = ghz_state 0.
+Lemma ghz_state0 : ghz_state 0 = tsmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
 Proof.
 apply/ffunP => /= vi.
 rewrite tsmorE !ffunE /= sum_enum_indices /=.
@@ -398,7 +398,7 @@ Qed.
 
 Lemma ghz_ok n : ghz' n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
 Proof.
-elim: n => [| n IH] /=. exact/ghz_ok0.
+elim: n => [| n IH] /=. by rewrite ghz_state0.
 rewrite focus_dpbasis.
 have Hex : extract (lothers (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
            = [tuple 0 | _ < n.+1].
