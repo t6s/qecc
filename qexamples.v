@@ -112,8 +112,8 @@ Qed.
 Definition rev_circuit n : endo n :=
   compn_mor (fun i => tsapp (lens_pair (rev_ord_neq i)) swap) xpredT.
 
-Let succ_neq n (i : 'I_n) :
-  widen_ord (leqnSn n) i != lift (widen_ord (leqnSn n) i) i := neq_lift _ _.
+Let succ_neq n (i : 'I_n) : widen_ord (leqnSn n) i != lift ord0 i.
+Proof. by rewrite neq_ltn /= /bump leq0n ltnSn. Qed.
 Definition ghz n : endo n.+1 :=
   compn_mor (fun i : 'I_n => tsapp (lens_pair (succ_neq (rev_ord i))) cnot)
             xpredT
@@ -384,8 +384,8 @@ rewrite [LHS]lift_max !(tnth_nth 0) /=.
 by case: j => -[|[]].
 Qed.
 
-Lemma bumpnn n : bump n n = n.+1.
-Proof. by rewrite /bump leqnn. Qed.
+Lemma bump0n n : bump 0 n = n.+1.
+Proof. by rewrite /bump leq0n. Qed.
 
 Lemma ghz_ok0 : tsmor hadamard Co (dpbasis C [tuple 0  | _ < 1]) = ghz_state 0.
 Proof.
@@ -427,7 +427,7 @@ rewrite (_ : merge _ _ _ _ =
 rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1%:O; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
-  by case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?ltnSn // bumpnn ltnn.
+  by case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?ltnSn // bump0n ltnn.
 rewrite tsmor_cnot1 uncurry_dpsingle.
 rewrite (_ : merge _ _ _ _ = [tuple 1%:O | i < n.+2]) //.
 apply eq_from_tnth => i; rewrite [RHS]tnth_map.
@@ -441,7 +441,7 @@ case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
   set lop := lothers _; have := mem_tnth (lens_index Hi) lop.
   rewrite mem_lothers !inE negb_or => /andP[_].
   apply contra => /eqP Hj.
-  by apply/eqP/val_inj => /=; rewrite bumpnn.
+  by apply/eqP/val_inj => /=; rewrite bump0n.
 Qed.
 End GHZ.
 
