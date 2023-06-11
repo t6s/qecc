@@ -64,6 +64,14 @@ Definition compn_mor m (F : 'I_n -> endo m) (P : pred 'I_n) :=
   \big[@comp_mor I R m m m/idmor I R m]_(i < n | P i) F i.
 End mor_monoid.
 
+Lemma focus_compn_mor n m p (l : lens p m) (F : 'I_n -> endo m) P :
+  focus l (compn_mor F P) = compn_mor (fun i => focus l (F i)) P.
+Proof.
+rewrite /compn_mor (big_morph _ (id1:=idmor I R p) (op1:=comp_mor(s:=p))) //.
+- move=> x y. exact/morP/focus_comp.
+- exact/morP/focus_idmor.
+Qed.
+
 Section foc_endo.
 Variable n : nat.
 Record foc_endo : Type :=
