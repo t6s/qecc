@@ -112,6 +112,22 @@ Qed.
 Definition rev_circuit n : endo n :=
   compn_mor (fun i => tsapp (lens_pair (rev_ord_neq i)) swap) xpredT.
 
+Let succ_neq n (i : 'I_n) : inord i != lift (inord i) i := neq_lift _ _.
+Definition ghz n : endo n.+1 :=
+  compn_mor (fun i : 'I_n => tsapp (lens_pair (succ_neq (rev_ord i))) cnot)
+            xpredT
+  \v tsapp [lens 0] hadamard.
+Fixpoint ghz' n :=
+  match n as n return endo n.+1 with
+  | 0 => tsmor hadamard
+  | i.+1 =>
+      tsapp (lens_pair (succ_neq ord_max)) cnot
+      \v focus (lothers (lens_single ord_max)) (ghz' i)
+  end.
+Definition ghz_state n : dpower n.+1 Co :=
+  (1 / Num.sqrt 2%:R)%:C *:
+  (dpbasis _ [tuple 0 | i < n.+1] + dpbasis _ [tuple 1%:O | i < n.+1]).
+
 Notation enum_indices := (enum_indices enum2).
 Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
@@ -119,9 +135,30 @@ Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 Local Definition uncurry_dpsingle := uncurry_dpsingle (0%:O : I).
 
+(* a bit of automation to avoid stalling on dependent types *)
+Ltac simpl_lens x :=
+  let y := fresh "y" in
+  pose y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
+  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); last (by eq_lens); subst y.
+
+Ltac simpl_lens_comp :=
+  match goal with |- context [ lens_comp ?a ?b ] => simpl_lens (lens_comp a b)
+  end.
+
+Ltac simpl_tuple x :=
+  let y := fresh "y" in
+  pose y := val x; rewrite /= ?(tnth_nth 0) /= in y;
+  rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
+
+Ltac simpl_extract :=
+  match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
+  end.
+
+Notation dpmerge l vi v :=
+ (uncurry l (dpmap (dpsingle (extract (lothers l) vi)) v)).
 
 (* Proof of correctness for Shor code *)
-
+Section Shor.
 Definition flip (i : I) := rev_ord i.
 
 (* behavior of gates on basis vectors *)
@@ -151,28 +188,6 @@ rewrite BigOp.bigopE /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
-
-(* a bit of automation to avoid stalling on dependent types *)
-Ltac simpl_lens x :=
-  let y := fresh "y" in
-  pose y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
-  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); last (by eq_lens); subst y.
-
-Ltac simpl_lens_comp :=
-  match goal with |- context [ lens_comp ?a ?b ] => simpl_lens (lens_comp a b)
-  end.
-
-Ltac simpl_tuple x :=
-  let y := fresh "y" in
-  pose y := val x; rewrite /= ?(tnth_nth 0) /= in y;
-  rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
-
-Ltac simpl_extract :=
-  match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
-  end.
-
-Notation dpmerge l vi v :=
- (uncurry l (dpmap (dpsingle (extract (lothers l) vi)) v)).
 
 (* bit flip code *)
 Lemma bit_flip_enc0 j k :
@@ -335,7 +350,122 @@ rewrite sign_flip_toffoli focus_dpbasis_id //.
 simpl_extract.
 by rewrite tsmor_toffoli00.
 Qed.
+End Shor.
 
+(* GHZ *)
+Section GHZ.
+Lemma ghz_def n : ghz n =e ghz' n.
+Proof.
+rewrite /ghz /compn_mor.
+elim: n => [|n IH] /=.
+  rewrite big_pred0; last by move=> i; rewrite -(ltn_ord i) ltn0.
+  rewrite comp_mor1f (_ : [lens 0] = lens_id 1); last by eq_lens.
+  exact: focusI.
+rewrite big_ord_recl.
+move=> T v /=.
+f_equal.
+  f_equal; f_equal; f_equal; eq_lens; by rewrite subn1.
+rewrite (focusE _ _ (ghz' n)) /focus_fun -IH.
+set f := \big[comp_mor (s:=n.+1)/_]_(i < n) _ \v _.
+rewrite -/(focus_fun dI (lothers (lens_single (@ord_max n.+1))) f v).
+rewrite -focusE /f.
+rewrite focus_comp /=.
+rewrite -[dpower.focus dI _ (tsapp _ _) _ _]focusM.
+rewrite (_ : lens_comp _ _ = [lens 0]);
+  last by eq_lens; rewrite /= enum_ordinalE.
+rewrite (big_morph _ (id1:=idmor I C n.+2) (op1:=comp_mor(s:=n.+2)));
+  first last.
+- exact/morP/focus_idmor.
+- move=> x y. exact/morP/focus_comp.
+do 3 f_equal.
+apply eq_bigr => i _.
+apply/morP => {}T {}v.
+rewrite -focusM.
+rewrite (_ : lens_comp _ _ = lens_pair (succ_neq (rev_ord (lift ord0 i)))) //.
+apply eq_lens_tnth => j.
+rewrite tnth_comp tnth_lothers_single.
+apply val_inj.
+rewrite [LHS]lift_max !(tnth_nth 0) /=.
+case: j => -[|[]] //= _.
+- rewrite !inordK.
+  + by rewrite subSS /bump leq0n.
+  + by rewrite ltn_subLR //= ltnS // -addSn -addSnnS ltn_addl.
+  + by rewrite ltn_subLR // leq_addl.
+- rewrite /bump leq0n !inordK ?(add1n,subSS) //.
+  + by rewrite ltn_subLR // -addSnnS leq_addl.
+  + by rewrite ltn_subLR // leq_addl.
+Qed.
+
+Lemma ghz_ok n : ghz' n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
+Proof.
+elim: n => [| n IH] /=.
+  apply/ffunP => /= vi.
+  rewrite tsmorE !ffunE /=.
+  rewrite sum_enum_indices /=.
+  have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=;
+  rewrite !ffunE !eq_ord_tuple /= enum_ordinalE /= !linE ![_ *: 1]mulr1;
+  by rewrite ![_ *: 0]mulr0 !linE.
+rewrite focus_dpbasis.
+have Hex :
+  extract (lothers (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
+  = [tuple 0 | _ < n.+1].
+  apply eq_from_tnth => i.
+  by rewrite tnth_extract !tnth_map.
+rewrite Hex {}IH.
+rewrite /ghz_state !linearZ_LR /=.
+congr (_ *: _); rewrite !linearE /=.
+congr (_ + _); rewrite uncurry_dpsingle.
+- rewrite -Hex merge_extract focus_dpbasis.
+  have Hex': extract (lens_pair (succ_neq ord_max)) [tuple (0:I) | _ < n.+2]
+             = [tuple 0; 0].
+    apply eq_from_tnth => i.
+    rewrite tnth_extract !tnth_map.
+    by case: i => -[|[]].
+  by rewrite Hex' tsmor_cnot0 uncurry_dpsingle -Hex' merge_extract.
+- rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
+    apply eq_from_tnth => i.
+    by rewrite tnth_extract !tnth_map.
+  rewrite (_ : merge _ _ _ _ =
+               [tuple if (i < n.+1)%N then 1%:O else 0 | i < n.+2]); last first.
+    apply eq_from_tnth => i.
+    rewrite [RHS]tnth_map tnth_ord_tuple.
+    case/boolP: (i \in lothers (lens_single ord_max)) => Hi.
+    - rewrite tnth_merge tnth_map.
+      rewrite mem_lothers inE in Hi.
+      case: ifPn => //.
+      move/negP; elim.
+      by rewrite ltn_neqAle Hi -ltnS /=.
+    - rewrite -mem_lothers in Hi.
+      rewrite tnth_merge_lothers tnth_map.
+      rewrite !mem_lothers inE negbK in Hi.
+      by rewrite (eqP Hi) ltnn.
+  rewrite focus_dpbasis.
+  rewrite (_ : extract _ _ = [tuple 1%:O; 0]); last first.
+    apply eq_from_tnth => i.
+    rewrite !tnth_map tnth_ord_tuple.
+    case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) /=.
+    - by rewrite inordK // ltnSn.
+    - by rewrite inordK // /bump leqnn ltnn.
+  rewrite tsmor_cnot1 uncurry_dpsingle.
+  rewrite (_ : merge _ _ _ _ = [tuple 1%:O | i < n.+2]) //.
+  apply eq_from_tnth => i.
+  rewrite [RHS]tnth_map.
+  case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
+  - rewrite tnth_merge.
+    case: (lens_index Hi) => -[|[]] // Hi'.
+    rewrite (tnth_nth 0) //=; by apply val_inj.
+  - rewrite -mem_lothers in Hi.
+    rewrite tnth_merge_lothers !tnth_map tnth_ord_tuple.
+    rewrite ifT //.
+    have := mem_tnth (lens_index Hi) (lothers (lens_pair (succ_neq ord_max))).
+    rewrite mem_lothers !inE negb_or => /andP[_].
+    set j := tnth _ _ => Hj.
+    have Hj' : j != n.+1 :> nat.
+      move: Hj; apply contra => /eqP Hj.
+      apply/eqP/val_inj => /=.
+      by rewrite /bump inordK ?leqnn ?add1n.
+    by rewrite ltn_neqAle Hj' -ltnS /=.
+Qed.
 
 (* Semantics of rev_circuit *)
 

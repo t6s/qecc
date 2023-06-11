@@ -460,7 +460,7 @@ Qed.
 
 Definition focus f := locked (Mor (focusN f)).
 
-Lemma focusE f T : focus f T = Linear (@focus_is_linear f T).
+Lemma focusE f T : focus f T = @focus_fun f T :> (dpower _ _ -> _).
 Proof. by rewrite /focus -lock. Qed.
 
 Lemma curry_dpbasis (vi : n.-tuple I) :
@@ -556,7 +556,7 @@ Variables (n m p : nat) (l : lens n m).
 Lemma focusI tr : focus (lens_id n) tr =e tr.
 Proof.
 case/naturalityP: (morN tr) => [f Hf] T v.
-rewrite /= focusE /=.
+rewrite /= focusE.
 apply/ffunP => /= vi.
 rewrite /focus_fun !{}Hf {tr} !ffunE !tsmorE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
