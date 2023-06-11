@@ -466,9 +466,11 @@ congr (_ + _); rewrite uncurry_dpsingle.
       by rewrite /bump inordK ?leqnn ?add1n.
     by rewrite ltn_neqAle Hj' -ltnS /=.
 Qed.
+End GHZ.
 
 (* Semantics of rev_circuit *)
 
+Section rev_circuit.
 Lemma swapU : unitary_endo (tsmor swap).
 Proof.
 rewrite /unitary_endo /tinner /= => s t.
@@ -684,9 +686,11 @@ case/boolP: (i < n.+2./2)%N => Hi.
   rewrite !cast_tupleE 2!merge_pair.
   by rewrite extract_lothers_merge extract_merge.
 Qed.
+End rev_circuit.
 
 (* Alternative proof using non-commutative monoid of composition  *)
 
+Section rev_circuit'.
 Lemma focus_compn_mor n m p (l : lens m p) (F : 'I_n -> endo p) P :
   focus l (compn_mor F P) =e compn_mor (fun i => focus l (F i)) P.
 Proof.
@@ -941,6 +945,7 @@ apply IH => //.
   by rewrite ltn_subRL addn0.
 - exact: ltnW.
 Qed.
+End rev_circuit'.
 
 (* Checking equality of functions (sum of tensors) *)
 Lemma cnotK : involutive (tsmor cnot Co).
