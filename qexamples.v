@@ -37,7 +37,7 @@ Definition cnot : tsquare 2 :=
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
 Definition hadamard : tsquare 1 :=
-  (1 / Num.sqrt 2%:R)%:C *:
+  (1 / Num.sqrt 2)%:C *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
 
 Definition toffoli : tsquare 3 :=
@@ -126,7 +126,7 @@ Fixpoint ghz' n :=
       \v focus (lothers (lens_single ord_max)) (ghz' i)
   end.
 Definition ghz_state n : dpower n.+1 Co :=
-  (1 / Num.sqrt 2%:R)%:C *:
+  (1 / Num.sqrt 2)%:C *:
   (dpbasis _ [tuple 0 | i < n.+1] + dpbasis _ [tuple 1%:O | i < n.+1]).
 
 Notation enum_indices := (enum_indices enum2).
@@ -241,7 +241,7 @@ Qed.
 (* Not used
 Lemma tsmor_hadamard0 :
   tsmor hadamard Co ¦ 0 ⟩ =
-  (1 / Num.sqrt 2%:R)%:C *: \sum_(vi : 1.-tuple I) (dpbasis C vi).
+  (1 / Num.sqrt 2)%:C *: \sum_(vi : 1.-tuple I) (dpbasis C vi).
 Proof.
 apply/ffunP => vi.
 rewrite tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 !subr0.
@@ -258,7 +258,7 @@ Definition parity n (vi : n.-tuple I) : nat :=
 
 Lemma tsmor_hadamard1 :
   tsmor hadamard Co ¦ 1 ⟩ =
-  (1 / Num.sqrt 2%:R)%:C *:
+  (1 / Num.sqrt 2)%:C *:
   \sum_(vi : 1.-tuple I) (-1)^+ (parity vi) *: dpbasis C vi.
 Proof.
 apply/ffunP => vi.
@@ -501,11 +501,11 @@ have := mem_enum2 b.
 have := mem_enum2 a.
 rewrite !inE.
 set F := curry _ _ _.
-have sumK : forall (vi : (0+2).-tuple I),
+have sumK : forall (vi : 2.-tuple I),
     \sum_vj (vi == vj)%:R *: F vj = F vi.
   move=> vk; rewrite -[RHS]sum_dpbasisK.
   apply eq_bigr => vj _; by rewrite !ffunE.
-do 2! (case/orP => /eqP ->);
+do 2 (case/orP => /eqP ->);
  under eq_bigr do rewrite /= !linE; by rewrite sumK !ffunE.
 Qed.
 End swap_asym_focus.
