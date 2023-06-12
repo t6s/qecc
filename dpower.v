@@ -1014,7 +1014,7 @@ End enum_indices.
 Section enum2.
 Let I := [finType of 'I_2].
 
-Definition enum2 : seq I := [:: 0%:O; 1%:O].
+Definition enum2 : seq I := [:: 0; 1].
 Lemma uniq_enum2 : uniq enum2. Proof. by []. Qed.
 Lemma mem_enum2 i : i \in enum2.
 Proof. by rewrite !inE; case: i => -[|[]]. Qed.

@@ -21,7 +21,7 @@ Let I := [finType of 'I_2].
 Let dI : I := 0%:O.
 
 Notation "¦ x1 , .. , xn ⟩" :=
-  (dpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
+  (dpbasis _ [tuple of x1 :: .. [:: xn] ..]) (at level 0).
 
 Notation focus := (focus dI).
 Notation tsapp l M := (focus l (tsmor M)).
@@ -127,14 +127,14 @@ Fixpoint ghz' n :=
   end.
 Definition ghz_state n : dpower n.+1 Co :=
   (1 / Num.sqrt 2)%:C *:
-  (dpbasis _ [tuple 0 | i < n.+1] + dpbasis _ [tuple 1%:O | i < n.+1]).
+  (dpbasis _ [tuple 0 | i < n.+1] + dpbasis _ [tuple 1 | i < n.+1]).
 
 Notation enum_indices := (enum_indices enum2).
 Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
-Local Definition uncurry_dpsingle := uncurry_dpsingle (0%:O : I).
+Local Definition uncurry_dpsingle := uncurry_dpsingle (0 : I).
 
 (* a bit of automation to avoid stalling on dependent types *)
 Ltac simpl_lens x :=
@@ -163,25 +163,21 @@ Section Shor.
 Definition flip (i : I) := rev_ord i.
 
 (* behavior of gates on basis vectors *)
-Lemma tsmor_cnot0 i :
-  tsmor cnot Co (dpbasis C [tuple 0%:O; i]) = dpbasis C [tuple 0%:O; i].
+Lemma tsmor_cnot0 i : tsmor cnot Co ¦0,i⟩ = ¦0,i⟩.
 Proof.
 apply/ffunP => vi; rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
-Lemma tsmor_cnot1 i :
-  tsmor cnot Co (dpbasis C [tuple 1%:O; i]) = dpbasis C [tuple 1%:O; flip i].
+Lemma tsmor_cnot1 i : tsmor cnot Co ¦1, i⟩ = ¦1, flip i⟩.
 Proof.
 apply/ffunP => vi; rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
-Lemma tsmor_toffoli00 i :
-  tsmor toffoli Co (dpbasis C [tuple 0%:O; 0%:O; i]) =
-  dpbasis C [tuple 0%:O; 0%:O; i].
+Lemma tsmor_toffoli00 i : tsmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.
 rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
@@ -191,32 +187,28 @@ by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
 (* bit flip code *)
-Lemma bit_flip_enc0 j k :
-  bit_flip_enc Co (dpbasis C [tuple 0%:O; j; k]) =
-  dpbasis C [tuple 0%:O; j; k].
+Lemma bit_flip_enc0 j k : bit_flip_enc Co ¦0,j,k⟩ = ¦0,j,k⟩.
 Proof.
 rewrite /bit_flip_enc /=.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot0.
 rewrite uncurry_dpsingle.
-rewrite (_ : merge _ _ _ _ = [tuple 0%:O; j; k]); last by eq_lens.
+rewrite (_ : merge _ _ _ _ = [tuple 0; j; k]); last by eq_lens.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot0 uncurry_dpsingle.
 by congr dpbasis; eq_lens.
 Qed.
 
-Lemma bit_flip_enc1 j k :
-  bit_flip_enc Co (dpbasis C [tuple 1%:O; j; k]) =
-  dpbasis C [tuple 1%:O; flip j; flip k].
+Lemma bit_flip_enc1 j k : bit_flip_enc Co ¦1,j,k⟩ = ¦1, flip j, flip k⟩.
 Proof.
 rewrite /bit_flip_enc /=.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot1.
 rewrite uncurry_dpsingle.
-rewrite (_ : merge _ _ _ _ = [tuple 1%:O; flip j; k]); last by eq_lens.
+rewrite (_ : merge _ _ _ _ = [tuple 1; flip j; k]); last by eq_lens.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot1 uncurry_dpsingle.
@@ -316,8 +308,7 @@ by rewrite -[RHS]bit_flip_toffoli.
 Qed.
 
 (* Shor code on a perfect channel *)
-Let shor_input i : 9.-tuple I :=
-  [tuple of [:: i; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O; 0%:O]].
+Let shor_input i : 9.-tuple I := [tuple of [:: i; 0; 0; 0; 0; 0; 0; 0; 0]].
 Lemma shor_code_id i :
  shor_code (idmor I C 9) Co (dpbasis C (shor_input i)) =
  dpbasis C (shor_input i).
@@ -333,8 +324,8 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   rewrite !linearZ_LR /= uncurry_dpsingle.
   congr (_ *: focus _ _ _ _).
   case: j => -[|a [|b [|c []]]] Hj //=.
-  rewrite (_ : merge _ _ _ _ =
-         [tuple a; 0%:O; 0%:O; b; 0%:O; 0%:O; c; 0%:O; 0%:O]); last by eq_lens.
+  rewrite (_ : merge _ _ _ _ = [tuple a; 0; 0; b; 0; 0; c; 0; 0]);
+    last by eq_lens.
   rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
   rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
   rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ; last by rewrite disjoint_has.
@@ -376,7 +367,7 @@ rewrite focus_compn_mor.
 do 3 f_equal.
 apply eq_bigr => i _; apply/morP => {}T {}v.
 rewrite -focusM.
-rewrite (_ : lens_comp _ _ = lens_pair (succ_neq (rev_ord (lift ord0 i)))) //.
+rewrite (_ : lens_comp _ _ = lens_pair (succ_neq (rev_ord (lift 0 i)))) //.
 apply eq_lens_tnth => j.
 rewrite tnth_comp tnth_lothers_single.
 apply val_inj.
@@ -415,7 +406,7 @@ congr (_ + _); rewrite uncurry_dpsingle.
 rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite (_ : merge _ _ _ _ =
-             [tuple if (i < n.+1)%N then 1%:O else 0 | i < n.+2]); last first.
+             [tuple if (i < n.+1)%N then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_map tnth_ord_tuple.
   case/boolP: (i == ord_max) => Hi.
   - have Hi' : i \in lothers (lothers (lens_single ord_max)).
@@ -425,11 +416,11 @@ rewrite (_ : merge _ _ _ _ =
       by rewrite mem_lothers inE Hi.
     by rewrite tnth_merge tnth_map ltn_neqAle Hi -ltnS ltn_ord.
 rewrite focus_dpbasis.
-rewrite (_ : extract _ _ = [tuple 1%:O; 0]); last first.
+rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
   by case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?ltnSn // bump0n ltnn.
 rewrite tsmor_cnot1 uncurry_dpsingle.
-rewrite (_ : merge _ _ _ _ = [tuple 1%:O | i < n.+2]) //.
+rewrite (_ : merge _ _ _ _ = [tuple 1 | i < n.+2]) //.
 apply eq_from_tnth => i; rewrite [RHS]tnth_map.
 case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
 - rewrite tnth_merge.
@@ -995,9 +986,9 @@ rewrite !mulrA !(mulrC (_ ^*)%C) !(mulrAC _ (_ ^*)%C).
 rewrite !addrA -!rmorphM !mulrN !mulNr !rmorphN /=.
 rewrite -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
 rewrite opprK.
-rewrite -!(addrAC _ (_ * t [tuple 0%:O] * ((s [tuple 0%:O])^*)%C)).
+rewrite -!(addrAC _ (_ * t [tuple 0] * ((s [tuple 0])^*)%C)).
 rewrite -!mulrA -mulrDl addrC !addrA.
-rewrite -!(addrAC _ (_ * (t [tuple 1%:O] * ((s [tuple 1%:O])^*)%C))).
+rewrite -!(addrAC _ (_ * (t [tuple 1] * ((s [tuple 1])^*)%C))).
 rewrite -mulrDl -addrA !mulNr -opprD -addrA addrK.
 by rewrite -rmorphD -mulr2n -mulr_natl divrr ?nat_unit //= !mul1r addrC.
 Qed.
