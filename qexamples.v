@@ -473,18 +473,14 @@ Proof.
 move=> T v; apply/ffunP => /= vi.
 rewrite focusE !(ffunE,tsmorE) /=.
 have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
-  apply/val_inj/eqP => /=; rewrite !eq_ord_tuple /= /others.
-  rewrite (eq_filter (a2:=fun j => j \notin lens_pair Hir)) // => k.
-  by rewrite !inE orbC.
+  apply/val_inj/val_inj/eq_lothers => k; by rewrite !inE orbC.
 have -> : esym (addKn_any n 2 2) = erefl by apply eq_irrelevance.
 rewrite cast_tupleE.
 under eq_bigr do rewrite 11!ffunE.
 move: (extract (lothers _) vi) => vi'.
-have -> : extract (lens_pair Hir) vi = [tuple tnth vi i; tnth vi j].
-  by apply/val_inj.
-have -> : extract (lens_pair Hri) vi = [tuple tnth vi j; tnth vi i].
-  by apply/val_inj.
-move: (tnth vi i) (tnth vi j) => a b.
+simpl_extract.
+simpl_extract.
+move: (vi`_i) (vi`_j) => a b.
 have := mem_enum2 b.
 have := mem_enum2 a.
 rewrite !inE.
@@ -536,7 +532,7 @@ apply/negP => /orP[] /orP[].
 Qed.
 
 Lemma rev_circuit_fendo :
-  rev_circuit n = fendo_mor ord0 (compn_fendo ord0 fendo_swap xpredT).
+  rev_circuit n = fendo_mor 0 (compn_fendo 0 fendo_swap xpredT).
 Proof. rewrite -compn_mor_disjoint //; exact/all_disjoint_swap. Qed.
 
 Lemma swap_asym_focusU P : unitary_endo (compn_fendo ord0 fendo_swap P).
@@ -563,8 +559,8 @@ by rewrite subnK // addnS addnn /= uphalf_double.
 Qed.
 
 Lemma rev_circuit_ok n (i : 'I_n.+2) v :
-  proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
-  proj ord0 (lens_single i) v.
+  proj 0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
+  proj 0 (lens_single i) v.
 Proof.
 rewrite rev_circuit_fendo.
 (* Special case: no swapping for the middle element (n is odd) *)
