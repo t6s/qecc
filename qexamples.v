@@ -134,7 +134,7 @@ Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Local Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
-Local Definition uncurry_dpsingle := uncurry_dpsingle (0 : I).
+Local Definition dpmerge_dpbasis := dpmerge_dpbasis (0 : I).
 
 (* a bit of automation to avoid stalling on dependent types *)
 Ltac simpl_lens x :=
@@ -154,9 +154,6 @@ Ltac simpl_tuple x :=
 Ltac simpl_extract :=
   match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
   end.
-
-Notation dpmerge l vi v :=
- (uncurry l (dpmap (dpsingle (extract (lothers l) vi)) v)).
 
 (* Proof of correctness for Shor code *)
 Section Shor.
@@ -193,11 +190,11 @@ rewrite /bit_flip_enc /=.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot0.
-rewrite uncurry_dpsingle.
+rewrite dpmerge_dpbasis.
 rewrite (_ : merge _ _ _ _ = [tuple 0; j; k]); last by eq_lens.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite tsmor_cnot0 uncurry_dpsingle.
+rewrite tsmor_cnot0 dpmerge_dpbasis.
 by congr dpbasis; eq_lens.
 Qed.
 
@@ -207,11 +204,11 @@ rewrite /bit_flip_enc /=.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot1.
-rewrite uncurry_dpsingle.
+rewrite dpmerge_dpbasis.
 rewrite (_ : merge _ _ _ _ = [tuple 1; flip j; k]); last by eq_lens.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite tsmor_cnot1 uncurry_dpsingle.
+rewrite tsmor_cnot1 dpmerge_dpbasis.
 by congr dpbasis; eq_lens.
 Qed.
 
@@ -321,7 +318,7 @@ transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
   set sfe := sign_flip_enc _ _.
   rewrite (decompose_scaler sfe) !linear_sum /=.
   apply eq_bigr => j _.
-  rewrite !linearZ_LR /= uncurry_dpsingle.
+  rewrite !linearZ_LR /= dpmerge_dpbasis.
   congr (_ *: focus _ _ _ _).
   case: j => -[|a [|b [|c []]]] Hj //=.
   rewrite (_ : merge _ _ _ _ = [tuple a; 0; 0; b; 0; 0; c; 0; 0]);
@@ -396,13 +393,13 @@ have Hex : extract (lothers (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite Hex {}IH /ghz_state !linearZ_LR /=.
 congr (_ *: _); rewrite !linearE /=.
-congr (_ + _); rewrite uncurry_dpsingle.
+congr (_ + _); rewrite dpmerge_dpbasis.
   rewrite -Hex merge_extract focus_dpbasis.
   have Hex': extract (lens_pair (succ_neq ord_max)) [tuple (0:I) | _ < n.+2]
              = [tuple 0; 0].
     apply eq_from_tnth => i; rewrite tnth_extract !tnth_map.
     by case: i => -[|[]].
-  by rewrite Hex' tsmor_cnot0 uncurry_dpsingle -Hex' merge_extract.
+  by rewrite Hex' tsmor_cnot0 dpmerge_dpbasis -Hex' merge_extract.
 rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite (_ : merge _ _ _ _ =
@@ -419,7 +416,7 @@ rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
   by case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?ltnSn // bump0n ltnn.
-rewrite tsmor_cnot1 uncurry_dpsingle.
+rewrite tsmor_cnot1 dpmerge_dpbasis.
 rewrite (_ : merge _ _ _ _ = [tuple 1 | i < n.+2]) //.
 apply eq_from_tnth => i; rewrite [RHS]tnth_map.
 case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.

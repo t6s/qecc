@@ -475,21 +475,25 @@ case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
 by elim Hvi; rewrite -Hvk -Hvj merge_extract.
 Qed.
 
+Definition dpmerge vi : {linear dpower m R^o -> dpower n R^o} :=
+  locked [linear of uncurry l \o dpmap (dpsingle (extract (lothers l) vi))].
+
+Lemma dpmergeE vi v :
+  dpmerge vi v = uncurry l (dpmap (dpsingle (extract (lothers l) vi)) v).
+Proof. by rewrite /dpmerge -lock. Qed.
+
 Lemma focus_dpbasis f (vi : n.-tuple I) :
-  focus f _ (dpbasis vi) =
-  uncurry l (dpmap (dpsingle (extract (lothers l) vi))
-                        (f _ (dpbasis (extract l vi)))).
+  focus f _ (dpbasis vi) = dpmerge vi (f _ (dpbasis (extract l vi))).
 Proof.
 apply/ffunP => v.
-by rewrite focusE !ffunE curry_dpbasis -(morN f) !ffunE.
+by rewrite focusE !ffunE curry_dpbasis -(morN f) dpmergeE !ffunE.
 Qed.
 
-Lemma uncurry_dpsingle (vi : (n-m).-tuple I) (vj : m.-tuple I) :
-  uncurry l (dpmap (dpsingle vi) (dpbasis vj)) =
-  dpbasis (merge l vj vi).
+Lemma dpmerge_dpbasis (vi : n.-tuple I) (vj : m.-tuple I) :
+  dpmerge vi (dpbasis vj) = dpbasis (merge l vj (extract (lothers l) vi)).
 Proof.
 apply/ffunP => vk.
-rewrite !ffunE.
+rewrite dpmergeE !ffunE.
 case/boolP: (_ == vk) => /eqP Hvk.
   by rewrite -Hvk extract_lothers_merge extract_merge !eqxx scale1r.
 case/boolP: (_ == extract _ _) => /eqP Hvi; last by rewrite scale0r.
@@ -502,7 +506,7 @@ Lemma focus_dpbasis_id (f : endo m) v :
   focus f _ (dpbasis v) = dpbasis v.
 Proof.
 move=> Htr.
-by rewrite focus_dpbasis // Htr uncurry_dpsingle merge_extract.
+by rewrite focus_dpbasis // Htr dpmerge_dpbasis merge_extract.
 Qed.
 End focus.
 
