@@ -11,7 +11,12 @@ dpower.v
 unitary.v
 endo_monoid.v
 kqm.v
-qexamples.v
+qexamples_common.v
+qexamples_shor.v
+qexamples_ghz.v
+qexamples_rev_circuit.v
+qexamples_rev_circuit_old.v
+qexamples_misc.v
 
 -R . qecc
 
