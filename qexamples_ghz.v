@@ -11,7 +11,7 @@ Proof. by rewrite neq_ltn /= /bump leq0n ltnSn. Qed.
 (* Specification *)
 Definition ghz_state n : dpower n.+1 Co :=
   (1 / Num.sqrt 2)%:C *:
-  (dpbasis _ [tuple 0 | i < n.+1] + dpbasis _ [tuple 1 | i < n.+1]).
+  (dpbasis C [tuple 0 | i < n.+1] + dpbasis C [tuple 1 | i < n.+1]).
 
 (* Recursive definition *)
 (* Uses a recursive embedding through dependent pattern-matching *)
