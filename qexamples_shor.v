@@ -1,6 +1,10 @@
 From mathcomp Require Import all_ssreflect all_algebra complex.
 Require Import qexamples_common.
 
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
 Definition bit_flip_enc : endo 3 :=
   tsapp [lens 0; 2] cnot \v  tsapp [lens 0; 1] cnot.
 
@@ -35,7 +39,7 @@ Definition shor_code (chan : endo 9) :=
 (* bit flip code *)
 Lemma bit_flip_enc0 j k : bit_flip_enc Co ¦0,j,k⟩ = ¦0,j,k⟩.
 Proof.
-rewrite /bit_flip_enc /=.
+rewrite /=.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot0.
@@ -49,7 +53,7 @@ Qed.
 
 Lemma bit_flip_enc1 j k : bit_flip_enc Co ¦1,j,k⟩ = ¦1, flip j, flip k⟩.
 Proof.
-rewrite /bit_flip_enc /=.
+rewrite /=.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite tsmor_cnot1.
@@ -136,7 +140,7 @@ Lemma shor_code_id i :
  shor_code (idmor I C 9) Co (dpbasis C (shor_input i)) =
  dpbasis C (shor_input i).
 Proof.
-rewrite /shor_code /=.
+rewrite /=.
 transitivity (focus [lens 0; 3; 6] (sign_flip_dec \v sign_flip_enc) Co
                     (dpbasis C (shor_input i))).
   rewrite [RHS]focus_comp /= focus_dpbasis.

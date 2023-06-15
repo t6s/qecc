@@ -84,8 +84,7 @@ Lemma dpcastN m n (H : n = m) : naturality (morlin_dpcast H).
 Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
 Definition mor_dpcast n m (H : n = m) := Mor (dpcastN H).
 
-Definition eq_mor m n (f1 f2 : mor m n) :=
-  forall T : lmodType R, f1 T =1 f2 T.
+Definition eq_mor m n (f1 f2 : mor m n) := forall T, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
 
 Definition tsmor_fun m n (M : tmatrix n m) : morfun m n :=
