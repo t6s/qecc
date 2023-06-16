@@ -51,12 +51,12 @@ Lemma tsapp_swap_asym_focus : tsapp (lens_pair Hir) swap =e swap_asym_focus.
 Proof.
 move=> T v; apply/ffunP => /= vi.
 rewrite focusE !(ffunE,tsmorE) /=.
-have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
-  apply/val_inj/val_inj/eq_lothers => k; by rewrite !inE orbC.
+have -> : lensC (lens_pair Hri) = lensC (lens_pair Hir).
+  apply/val_inj/val_inj/eq_lensC => k; by rewrite !inE orbC.
 have -> : esym (addKn_any n 2 2) = erefl by apply eq_irrelevance.
 rewrite cast_tupleE.
 under eq_bigr do rewrite 11!ffunE.
-move: (extract (lothers _) vi) => vi'.
+move: (extract (lensC _) vi) => vi'.
 simpl_extract.
 simpl_extract.
 move: (vi`_i) (vi`_j) => a b.
@@ -153,8 +153,8 @@ case/boolP: (i == rev_ord i) => [/eqP|] Hir.
     by move: (ltn_ord k); rewrite -Hk Hi' ltnn.
   - exact/swap_asym_focusU.
 have := Hir; rewrite eq_sym => Hri.
-have Hior : i \in lothers (lens_single (rev_ord i)) by rewrite mem_lothers !inE.
-have Hroi : rev_ord i \in lothers (lens_single i) by rewrite mem_lothers !inE.
+have Hior : i \in lensC (lens_single (rev_ord i)) by rewrite mem_lensC !inE.
+have Hroi : rev_ord i \in lensC (lens_single i) by rewrite mem_lensC !inE.
 pose lens_ior := lens_single (lens_index Hior).
 pose lens_roi := lens_single (lens_index Hroi).
 (* Main case: i < rev_ord i *)
@@ -176,9 +176,9 @@ case/boolP: (i < n.+2./2)%N => Hi.
   apply eq_bigr => vj _; apply eq_bigr => vk _; rewrite !ffunE.
   have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
   rewrite !cast_tupleE merge_pair.
-  have -> : lothers (lens_pair Hri) = lothers (lens_pair Hir).
-    by apply/lens_inj/eq_lothers => j; rewrite !inE orbC.
-  rewrite extract_lothers_merge [in RHS]merge_pair.
+  have -> : lensC (lens_pair Hri) = lensC (lens_pair Hir).
+    by apply/lens_inj/eq_lensC => j; rewrite !inE orbC.
+  rewrite extractC_merge [in RHS]merge_pair.
   have Hris : lens_basis (lens_pair Hri) = lens_pair Hir :> seq _.
     apply/eq_lens_sorted.
     - by move=> /= j; rewrite mem_lensE mem_filter mem_enum !inE andbT orbC.
@@ -224,5 +224,5 @@ case/boolP: (i < n.+2./2)%N => Hi.
   apply eq_bigr => vj _; apply eq_bigr => vk _; rewrite !ffunE.
   have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
   rewrite !cast_tupleE 2!merge_pair.
-  by rewrite extract_lothers_merge extract_merge.
+  by rewrite extractC_merge extract_merge.
 Qed.

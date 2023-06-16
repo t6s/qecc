@@ -268,12 +268,12 @@ Definition curry (st : dpower n T) : dpower m (dpower (n-m) T) :=
    [ffun w : (n-m).-tuple I => st (merge l v w)]].
 
 Definition uncurry (st : dpower m (dpower (n-m) T)) : dpower n T :=
-  [ffun v : n.-tuple I => st (extract l v) (extract (lothers l) v)].
+  [ffun v : n.-tuple I => st (extract l v) (extract (lensC l) v)].
 
 Lemma uncurryK : cancel uncurry curry.
 Proof.
 move=> v; apply/ffunP => v1; apply/ffunP => v2.
-by rewrite !ffunE extract_merge extract_lothers_merge.
+by rewrite !ffunE extract_merge extractC_merge.
 Qed.
 
 Lemma curryK : cancel curry uncurry.
@@ -399,30 +399,30 @@ Proof.
 move=> T /= v.
 apply/ffunP => /= vi.
 rewrite /ptracefun !sum_ffunE /ptracefun.
-rewrite [LHS](reindex_merge _ dI (lothers_notin_l l1 l2)) exchange_big /=.
-rewrite (reindex_inj (@extract_inj _ (lens_perm (lothers_in_l l1 l2)) _)).
+rewrite [LHS](reindex_merge _ dI (lensC_notin_l l1 l2)) exchange_big /=.
+rewrite (reindex_inj (@extract_inj _ (lens_perm (lensC_in_l l1 l2)) _)).
 rewrite (reindex _
-    (onW_bij _ (cast_tuple_bij _ (esym (cast_lothers_notin_l' l1 l2))))) /=.
+    (onW_bij _ (cast_tuple_bij _ (esym (cast_lensC_notin_l' l1 l2))))) /=.
 apply eq_bigr => /= vj _.
 rewrite !linear_sum sum_ffunE.
 apply eq_bigr => /= vk _.
 rewrite /dpsel !ffunE.
-f_equal; last by rewrite merge_lothers_notin_l; apply: merge_comp.
+f_equal; last by rewrite merge_lensC_notin_l; apply: merge_comp.
 f_equal.
 apply/ffunP => vh.
 rewrite !ffunE -!extract_comp scalerA -natrM mulnb.
 congr ((_ : bool)%:R *: _).
-rewrite -[extract (lothers _) vh](merge_extract dI (lothers_notin_l l1 l2)).
-rewrite merge_inj_eq -extract_comp lothers_notin_l_comp -extract_comp.
+rewrite -[extract (lensC _) vh](merge_extract dI (lensC_notin_l l1 l2)).
+rewrite merge_inj_eq -extract_comp lensC_notin_l_comp -extract_comp.
 congr andb.
-rewrite -(inj_eq (f:=cast_tuple (cast_lothers_notin_l' l1 l2))); last first.
+rewrite -(inj_eq (f:=cast_tuple (cast_lensC_notin_l' l1 l2))); last first.
   move=> x y /(f_equal val) => H; exact/val_inj.
 rewrite (_ : cast_tuple _ _ = vj); last by apply val_inj.
 rewrite -[in LHS]
-         (inj_eq (extract_inj (l:=lens_perm (lothers_in_l l1 l2)) (T:=I))).
+         (inj_eq (extract_inj (l:=lens_perm (lensC_in_l l1 l2)) (T:=I))).
 congr (_ == _).
 rewrite cast_tuple_extract -extract_comp cast_lens_comp.
-by rewrite -lothers_in_l_comp lens_compA lothers_lothers_notin_l_perm.
+by rewrite -lensC_in_l_comp lens_compA lensC_lensC_notin_l_perm.
 Qed.
 
 Section focus.
@@ -464,21 +464,21 @@ Proof. by rewrite /focus -lock. Qed.
 
 Lemma curry_dpbasis (vi : n.-tuple I) :
   curry l (dpbasis vi) =
-  dpmap (dpsingle (extract (lothers l) vi)) (dpbasis (extract l vi)).
+  dpmap (dpsingle (extract (lensC l) vi)) (dpbasis (extract l vi)).
 Proof.
 apply/ffunP => vj; apply/ffunP => vk; rewrite !ffunE.
 case/boolP: (vi == _) => /eqP Hvi.
-  by rewrite Hvi extract_lothers_merge extract_merge !eqxx /= scale1r.
+  by rewrite Hvi extractC_merge extract_merge !eqxx /= scale1r.
 case/boolP: (_ == vk) => /eqP Hvk; last by rewrite scale0r.
 case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
 by elim Hvi; rewrite -Hvk -Hvj merge_extract.
 Qed.
 
 Definition dpmerge vi : {linear dpower m R^o -> dpower n R^o} :=
-  locked [linear of uncurry l \o dpmap (dpsingle (extract (lothers l) vi))].
+  locked [linear of uncurry l \o dpmap (dpsingle (extract (lensC l) vi))].
 
 Lemma dpmergeE vi v :
-  dpmerge vi v = uncurry l (dpmap (dpsingle (extract (lothers l) vi)) v).
+  dpmerge vi v = uncurry l (dpmap (dpsingle (extract (lensC l) vi)) v).
 Proof. by rewrite /dpmerge -lock. Qed.
 
 Lemma focus_dpbasis f (vi : n.-tuple I) :
@@ -489,12 +489,12 @@ by rewrite focusE !ffunE curry_dpbasis -(morN f) dpmergeE !ffunE.
 Qed.
 
 Lemma dpmerge_dpbasis (vi : n.-tuple I) (vj : m.-tuple I) :
-  dpmerge vi (dpbasis vj) = dpbasis (merge l vj (extract (lothers l) vi)).
+  dpmerge vi (dpbasis vj) = dpbasis (merge l vj (extract (lensC l) vi)).
 Proof.
 apply/ffunP => vk.
 rewrite dpmergeE !ffunE.
 case/boolP: (_ == vk) => /eqP Hvk.
-  by rewrite -Hvk extract_lothers_merge extract_merge !eqxx scale1r.
+  by rewrite -Hvk extractC_merge extract_merge !eqxx scale1r.
 case/boolP: (_ == extract _ _) => /eqP Hvi; last by rewrite scale0r.
 case/boolP: (_ == _) => /eqP Hvj; last by rewrite scaler0.
 elim Hvk; by rewrite Hvi Hvj merge_extract.
@@ -635,7 +635,7 @@ rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (f _ vk * f' _ vj *: v _).
 - by rewrite extract_merge_disjoint // disjoint_sym.
 - by rewrite extract_merge_disjoint.
-- by rewrite !merge_extract_others inject_disjointC.
+- by rewrite !merge_extractC inject_disjointC.
 Qed.
 
 Lemma focus_tensor (M : tsquare m) (M' : tsquare n) :
@@ -646,7 +646,7 @@ move=> T v; apply/ffunP => /= vi.
 rewrite focusE !(ffunE,tsmorE) !sum_ffunE.
 under eq_bigr do rewrite !focusE !(ffunE,tsmorE) !sum_ffunE scaler_sumr.
 rewrite reindex_left_right.
-apply eq_bigr => /= vj _; rewrite !ffunE !merge_extract_others.
+apply eq_bigr => /= vj _; rewrite !ffunE !merge_extractC.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
 by rewrite scalerA inject_all // lens_left_right_disjoint.
 Qed.
@@ -659,8 +659,8 @@ case/naturalityP: (morN tr) => f Hf T v.
 rewrite /= !focusE /focus_fun /= !Hf.
 rewrite /= !focusE /focus_fun /= !Hf {tr Hf}.
 apply/ffunP => /= vi.
-rewrite !ffunE !tsmorE (extract_lothers_comp dI) -!extract_comp.
-rewrite -[in RHS]lothers_in_l_comp -(lothers_notin_l_comp l l') !sum_ffunE.
+rewrite !ffunE !tsmorE (extract_lensC_comp dI) -!extract_comp.
+rewrite -[in RHS]lensC_in_l_comp -(lensC_notin_l_comp l l') !sum_ffunE.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _).
 exact: merge_comp.
@@ -669,7 +669,7 @@ Qed.
 (* Variant for disjoint lenses, used in unitary.v *)
 Variable T : lmodType R.
 Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : dpower n T) :
-  focus (lens_comp (lothers l) l') f T t =
+  focus (lens_comp (lensC l) l') f T t =
   uncurry l (dpmap (m:=m) (focus l' f T) (curry l t)).
   (* parametricity prevents writing it this way:
      focus l (fun _ => Linear (dpmap_linear (focus l' f T))) T t. *)
@@ -692,8 +692,8 @@ Lemma asym_focusC n m p n' m' p' (l1 : lens (m+n) m) (l2 : lens (p+n) p)
 
 Lemma asym_focusC n m p (l1 : lens (m+n) m) (l2 : lens (p+n) p)
       (g : mor m p) (f : endo n) :
-  focus (cast_lens (addKn _ _) (lothers l2)) f \v asym_focus l1 l2 g =e
-  asym_focus l1 l2 g \v focus (cast_lens (addKn _ _) (lothers l1)) f.
+  focus (cast_lens (addKn _ _) (lensC l2)) f \v asym_focus l1 l2 g =e
+  asym_focus l1 l2 g \v focus (cast_lens (addKn _ _) (lensC l1)) f.
 Proof.
 case/naturalityP: (morN f) (morN g) => Mf Hf /naturalityP [Mg Hg] T v /=.
 rewrite !focusE /=.
@@ -707,35 +707,35 @@ rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (Mf _ vk * Mg _ vj *: v _).
 - apply val_inj => /=.
   set w := cast_tuple _ _.
-  by move/(f_equal val): (extract_lothers_merge dI l1 vj w) => /= ->.
+  by move/(f_equal val): (extractC_merge dI l1 vj w) => /= ->.
 - rewrite extract_merge_disjoint //.
   apply/pred0P => /= i.
   rewrite simpl_predE /= andbC /=.
   case Hi: (i \in l2) => //=.
-  by rewrite mem_lensE /= mem_others Hi.
-- rewrite !merge_extract_others.
+  by rewrite mem_lensE /= mem_lensC Hi.
+- rewrite !merge_extractC.
   apply eq_from_tnth => i /=.
   rewrite !tnth_mktuple /=.
   case/boolP: (i \in l1) => Hil1. 
     rewrite !nth_lens_index.
-    rewrite nth_default // memNindex ?(mem_others,Hil1) //.
-    by rewrite (eqP (size_others l1)) size_tuple addKn.
+    rewrite nth_default // memNindex ?(mem_lensC,Hil1) //.
+    by rewrite (eqP (size_lensC l1)) size_tuple addKn.
   rewrite !nth_lens_out //.
   move/negbF: Hil1.
-  rewrite -mem_others => /negbFE.
-  have -> : others l1 = cast_lens (addKn _ _) (lothers l1) by [].
+  rewrite -mem_lensC => /negbFE.
+  have -> : seq_lensC l1 = cast_lens (addKn _ _) (lensC l1) by [].
   move=> Hil1.
   rewrite !nth_lens_index (tnth_nth dI).
   congr nth.
-  have -> : others l2 = cast_lens (addKn _ _) (lothers l2) by [].
-  transitivity (map_tuple (tnth (inject (cast_lens (addKn p n) (lothers l2))
-                           vi vk)) (cast_lens (addKn p n) (lothers l2))) => //.
+  have -> : seq_lensC l2 = cast_lens (addKn _ _) (lensC l2) by [].
+  transitivity (map_tuple (tnth (inject (cast_lens (addKn p n) (lensC l2))
+                           vi vk)) (cast_lens (addKn p n) (lensC l2))) => //.
   apply f_equal, eq_from_tnth => j.
   rewrite tnth_map /= tnth_mktuple nth_lens_index ?mem_tnth // => H.
   rewrite -(nth_lens_index H dI) nthK /=.
   + by rewrite -?tnth_nth.
-  + by rewrite uniq_others.
-  + by rewrite (eqP (size_others _)) addKn inE.
+  + by rewrite uniq_lensC.
+  + by rewrite (eqP (size_lensC _)) addKn inE.
 Qed.
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
@@ -760,7 +760,7 @@ Definition narrow (f : endofun n) : endofun m :=
 End narrow.
 Lemma narrow_focus n m p (l : lens n m) (l' : lens n p)
       (H : [disjoint l & l']) f (T : lmodType R) v :
-  narrow (lothers l) (focus l' f) v =
+  narrow (lensC l) (focus l' f) v =
   focus (lmake_comp H) f T v.
 Proof.
 apply/ffunP => vi.

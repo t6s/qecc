@@ -20,7 +20,7 @@ Fixpoint ghz n :=
   | 0 => tsmor hadamard
   | i.+1 =>
       tsapp (lens_pair (succ_neq ord_max)) cnot
-      \v focus (lothers (lens_single ord_max)) (ghz i)
+      \v focus (lensC (lens_single ord_max)) (ghz i)
   end.
 
 (* Alternative flat definition, using iterated composition *)
@@ -43,7 +43,7 @@ f_equal.
   do 3 f_equal; eq_lens; by rewrite subn1.
 rewrite (focusE _ _ (ghz n)) /focus_fun -IH.
 set f := \big[_/_]_(i < n) _ \v _.
-rewrite -/(focus_fun dI (lothers (lens_single (@ord_max n.+1))) f v).
+rewrite -/(focus_fun dI (lensC (lens_single (@ord_max n.+1))) f v).
 rewrite -focusE /f focus_comp /= -focusM.
 rewrite (_ : lens_comp _ _ = [lens 0]);
   last by eq_lens; rewrite /= enum_ordinalE.
@@ -53,7 +53,7 @@ apply eq_bigr => i _; apply/morP => {}T {}v.
 rewrite -focusM.
 rewrite (_ : lens_comp _ _ = lens_pair (succ_neq (rev_ord (lift 0 i)))) //.
 apply eq_lens_tnth => j.
-rewrite tnth_comp tnth_lothers_single.
+rewrite tnth_comp tnth_lensC_single.
 apply val_inj.
 rewrite [LHS]lift_max !(tnth_nth 0) /=.
 by case: j => -[|[]].
@@ -75,7 +75,7 @@ Lemma ghz_ok n : ghz n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
 Proof.
 elim: n => [| n IH] /=. by rewrite ghz_state0.
 rewrite focus_dpbasis.
-have Hex : extract (lothers (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
+have Hex : extract (lensC (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
            = [tuple 0 | _ < n.+1].
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite Hex {}IH /ghz_state !linearZ_LR /=.
@@ -93,11 +93,11 @@ rewrite (_ : merge _ _ _ _ =
              [tuple if (i < n.+1)%N then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_map tnth_ord_tuple.
   case/boolP: (i == ord_max) => Hi.
-  - have Hi' : i \in lothers (lothers (lens_single ord_max)).
-      by rewrite !mem_lothers inE Hi.
-    by rewrite tnth_merge_lothers tnth_map (eqP Hi) ltnn.
-  - have Hi' : i \in lothers (lens_single ord_max).
-      by rewrite mem_lothers inE Hi.
+  - have Hi' : i \in lensC (lensC (lens_single ord_max)).
+      by rewrite !mem_lensC inE Hi.
+    by rewrite tnth_mergeC tnth_map (eqP Hi) ltnn.
+  - have Hi' : i \in lensC (lens_single ord_max).
+      by rewrite mem_lensC inE Hi.
     by rewrite tnth_merge tnth_map ltn_neqAle Hi -ltnS ltn_ord.
 rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
@@ -110,11 +110,11 @@ case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
 - rewrite tnth_merge.
   case: (lens_index Hi) => -[|[]] // Hi'.
   rewrite (tnth_nth 0) //=; by apply val_inj.
-- rewrite -mem_lothers in Hi.
-  rewrite tnth_merge_lothers !tnth_map tnth_ord_tuple ifT //.
+- rewrite -mem_lensC in Hi.
+  rewrite tnth_mergeC !tnth_map tnth_ord_tuple ifT //.
   rewrite ltn_neqAle -ltnS ltn_ord andbT.
-  set lop := lothers _; have := mem_tnth (lens_index Hi) lop.
-  rewrite mem_lothers !inE negb_or => /andP[_].
+  set lop := lensC _; have := mem_tnth (lens_index Hi) lop.
+  rewrite mem_lensC !inE negb_or => /andP[_].
   apply contra => /eqP Hj.
   by apply/eqP/val_inj => /=; rewrite bump0n.
 Qed.

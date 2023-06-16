@@ -35,7 +35,7 @@ Qed.
 Lemma rev_circuit_odd n (i : 'I_n.+2) :
   i == rev_ord i ->
   (i = n./2.+1 :> nat)%N ->
-  rev_circuit n.+2 =e focus (lothers (lens_single i)) (rev_circuit n.+1).
+  rev_circuit n.+2 =e focus (lensC (lens_single i)) (rev_circuit n.+1).
 Proof.
 move=> Hi Hi' T x; rewrite focus_compn_mor.
 rewrite /rev_circuit.
@@ -55,11 +55,11 @@ rewrite Hn big_mkord.
 move: T x; apply /morP/eq_bigr => j _.
 apply/morP => T x.
 rewrite -focusM.
-have -> // : lens_comp (lothers (lens_single i)) (lens_pair (rev_ord_neq j)) =
+have -> // : lens_comp (lensC (lens_single i)) (lens_pair (rev_ord_neq j)) =
              lens_pair (rev_ord_neq (cast_ord Hn' (inord j))).
 apply/val_inj/eqP; rewrite eq_ord_tuple /=; apply/eqP.
 rewrite inordK; last by rewrite Hn' Hn ltn_ord.
-rewrite !tnth_lothers_single /= /bump /= Hi'.
+rewrite !tnth_lensC_single /= /bump /= Hi'.
 do !(congr cons).
 - case Hj: (_ < _)%N => //.
   have : (n./2 < n./2)%N by rewrite (leq_trans Hj) // -ltnS Hn' Hn.
@@ -121,11 +121,11 @@ Lemma proj_swapE n (i j : 'I_n.+2) (v : dpower n.+2 Co) (Hir : i != j) :
   proj ord0 (lens_single j) (tsapp (lens_pair Hir) swap Co v) =
   proj ord0 (lens_single i) v.
 Proof.
-have Hior : i \in lothers (lens_single j).
-  by rewrite mem_lothers !inE.
+have Hior : i \in lensC (lens_single j).
+  by rewrite mem_lensC !inE.
 have Hri : j != i by rewrite eq_sym.
-have Hroi : j \in lothers (lens_single i).
-  by rewrite mem_lothers !inE.
+have Hroi : j \in lensC (lens_single i).
+  by rewrite mem_lensC !inE.
 apply/ffunP => vi.
 rewrite /= focusE !ffunE /tinner; congr sqrtc.
 rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
@@ -137,7 +137,7 @@ under eq_bigr do rewrite !ffunE.
 rewrite sum_enum_indices /= /GRing.scale !(linE,ffunE) /= !(mulr1,mulr0,linE).
 rewrite /GRing.scale /=.
 rewrite (merge_pair ord0 vi vj vk Hior) //.
-rewrite extract_merge extract_lothers_merge.
+rewrite extract_merge extractC_merge.
 rewrite (merge_pair ord0 vi vj vk Hroi) //.
 rewrite (merge_rev ord0 (l:=lens_pair Hri) (l':=lens_pair Hir)
           (vi:=[tuple of vj ++ vi]) (vj:=[tuple of vi ++ vj])) //; first last.
@@ -165,7 +165,7 @@ case/boolP: (i == rev_ord i) => Hir.
   rewrite proj_focusE //.
   - rewrite disjoint_has -all_predC.
     apply/allP => j /=.
-    by rewrite mem_others negbK.
+    by rewrite mem_lensC negbK.
   - exact: rev_circuitU. 
 have Hi: ((i < n./2.+1) || (rev_ord i < n./2.+1))%N.
   case: (ltngtP i n./2.+1) => //=.
@@ -209,10 +209,10 @@ rewrite comp_morE /f.
 rewrite subnS prednK; last by rewrite ltn_subRL addn0.
 set v' := _ _ v.
 rewrite -subnS.
-have Hior : i \in lothers (lens_single (rev_ord i)).
-  by rewrite mem_lothers mem_lensE inE Hir.
-have Hroi : rev_ord i \in lothers (lens_single i).
-  by rewrite mem_lothers mem_lensE inE eq_sym Hir.
+have Hior : i \in lensC (lens_single (rev_ord i)).
+  by rewrite mem_lensC mem_lensE inE Hir.
+have Hroi : rev_ord i \in lensC (lens_single i).
+  by rewrite mem_lensC mem_lensE inE eq_sym Hir.
 have Hri : rev_ord i != rev_ord (rev_ord i) by rewrite rev_ordK eq_sym.
 case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
   transitivity (proj ord0 (lens_single i) v'); last first.
@@ -248,7 +248,7 @@ case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
              (vi:=[tuple of vj ++ vi]) (vj:=[tuple of vi ++ vj])); first last.
   - by case: vi vj => -[] // a [] // sza [] [] // b [].
   - by rewrite /= rev_ordK.
-  rewrite extract_merge extract_lothers_merge.
+  rewrite extract_merge extractC_merge.
   rewrite /GRing.scale /=.
   have := mem_enum_indices vi => /=.
   have := mem_enum_indices vj => /=.

@@ -138,7 +138,7 @@ transitivity (\sum_i (sel s i)^* * sel t i); last first.
   apply eq_bigr => vi _; by rewrite !ffunE /dpsel !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
 rewrite focusE /= /focus_fun.
-rewrite /uncurry !ffunE !extract_merge !extract_lothers_merge.
+rewrite /uncurry !ffunE !extract_merge !extractC_merge.
 by rewrite -!(morN f) !ffunE.
 Qed.
 End unitary_endo.

@@ -46,10 +46,10 @@ Lemma lens_right_1 n : lens_right n 1 = [lens n].
 Proof. by eq_lens; rewrite /= addnOK. Qed.
 
 Lemma lens_comp_rev_left n (l1 l2 : lens (2+n) 2) : rev l1 = l2 ->
-  lens_comp l1 (lens_left 1 1) = lens_comp l2 (lothers(lens_left 1 1)).
+  lens_comp l1 (lens_left 1 1) = lens_comp l2 (lensC(lens_left 1 1)).
 Proof.
 move=> Hrev; apply/lens_inj => /=.
-move: (lothers_left 1 1) => /= ->.
+move: (lensC_left 1 1) => /= ->.
 by rewrite !enum_ordinalE /= !(tnth_nth ord0) /= -Hrev nth_rev // size_tuple.
 Qed.
 
@@ -79,7 +79,7 @@ apply/ffunP => vi /=.
 rewrite /asym_focus_fun !focusE /= /focus_fun.
 do! rewrite !(tsmorE,ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
 rewrite !lens_left_1.
-have -> : lothers [lens 0] = [lens 1] by eq_lens.
+have -> : lensC [lens 0] = [lens 1] by eq_lens.
 rewrite !cast_tupleE /= -!extract_comp.
 have -> : lens_comp [lens 0; 1] [lens 0] = [lens 0] :> lens 3 1 by eq_lens.
 have -> : lens_comp [lens 0; 1] [lens 1] = [lens 1] :> lens 3 1 by eq_lens.
@@ -90,7 +90,7 @@ have := mem_enum_indices (extract [lens 0] vi).
 have := mem_enum_indices (extract [lens 1] vi).
 by rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
    rewrite !(mulr0,addr0,add0r).
-all: by rewrite disjoint_has //= /others enum_ordinalE.
+all: by rewrite disjoint_has //= /seq_lensC enum_ordinalE.
 Qed.  
 
 Lemma cat_2tuple A (x y : A) : [tuple of [tuple x]++[tuple y]] =  [tuple x; y].
@@ -104,15 +104,15 @@ apply/ffunP => t /=.
 rewrite /inner_prod /inner_coprod /M_inner_prod /M_inner_coprod.
 rewrite {1}/uncurry !ffunE /= !tsmorE sum_enum_indices /= !ffunE /=.
 rewrite -!cat_2tuple !extract_lens_left.
-rewrite !(extract_eq_cast (lothers_left 1 1)) !extract_lens_right /= !linE.
+rewrite !(extract_eq_cast (lensC_left 1 1)) !extract_lens_right /= !linE.
 rewrite !tsmorE !sum_enum_indices /= !ffunE /= !addr0.
 apply/eqP; move: t; apply/forall_indicesP.
 rewrite /= andbT; apply/andP.
 (* brute force *)
-rewrite !eq_ord_tuple /= /tnth /= /tnth /= /others.
+rewrite !eq_ord_tuple /= /tnth /= /tnth /= /seq_lensC.
 rewrite /in_mem /mem /= !enum_ordinalE /= !linE.
 split; apply/eqP/f_equal/eqP;
-  by rewrite eq_ord_tuple /= /tnth /= /others !enum_ordinalE.
+  by rewrite eq_ord_tuple /= /tnth /= /seq_lensC !enum_ordinalE.
 Qed.
 
 Lemma transpose_focus (M : tsquare 1) :
@@ -128,11 +128,11 @@ set mycup := asym_focus_fun dI ([lens] : lens (0+1) 0)
 move: (asym_focusC dI ([lens 1; 2] : lens (2+1) 2) ([lens] : lens (0+1) 0)
                    (inner_prod I R 1) (tsmor (transpose_tsquare M)) mycup).
 rewrite !cast_lensE.
-have -> : lothers [lens 1; 2] = [lens 0] by eq_lens.
+have -> : lensC [lens 1; 2] = [lens 0] by eq_lens.
 move=> /= <-.
 subst mycup.
 move: (straighten v) => /= ->.
-have <- : lens_id 1 = lothers [lens] by eq_lens.
+have <- : lens_id 1 = lensC [lens] by eq_lens.
 by rewrite (focusI dI (tsmor (transpose_tsquare M)) v).
 Qed.
 End transpose.
