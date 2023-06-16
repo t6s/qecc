@@ -77,14 +77,14 @@ elim: n => [| n IH] /=. by rewrite ghz_state0.
 rewrite focus_dpbasis.
 have Hex : extract (lensC (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
            = [tuple 0 | _ < n.+1].
-  apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
+  apply eq_from_tnth => i; by rewrite tnth_extract !tnth_mktuple.
 rewrite Hex {}IH /ghz_state !linearZ_LR /=.
 congr (_ *: _); rewrite !linearE /=.
 congr (_ + _); rewrite dpmerge_dpbasis.
   rewrite -Hex merge_extract focus_dpbasis.
   have Hex': extract (lens_pair (succ_neq ord_max)) [tuple (0:I) | _ < n.+2]
              = [tuple 0; 0].
-    apply eq_from_tnth => i; rewrite tnth_extract !tnth_map.
+    apply eq_from_tnth => i; rewrite tnth_extract !tnth_mktuple.
     by case: i => -[|[]].
   by rewrite Hex' tsmor_cnot0 dpmerge_dpbasis -Hex' merge_extract.
 rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
@@ -104,17 +104,15 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
   by case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?ltnSn // bump0n ltnn.
 rewrite tsmor_cnot1 dpmerge_dpbasis.
-rewrite (_ : merge _ _ _ _ = [tuple 1 | i < n.+2]) //.
-apply eq_from_tnth => i; rewrite [RHS]tnth_map.
+congr dpbasis.
+apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
 case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
-- rewrite tnth_merge.
-  case: (lens_index Hi) => -[|[]] // Hi'.
-  rewrite (tnth_nth 0) //=; by apply val_inj.
+- rewrite tnth_merge -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)).
+  by congr tnth; eq_lens.
 - rewrite -mem_lensC in Hi.
-  rewrite tnth_mergeC !tnth_map tnth_ord_tuple ifT //.
-  rewrite ltn_neqAle -ltnS ltn_ord andbT.
-  set lop := lensC _; have := mem_tnth (lens_index Hi) lop.
-  rewrite mem_lensC !inE negb_or => /andP[_].
-  apply contra => /eqP Hj.
+  rewrite tnth_mergeC tnth_extract tnth_mktuple.
+  rewrite tnth_lens_index ifT //.
+  move: Hi; rewrite mem_lensC !inE negb_or => /andP[] _.
+  rewrite ltn_neqAle -ltnS ltn_ord andbT; apply/contra => /eqP Hj.
   by apply/eqP/val_inj => /=; rewrite bump0n.
 Qed.
