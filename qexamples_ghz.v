@@ -18,9 +18,9 @@ Definition ghz_state n : dpower n.+1 Co :=
 Fixpoint ghz n :=
   match n as n return endo n.+1 with
   | 0 => tsmor hadamard
-  | i.+1 =>
-      tsapp (lens_pair (succ_neq ord_max)) cnot
-      \v focus (lensC (lens_single ord_max)) (ghz i)
+  | m.+1 =>
+      tsapp (lens_pair (succ_neq (@ord_max m))) cnot
+      \v focus (lensC (lens_single (@ord_max m.+1))) (ghz m)
   end.
 
 (* Alternative flat definition, using iterated composition *)
@@ -90,19 +90,20 @@ congr (_ + _); rewrite dpmerge_dpbasis.
 rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite (_ : merge _ _ _ _ =
-             [tuple if (i < n.+1)%N then 1 else 0 | i < n.+2]); last first.
+             [tuple if i != n.+1 :> nat then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_map tnth_ord_tuple.
   case/boolP: (i == ord_max) => Hi.
   - have Hi' : i \in lensC (lensC (lens_single ord_max)).
       by rewrite !mem_lensC inE Hi.
-    by rewrite tnth_mergeC tnth_map (eqP Hi) ltnn.
+    by rewrite tnth_mergeC tnth_map (eqP Hi) eqxx.
   - have Hi' : i \in lensC (lens_single ord_max).
       by rewrite mem_lensC inE Hi.
-    by rewrite tnth_merge tnth_map ltn_neqAle Hi -ltnS ltn_ord.
+    by rewrite tnth_merge tnth_map Hi.
 rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
-  by case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?ltnSn // bump0n ltnn.
+  case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?(bump0n,eqxx) //.
+  by rewrite neq_ltn ltnSn.
 rewrite tsmor_cnot1 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
@@ -113,6 +114,5 @@ case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
   rewrite tnth_mergeC tnth_extract tnth_mktuple.
   rewrite tnth_lens_index ifT //.
   move: Hi; rewrite mem_lensC !inE negb_or => /andP[] _.
-  rewrite ltn_neqAle -ltnS ltn_ord andbT; apply/contra => /eqP Hj.
-  by apply/eqP/val_inj => /=; rewrite bump0n.
+  by apply/contra => /eqP Hj; apply/eqP/val_inj; rewrite /= bump0n.
 Qed.
