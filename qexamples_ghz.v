@@ -5,6 +5,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Arguments ord_max : clear implicits.
+
 Let succ_neq n (i : 'I_n) : widen_ord (leqnSn n) i != lift ord0 i.
 Proof. by rewrite neq_ltn /= /bump leq0n ltnSn. Qed.
 
@@ -19,8 +21,8 @@ Fixpoint ghz n :=
   match n as n return endo n.+1 with
   | 0 => tsmor hadamard
   | m.+1 =>
-      tsapp (lens_pair (succ_neq (@ord_max m))) cnot
-      \v focus (lensC (lens_single (@ord_max m.+1))) (ghz m)
+      tsapp (lens_pair (succ_neq (ord_max m))) cnot
+      \v focus (lensC (lens_single (ord_max m.+1))) (ghz m)
   end.
 
 (* Alternative flat definition, using iterated composition *)
@@ -43,7 +45,7 @@ f_equal.
   do 3 f_equal; eq_lens; by rewrite subn1.
 rewrite (focusE _ _ (ghz n)) /focus_fun -IH.
 set f := \big[_/_]_(i < n) _ \v _.
-rewrite -/(focus_fun dI (lensC (lens_single (@ord_max n.+1))) f v).
+rewrite -/(focus_fun dI (lensC (lens_single (ord_max n.+1))) f v).
 rewrite -focusE /f focus_comp /= -focusM.
 rewrite (_ : lens_comp _ _ = [lens 0]);
   last by eq_lens; rewrite /= enum_ordinalE.
@@ -75,7 +77,7 @@ Lemma ghz_ok n : ghz n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
 Proof.
 elim: n => [| n IH] /=. by rewrite ghz_state0.
 rewrite focus_dpbasis.
-have Hex : extract (lensC (lens_single ord_max)) [tuple (0:I)  | _ < n.+2]
+have Hex : extract (lensC(lens_single (ord_max n.+1))) [tuple (0:I)  | _ < n.+2]
            = [tuple 0 | _ < n.+1].
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_mktuple.
 rewrite Hex {}IH /ghz_state !linearZ_LR /=.
@@ -107,7 +109,7 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
 rewrite tsmor_cnot1 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
-case/boolP: (i \in lens_pair (succ_neq ord_max)) => Hi.
+case/boolP: (i \in lens_pair (succ_neq (ord_max n))) => Hi.
 - rewrite tnth_merge -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)).
   by congr tnth; eq_lens.
 - rewrite -mem_lensC in Hi.
