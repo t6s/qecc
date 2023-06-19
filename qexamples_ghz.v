@@ -84,7 +84,7 @@ rewrite Hex {}IH /ghz_state !linearZ_LR /=.
 congr (_ *: _); rewrite !linearE /=.
 congr (_ + _); rewrite dpmerge_dpbasis.
   rewrite -Hex merge_extract focus_dpbasis.
-  have Hex': extract (lens_pair (succ_neq ord_max)) [tuple (0:I) | _ < n.+2]
+  have Hex': extract (lens_pair (succ_neq (ord_max n))) [tuple (0:I) | _ < n.+2]
              = [tuple 0; 0].
     apply eq_from_tnth => i; rewrite tnth_extract !tnth_mktuple.
     by case: i => -[|[]].
@@ -94,11 +94,11 @@ rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
 rewrite (_ : merge _ _ _ _ =
              [tuple if i != n.+1 :> nat then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_map tnth_ord_tuple.
-  case/boolP: (i == ord_max) => Hi.
-  - have Hi' : i \in lensC (lensC (lens_single ord_max)).
+  case/boolP: (i == ord_max _) => Hi.
+  - have Hi' : i \in lensC (lensC (lens_single (ord_max _))).
       by rewrite !mem_lensC inE Hi.
     by rewrite tnth_mergeC tnth_map (eqP Hi) eqxx.
-  - have Hi' : i \in lensC (lens_single ord_max).
+  - have Hi' : i \in lensC (lens_single (ord_max _)).
       by rewrite mem_lensC inE Hi.
     by rewrite tnth_merge tnth_map Hi.
 rewrite focus_dpbasis.

@@ -484,7 +484,7 @@ Lemma dpmergeE vi v :
 Proof. by rewrite /dpmerge -lock. Qed.
 
 Lemma focus_dpbasis f (vi : n.-tuple I) :
-  focus f _ (dpbasis vi) = dpmerge vi (f _ (dpbasis (extract l vi))).
+  focus f Ro (dpbasis vi) = dpmerge vi (f Ro (dpbasis (extract l vi))).
 Proof.
 apply/ffunP => v.
 by rewrite focusE !ffunE curry_dpbasis -(morN f) dpmergeE !ffunE.
