@@ -95,11 +95,11 @@ rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
 rewrite (_ : merge _ _ _ _ =
              [tuple if i != n.+1 :> nat then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_map tnth_ord_tuple.
-  case/boolP: (i == ord_max _) => Hi.
-  - have Hi' : i \in lensC (lensC (lens_single (ord_max _))).
+  case/boolP: (i == ord_max n.+1) => Hi.
+  - have Hi' : i \in lensC (lensC (lens_single (ord_max n.+1))).
       by rewrite !mem_lensC inE Hi.
     by rewrite tnth_mergeC tnth_map (eqP Hi) eqxx.
-  - have Hi' : i \in lensC (lens_single (ord_max _)).
+  - have Hi' : i \in lensC (lens_single (ord_max n.+1)).
       by rewrite mem_lensC inE Hi.
     by rewrite tnth_merge tnth_map Hi.
 rewrite focus_dpbasis.
