@@ -359,6 +359,8 @@ Definition ptracefun (T : lmodType R) (v : dpower m T) : dpower m T :=
   \sum_(vi : (n-m).-tuple I)
     (dpmap (dpsel vi) \o curry l \o f T
        \o uncurry l \o dpmap (dpsingle vi)) v.
+(* dpfilter l vi \o f T \o dpmerge l vi ? *)
+(* Hopf algebra ? *)
 
 Lemma ptrace_is_linear T : linear (@ptracefun T).
 Proof.

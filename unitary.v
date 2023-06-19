@@ -93,9 +93,12 @@ Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtmatrix M).
 Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
 Section unitary_endo.
+(* One could probably replace tinner by any bilinear form *)
 Definition tinner n (s t : dpower I n Co) := \sum_i (s i)^* * (t i).
 Definition unitary_endo m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
+(* Actually this only makes sense for n >= m, since the rank must be at
+   least m to be unitary *)
 
 Lemma idmorU n : unitary_endo (idmor I C n).
 Proof. done. Qed.
