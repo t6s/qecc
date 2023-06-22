@@ -47,8 +47,9 @@ rewrite (focusE _ _ (ghz n)) /focus_fun -IH.
 set f := \big[_/_]_(i < n) _ \v _.
 rewrite -/(focus_fun dI (lensC (lens_single (ord_max n.+1))) f v).
 rewrite -focusE /f focus_comp /= -focusM.
-rewrite (_ : lens_comp _ _ = [lens 0]);
-  last by eq_lens; rewrite /= enum_ordinalE.
+simpl_lens_comp.
+(* rewrite (_ : lens_comp _ _ = [lens 0]);
+  last by eq_lens; rewrite /= enum_ordinalE. *)
 rewrite focus_compn_mor.
 do 3 f_equal.
 apply eq_bigr => i _; apply/morP => {}T {}v.

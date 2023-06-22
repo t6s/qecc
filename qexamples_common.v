@@ -61,8 +61,11 @@ Definition dpmerge_dpbasis := dpmerge_dpbasis (0 : I).
 
 Ltac simpl_lens x :=
   let y := fresh "y" in
-  pose y := val (val x); rewrite /= ?(tnth_nth 0) /= in y;
-  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); last (by eq_lens); subst y.
+  pose y := val (val x);
+  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
+  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= ?succOE in y;
+  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); first subst y;
+  last by eq_lens; rewrite /= ?enum_ordinalE.
 
 Ltac simpl_lens_comp :=
   match goal with |- context [ lens_comp ?a ?b ] => simpl_lens (lens_comp a b)
@@ -70,11 +73,17 @@ Ltac simpl_lens_comp :=
 
 Ltac simpl_tuple x :=
   let y := fresh "y" in
-  pose y := val x; rewrite /= ?(tnth_nth 0) /= in y;
+  pose y := val x;
+  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
+  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= in y;
   rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
 
 Ltac simpl_extract :=
   match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
+  end.
+
+Ltac simpl_merge :=
+  match goal with |- context [ merge ?a ?b ?c ?d] => simpl_tuple (merge a b c d)
   end.
 
 (* Behavior of some gates on basis vectors *)

@@ -1430,7 +1430,7 @@ Notation "[ 'lens' x1 ; .. ; xn ]" :=
 Fixpoint enum_ordinal n : seq 'I_n :=
   match n with
   | 0 => [::]
-  | m.+1 => ord0 :: map succO (enum_ordinal m)
+  | m.+1 => 0%:O :: map succO (enum_ordinal m)
   end.
 
 Lemma enum_ordinalE n : enum 'I_n = enum_ordinal n.
