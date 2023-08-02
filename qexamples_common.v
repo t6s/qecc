@@ -114,6 +114,27 @@ have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
+Lemma flip_addr i : flip i = 1 + i.
+Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP-> ; apply/val_inj. Qed.
+
+Lemma tsmor_cnot (i j : I) : tsmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
+Proof.
+have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=.
+- by rewrite tsmor_cnot0 add0r.
+- by rewrite tsmor_cnot1 flip_addr.
+Qed.
+
+Lemma tsmor_swap (i j : I) : tsmor swap Co ¦i, j⟩ = ¦j, i⟩.
+Proof.
+have := mem_enum2 i; rewrite !inE => /orP[] /eqP ->;
+have := mem_enum2 j; rewrite !inE => /orP[] /eqP -> /=;
+apply/eq_from_indicesP; do! (apply/andP; split) => //=.
+all: time (by rewrite !(tsmorE,linE,sum_dpbasisK,ffunE)).
+Qed.
+
+Lemma addii (i : I) : i + i = 0.
+Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
+
 Lemma tsmor_toffoli00 i : tsmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.

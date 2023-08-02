@@ -5,6 +5,28 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(* cnot \v cnot \cnot = swap *)
+(* See example from section 7.4 of  Unruh's Quantum and classical registers *)
+
+Lemma cnot3_swap :
+  tsapp [lens 0; 1] cnot \v tsapp [lens 1; 0] cnot \v tsapp [lens 0; 1] cnot
+  =e (tsapp [lens 0; 1] swap : endo 2).
+Proof.
+apply/lift_mor_eq => v.
+rewrite (decompose_scaler v) !linear_sum.
+apply eq_bigr => i _.
+rewrite 2!linearZ_LR; congr (_ *: _).
+case: i => -[|i [|j []]] Hj //=.
+rewrite !focus_dpbasis.
+simpl_extract.
+rewrite tsmor_cnot tsmor_swap !dpmerge_dpbasis.
+do 2 simpl_merge.
+rewrite focus_dpbasis tsmor_cnot addrAC addii add0r dpmerge_dpbasis.
+simpl_merge.
+rewrite focus_dpbasis tsmor_cnot addrCA addii addr0 dpmerge_dpbasis.
+by simpl_merge.
+Qed.
+
 (* Checking equality of functions (sum of tensors) *)
 
 Lemma cnotK : involutive (tsmor cnot Co).
