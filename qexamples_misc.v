@@ -17,8 +17,7 @@ rewrite (decompose_scaler v) !linear_sum.
 apply eq_bigr => i _.
 rewrite 2!linearZ_LR; congr (_ *: _).
 case: i => -[|i [|j []]] Hj //=.
-rewrite !focus_dpbasis.
-simpl_extract.
+rewrite !focus_dpbasis; simpl_extract.
 rewrite tsmor_cnot tsmor_swap !dpmerge_dpbasis.
 do 2 simpl_merge.
 rewrite focus_dpbasis tsmor_cnot addrAC addii add0r dpmerge_dpbasis.

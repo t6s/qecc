@@ -76,7 +76,7 @@ Lemma transpose_cup (M : tsquare 1) :
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
-rewrite /asym_focus_fun !focusE /= /focus_fun.
+rewrite /asym_focus_fun !focusE /=.
 do! rewrite !(tsmorE,ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
 rewrite !lens_left_1.
 have -> : lensC [lens 0] = [lens 1] by eq_lens.

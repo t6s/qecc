@@ -102,7 +102,7 @@ Definition id_fendo := mkFoc (lens_sorted_empty n) (idmor I R 0).
 Definition err_fendo := mkFoc (lens_sorted_id n) (nullmor n n).
 
 Lemma fendo_mor_id : fendo_mor id_fendo = idmor I R n.
-Proof. by apply/morP => T v; rewrite focusE /focus_fun/=curryK. Qed.
+Proof. by apply/morP => T v; rewrite focusE /=curryK. Qed.
 
 Lemma fendo_mor_err : fendo_mor err_fendo = nullmor n n.
 Proof. by apply/morP => T v; apply/ffunP => vi; rewrite focusE /= !ffunE. Qed.
@@ -164,11 +164,11 @@ Proof. by move=> H; subst. Qed.
 
 Lemma focus_left_idmor p q :
   focus (lens_left p q) (idmor I R p) = idmor I R (p + q).
-Proof. by apply/morP => T v; rewrite /= focusE /= /focus_fun /= curryK. Qed.
+Proof. by apply/morP => T v; rewrite /= focusE /= curryK. Qed.
 
 Lemma focus_right_idmor p q :
   focus (lens_right p q) (idmor I R q) = idmor I R (p + q).
-Proof. by apply/morP => T v; rewrite /= focusE /= /focus_fun /= curryK. Qed.
+Proof. by apply/morP => T v; rewrite /= focusE /= curryK. Qed.
 
 Lemma focus_lens_right0 fm (f : endo fm) (l : lens n fm) :
   focus (lens_right 0 fm) f = f.

@@ -43,9 +43,9 @@ rewrite big_ord_recl.
 move=> T v /=.
 f_equal.
   do 3 f_equal; eq_lens; by rewrite subn1.
-rewrite (focusE _ _ (ghz n)) /focus_fun -IH.
+rewrite (focusE _ _ (ghz n)) /= -IH.
 set f := \big[_/_]_(i < n) _ \v _.
-rewrite -/(focus_fun dI (lensC (lens_single (ord_max n.+1))) f v).
+rewrite -[uncurry _ _]/(focuslin dI _ f _ v).
 rewrite -focusE /f focus_comp /= -focusM.
 simpl_lens_comp.
 (* rewrite (_ : lens_comp _ _ = [lens 0]);
