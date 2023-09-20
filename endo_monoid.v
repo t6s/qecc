@@ -83,7 +83,7 @@ Definition fendo_mor f := focus (foc_l f) f.
 Section mkFendo.
 Variables (m : nat) (l : lens n m) (f : endo m).
 Definition mkFendo :=
-  mkFoc (lens_sorted_basis l) (focus (lens_perm l) f).
+  {| foc_s := lens_sorted_basis l; foc_e := focus (lens_perm l) f |}.
 
 Lemma mkFendoE : fendo_mor mkFendo = focus l f.
 Proof. by apply/morP => T v; rewrite -focusM // lens_basis_perm. Qed.

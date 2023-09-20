@@ -37,31 +37,17 @@ Definition shor_code (chan : endo 9) :=
 (* Proof of correctness for Shor code *)
 
 (* bit flip code *)
-Lemma bit_flip_enc0 j k : bit_flip_enc Co ¦0,j,k⟩ = ¦0,j,k⟩.
+Lemma bit_flip_enc_ok i j k : bit_flip_enc Co ¦i,j,k⟩ = ¦i, i + j, i + k⟩.
 Proof.
 rewrite /=.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite tsmor_cnot0.
+rewrite tsmor_cnot.
 rewrite dpmerge_dpbasis.
 simpl_merge.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite tsmor_cnot0 dpmerge_dpbasis.
-by congr dpbasis; eq_lens.
-Qed.
-
-Lemma bit_flip_enc1 j k : bit_flip_enc Co ¦1,j,k⟩ = ¦1, flip j, flip k⟩.
-Proof.
-rewrite /=.
-rewrite focus_dpbasis.
-simpl_extract.
-rewrite tsmor_cnot1.
-rewrite dpmerge_dpbasis.
-simpl_merge.
-rewrite focus_dpbasis.
-simpl_extract.
-rewrite tsmor_cnot1 dpmerge_dpbasis.
+rewrite tsmor_cnot dpmerge_dpbasis.
 by congr dpbasis; eq_lens.
 Qed.
 
@@ -72,12 +58,8 @@ apply/lift_mor_eq => v.
 rewrite (decompose_dpower v) !linear_sum.
 apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
 simpl_tuple (Tuple Hi).
-rewrite dpmap_scale !linearZ_LR comp_morE.
-have := mem_enum2 i.
-rewrite !inE => /orP[] /eqP ->.
-- by rewrite bit_flip_enc0 /bit_flip_dec comp_morE bit_flip_enc0.
-- rewrite bit_flip_enc1 /bit_flip_dec comp_morE bit_flip_enc1.
-  by rewrite ![flip _]rev_ordK.
+rewrite dpmap_scale !linearZ_LR /bit_flip_dec 2!comp_morE 2!bit_flip_enc_ok.
+by rewrite !addrA !addii !add0r.
 Qed.
 
 (* Not used
