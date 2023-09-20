@@ -22,6 +22,7 @@ Notation tmatrixmx := (tmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
+Local Notation "T '^^' n " := (dpower I n T).
 
 Definition hadjmx n m (M : 'M[C]_(n,m)) := \matrix_(i,j) (M j i)^*.
 
@@ -94,7 +95,7 @@ Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
 Section unitary_endo.
 (* One could probably replace tinner by any bilinear form *)
-Definition tinner n (s t : dpower I n Co) := \sum_i (s i)^* * (t i).
+Definition tinner n (s t : Co ^^ n) := \sum_i (s i)^* * (t i).
 Definition unitary_endo m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 (* Actually this only makes sense for n >= m, since the rank must be at
@@ -136,7 +137,7 @@ rewrite /unitary_endo /tinner => /= Uf s t.
 rewrite 2!(reindex_merge _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
-pose sel s : dpower I m Co := dpmap (dpsel vj) (curry dI l s).
+pose sel s : Co ^^ m := dpmap (dpsel vj) (curry dI l s).
 transitivity (\sum_i (sel s i)^* * sel t i); last first.
   apply eq_bigr => vi _; by rewrite !ffunE /dpsel !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
@@ -149,12 +150,12 @@ End unitary_endo.
 Section projection.
 Variables (n m : nat) (l : lens n m).
 
-Let norm p := fun s : dpower I p Co => (sqrtc (tinner s s) : Co).
+Let norm p := fun s : Co ^^ p => (sqrtc (tinner s s) : Co).
 
-Definition proj (t : dpower I n Co) : dpower I m Co :=
+Definition proj (t : Co ^^ n) : Co ^^ m :=
   dpmap (@norm _) (curry dI l t).
 
-Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : dpower I n Co) :
+Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : Co ^^ n) :
   [disjoint l & l'] -> unitary_endo f ->
   proj (focus l' f Co t) = proj t.
 Proof.

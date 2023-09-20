@@ -16,7 +16,7 @@ Variables (I : finType) (dI : I).
 
 Notation focus := (focus dI).
 Notation tsapp l M := (focus l (tsmor M)).
-Notation dpower := (dpower I).
+Local Notation "T '^^' n" := (dpower I n T).
 
 Section com_ring.
 Variable R : comRingType.
@@ -90,7 +90,7 @@ Proof. by apply/morP => T v; rewrite -focusM // lens_basis_perm. Qed.
 End mkFendo.
 
 Lemma null_lin p q (T : lmodType R) :
-  linear (fun v : dpower p T => (0 : dpower q T)).
+  linear (fun v : T ^^ p => (0 : T ^^ q)).
 Proof. move=> x y z; by rewrite scaler0 add0r. Qed.
 Definition nullmorlin p q : morlin _ _ p q := fun T => Linear (@null_lin p q T).
 Lemma nullmorN p q : naturality (nullmorlin p q).

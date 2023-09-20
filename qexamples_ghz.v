@@ -11,7 +11,7 @@ Let succ_neq n (i : 'I_n) : widen_ord (leqnSn n) i != lift ord0 i.
 Proof. by rewrite neq_ltn /= /bump leq0n ltnSn. Qed.
 
 (* Specification *)
-Definition ghz_state n : dpower n.+1 Co :=
+Definition ghz_state n : Co ^^ n.+1 :=
   (1 / Num.sqrt 2)%:C *:
   (dpbasis C [tuple 0 | i < n.+1] + dpbasis C [tuple 1 | i < n.+1]).
 

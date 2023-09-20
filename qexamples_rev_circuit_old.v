@@ -73,7 +73,7 @@ do !(congr cons).
   by rewrite -addnn addnA leq_addl.
 Qed.
 
-Lemma proj_focusE_swap n (i : 'I_n.+2) (v : dpower n.+2 Co) h
+Lemma proj_focusE_swap n (i : 'I_n.+2) (v : Co ^^ n.+2) h
       (Hn : n./2.+1 = (n.+2)./2) :
   let f j := tsapp (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap in
   (h < n./2.+1)%N -> (n./2.+1 - h.+1)%N = i \/ (n./2.+1 - h.+1)%N = rev_ord i ->
@@ -117,7 +117,7 @@ rewrite -IH.
 - by case: ih => ih; [left|right]; move: ih; rewrite !ltn_subRL addSn => /ltnW.
 Qed.
 
-Lemma proj_swapE n (i j : 'I_n.+2) (v : dpower n.+2 Co) (Hir : i != j) :
+Lemma proj_swapE n (i j : 'I_n.+2) (v : Co ^^ n.+2) (Hir : i != j) :
   proj ord0 (lens_single j) (tsapp (lens_pair Hir) swap Co v) =
   proj ord0 (lens_single i) v.
 Proof.

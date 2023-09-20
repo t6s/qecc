@@ -20,9 +20,9 @@ Notation "¦ x1 , .. , xn ⟩" :=
 
 Notation focus := (focus dI).
 Notation tsapp l M := (focus l (tsmor M)).
-Notation dpower := (dpower I).
 Notation tsquare n := (tmatrix I C n n).
 Notation endo n := (mor I C n n).
+Notation "T '^^' n" := (dpower I n T).
 
 Definition qnot : tsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
