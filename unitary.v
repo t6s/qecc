@@ -16,9 +16,9 @@ Let Co := [lmodType C of C^o].
 Variable I : finType.
 Variable dI : I.
 
-Notation tsquare n := (tmatrix I C n n).
+Notation dpsquare n := (dpmatrix I C n n).
 Notation idts := (idts I C).
-Notation tmatrixmx := (tmatrixmx dI).
+Notation dpmatrixmx := (dpmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
@@ -43,55 +43,55 @@ move => /eqP UM /eqP UN; apply/eqP.
 by rewrite hadjmx_mul mulmxA -(mulmxA (hadjmx N)) UM mulmx1.
 Qed.
 
-Section unitary_tmatrix.
+Section unitary_dpmatrix.
 Variable n : nat.
-Variable M : tsquare n.
+Variable M : dpsquare n.
 
-Definition hadjts m (N : tmatrix I C m n) : tmatrix I C n m :=
+Definition hadjts m (N : dpmatrix I C m n) : dpmatrix I C n m :=
   [ffun vi => [ffun vj => (N vj vi)^*]].
 
 Definition unitaryts := mults (hadjts M) M == idts n.
 
-Lemma hadjtsE m (N : tmatrix I C m n) :
-  tmatrixmx (hadjts N) = hadjmx (tmatrixmx N).
+Lemma hadjtsE m (N : dpmatrix I C m n) :
+  dpmatrixmx (hadjts N) = hadjmx (dpmatrixmx N).
 Proof. apply/matrixP => i j; by rewrite !mxE !ffunE. Qed.
 
-Lemma unitarytsE : unitaryts = unitarymx (tmatrixmx M).
+Lemma unitarytsE : unitaryts = unitarymx (dpmatrixmx M).
 Proof.
 case/boolP: unitaryts => /eqP Hts; apply/esym/eqP.
-- by rewrite -hadjtsE -tmatrixmx_mul Hts tmatrixmx_id.
+- by rewrite -hadjtsE -dpmatrixmx_mul Hts dpmatrixmx_id.
 - move=> Hmx; elim Hts.
-  by rewrite -mxtmatrix_id // -Hmx mxtmatrix_mul // -hadjtsE !tmatrixmxK.
+  by rewrite -mxdpmatrix_id // -Hmx mxdpmatrix_mul // -hadjtsE !dpmatrixmxK.
 Qed.
 
 Lemma unitary_invP : hadjts M = M ->
-  reflect (forall T, involutive (tsmor M T)) unitaryts.
+  reflect (forall T, involutive (mxmor M T)) unitaryts.
 Proof.
 rewrite /unitaryts => ->.
 apply: (iffP idP) => [/eqP|] Hinv.
 - move=> T v.
-  move: (f_equal (fun M => tsmor M T v) Hinv).
-  by rewrite tsmor_comp -idmorE.
+  move: (f_equal (fun M => mxmor M T v) Hinv).
+  by rewrite mxmor_comp -idmorE.
 - apply/eqP.
-  rewrite -[LHS]tsmorK -[RHS]tsmorK.
-  apply morts_eq => T v.
-  rewrite tsmor_comp -idmorE /=.
+  rewrite -[LHS]mxmorK -[RHS]mxmorK.
+  apply mormx_eq => T v.
+  rewrite mxmor_comp -idmorE /=.
   by have /= -> := Hinv T.
 Qed.
-End unitary_tmatrix.
+End unitary_dpmatrix.
 
 Lemma hadjts_mul n m p M N : hadjts (M *t N) = @hadjts p m N *t @hadjts m n M.
 Proof.
-rewrite -[LHS](tmatrixmxK dI) hadjtsE tmatrixmx_mul.
-by rewrite hadjmx_mul -!hadjtsE -tmatrixmx_mul tmatrixmxK.
+rewrite -[LHS](dpmatrixmxK dI) hadjtsE dpmatrixmx_mul.
+by rewrite hadjmx_mul -!hadjtsE -dpmatrixmx_mul dpmatrixmxK.
 Qed.
 
-Lemma unitaryts_mul n (M N : tsquare n) :
+Lemma unitaryts_mul n (M N : dpsquare n) :
   unitaryts M -> unitaryts N -> unitaryts (mults M N).
-Proof. rewrite !unitarytsE tmatrixmx_mul; exact/unitarymx_mul. Qed.
+Proof. rewrite !unitarytsE dpmatrixmx_mul; exact/unitarymx_mul. Qed.
 
-Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtmatrix M).
-Proof. by rewrite unitarytsE mxtmatrixK. Qed.
+Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxdpmatrix M).
+Proof. by rewrite unitarytsE mxdpmatrixK. Qed.
 
 Section unitary_endo.
 (* One could probably replace tinner by any bilinear form *)
@@ -104,23 +104,23 @@ Definition unitary_endo m n (f : mor m n) :=
 Lemma idmorU n : unitary_endo (idmor I C n).
 Proof. done. Qed.
 
-Lemma unitary_endoP n M : reflect (@unitary_endo n n (tsmor M)) (unitaryts M).
+Lemma unitary_endoP n M : reflect (@unitary_endo n n (mxmor M)) (unitaryts M).
 Proof.
 rewrite /unitaryts /unitary_endo.
 apply/(iffP idP).
 - move=> Uf s t; move/eqP: Uf.
   move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
   rewrite !multsA -multsA -hadjts_mul mul1ts //.
-  move/(f_equal (fun M : tsquare 0 => M [tuple] [tuple])).
+  move/(f_equal (fun M : dpsquare 0 => M [tuple] [tuple])).
   rewrite !ffunE. under [RHS]eq_bigr do rewrite !ffunE.
   move=> Uf; rewrite -{}[RHS]Uf.
-  apply eq_bigr => vi _; rewrite !ffunE !tsmorE.
+  apply eq_bigr => vi _; rewrite !ffunE !mxmorE.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
 - move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
   have := Uf (dpbasis C vi) (dpbasis C vj).
   rewrite /tinner.
-  under eq_bigr do rewrite !tsmorE !sum_dpbasisKo.
+  under eq_bigr do rewrite !mxmorE !sum_dpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
   by rewrite sum_muleqr [LHS]conjc_nat.

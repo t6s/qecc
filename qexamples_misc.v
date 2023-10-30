@@ -9,8 +9,8 @@ Unset Printing Implicit Defensive.
 (* See example from section 7.4 of  Unruh's Quantum and classical registers *)
 
 Lemma cnot3_swap :
-  tsapp [lens 0; 1] cnot \v tsapp [lens 1; 0] cnot \v tsapp [lens 0; 1] cnot
-  =e (tsapp [lens 0; 1] swap : endo 2).
+  mxapp [lens 0; 1] cnot \v mxapp [lens 1; 0] cnot \v mxapp [lens 0; 1] cnot
+  =e (mxapp [lens 0; 1] swap : endo 2).
 Proof.
 apply/lift_mor_eq => v.
 rewrite (decompose_scaler v) !linear_sum.
@@ -18,27 +18,27 @@ apply eq_bigr => i _.
 rewrite 2!linearZ_LR; congr (_ *: _).
 case: i => -[|i [|j []]] Hj //=.
 rewrite !focus_dpbasis; simpl_extract.
-rewrite tsmor_cnot tsmor_swap !dpmerge_dpbasis.
+rewrite mxmor_cnot mxmor_swap !dpmerge_dpbasis.
 do 2 simpl_merge.
-rewrite focus_dpbasis tsmor_cnot addrAC addii add0r dpmerge_dpbasis.
+rewrite focus_dpbasis mxmor_cnot addrAC addii add0r dpmerge_dpbasis.
 simpl_merge.
-rewrite focus_dpbasis tsmor_cnot addrCA addii addr0 dpmerge_dpbasis.
+rewrite focus_dpbasis mxmor_cnot addrCA addii addr0 dpmerge_dpbasis.
 by simpl_merge.
 Qed.
 
 (* Checking equality of functions (sum of tensors) *)
 
-Lemma cnotK : involutive (tsmor cnot Co).
+Lemma cnotK : involutive (mxmor cnot Co).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(tsmorE,linE,sum_dpbasisK,ffunE)).
+all: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
 (* 2.8s *)
 Qed.
 
-Lemma qnotK : involutive (tsmor qnot Co).
+Lemma qnotK : involutive (mxmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(tsmorE,linE,sum_dpbasisK,ffunE).
+all: by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE).
 Qed.
 
 (* Unitarity: matrix or endomorphism *)
@@ -53,11 +53,11 @@ all: time (rewrite !sum_enum_indices /= !ffunE /=).
 all: by rewrite !linE.
 Qed.
 
-Lemma cnotU : unitary_endo (tsmor cnot).
+Lemma cnotU : unitary_endo (mxmor cnot).
 Proof.
 rewrite /unitary_endo /tinner /= => s t.
 rewrite !sum_enum_indices /=.
-rewrite !tsmorE.
+rewrite !mxmorE.
 time (rewrite !ffunE /= !linE).
 rewrite !sum_dpbasisK.
 by rewrite (addrC _ (_ * _)).
@@ -86,10 +86,10 @@ par: time (rewrite !ffunE;
 Qed.
 
 (* The direct proof is fast but verbose *)
-Lemma hadamardU_direct : unitary_endo (tsmor hadamard).
+Lemma hadamardU_direct : unitary_endo (mxmor hadamard).
 Proof.
 rewrite /unitary_endo /tinner /= => s t.
-rewrite !sum_enum_indices /= !tsmorE.
+rewrite !sum_enum_indices /= !mxmorE.
 time (rewrite !sum_enum_indices /= !ffunE /= !linE).
 rewrite /GRing.scale /= !mulr1.
 rewrite mulr1n mulrN mulr1.
@@ -109,18 +109,18 @@ Qed.
 
 (*
 (* Trying to check the hadamart representation of cnot... *)
-Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.
+Lemma cnotH_ok : mxmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
-all: rewrite !(linE,tsmorE,ffunE,scalerDl,sum_enum_indices) /=.
+all: rewrite !(linE,mxmorE,ffunE,scalerDl,sum_enum_indices) /=.
 rewrite 50!(eq_ord_tuple,linE,ffunE,scalerDl) /=.
 rewrite !enum_ordinalE /=.
 rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
 rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
 rewrite !eq_ord_tuple /=.
-rewrite !enum_ordinalE /= !tsmorE.
+rewrite !enum_ordinalE /= !mxmorE.
 rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
-rewrite !sum_dpbasisK !tsmorE.
+rewrite !sum_dpbasisK !mxmorE.
 rewrite !ffunE /= !eq_ord_tuple /= !enum_ordinalE /= !linE /=.
 rewrite !(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
 rewrite 50!(linE,ffunE,scalerDl,sum_dpbasisK,sum_enum_indices) /=.
@@ -141,22 +141,22 @@ Abort.
 
 (* Computations on matrices *)
 
-Definition hadamard2 := tensor_tsquare hadamard hadamard.
+Definition hadamard2 := tensor_dpsquare hadamard hadamard.
 
-Definition cnotH : tsquare 2 :=
+Definition cnotH : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
 
 Definition cnotHe :=
-  tsmor hadamard2 \v tsmor cnot \v tsmor hadamard2.
+  mxmor hadamard2 \v mxmor cnot \v mxmor hadamard2.
 
 (* Use linearity to extra the global factor first *)
-Lemma cnotH_ok' : tsmor cnotH Co =1 cnotHe Co.
+Lemma cnotH_ok' : mxmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v /=.
 rewrite /hadamard2 /hadamard.
 set hadam := (_ *: (_ + _ + _ - _))%R.
-rewrite (_ : tensor_tsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
+rewrite (_ : tensor_dpsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
 rewrite linearZ_LR.
 set hadam' := (_ + _ + _ - _)%R.
 rewrite (_ : Linear _ _ = Linear (tensor_linearr hadam') hadam) //.

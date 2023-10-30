@@ -20,7 +20,7 @@ by rewrite -{3}(odd_double_half n) addnn leq_addl.
 Qed.
 
 Definition rev_circuit n : endo n :=
-  compn_mor (fun i => tsapp (lens_pair (rev_ord_neq i)) swap) xpredT.
+  compn_mor (fun i => mxapp (lens_pair (rev_ord_neq i)) swap) xpredT.
 
 (* Semantics of rev_circuit *)
 
@@ -47,10 +47,10 @@ Definition swap_asym_focus : endo n.+2 :=
   asym_focus ord0 (lens_pair (n:=2+n) Hir) (lens_pair (n:=2+n) Hri)
     (idmor I C 2).
 
-Lemma tsapp_swap_asym_focus : tsapp (lens_pair Hir) swap =e swap_asym_focus.
+Lemma mxapp_swap_asym_focus : mxapp (lens_pair Hir) swap =e swap_asym_focus.
 Proof.
 move=> T v; apply/ffunP => /= vi.
-rewrite focusE !(ffunE,tsmorE) /=.
+rewrite focusE !(ffunE,mxmorE) /=.
 have -> : lensC (lens_pair Hri) = lensC (lens_pair Hir).
   apply/val_inj/val_inj/eq_lensC => k; by rewrite !inE orbC.
 have -> : esym (addKn_any n 2 2) = erefl by apply eq_irrelevance.
@@ -86,7 +86,7 @@ by rewrite -{2}(odd_double_half n) leq_subRL -addnn addnA ?leq_add // ltn_addl.
 Qed.
 
 Definition fendo_swap (i : 'I_n./2) :=
-  mkFoc (lens_pair_rev_sorted i) (tsmor swap).
+  mkFoc (lens_pair_rev_sorted i) (mxmor swap).
 
 Lemma widen_ord_inj m (H : (m <= n)%N) : injective (widen_ord H).
 Proof. move=> i j /(f_equal val) /= ij; exact/val_inj/ij. Qed.
@@ -169,7 +169,7 @@ case/boolP: (i < n.+2./2)%N => Hi.
     by rewrite !inE ji orbC -(inj_eq val_inj) eqxx.
   rewrite /fendo_mor /=.
   have -> : lens_pair (rev_ord_neq (Ordinal Hi)) = lens_pair Hir by eq_lens.
-  rewrite (tsapp_swap_asym_focus Hir).
+  rewrite (mxapp_swap_asym_focus Hir).
   apply/ffunP => vi; rewrite !ffunE; congr sqrtc.
   rewrite [LHS](reindex_merge _ ord0 lens_ior) //=.
   rewrite [RHS](reindex_merge _ ord0 lens_roi) //=.
@@ -217,7 +217,7 @@ case/boolP: (i < n.+2./2)%N => Hi.
   rewrite /fendo_mor /=.
   have -> : lens_pair (rev_ord_neq (Ordinal Hi')) = lens_pair Hri.
     by eq_lens; move/(f_equal val): (rev_ordK i) => /= ->.
-  rewrite (tsapp_swap_asym_focus Hri).
+  rewrite (mxapp_swap_asym_focus Hri).
   apply/ffunP => vi; rewrite !ffunE; congr sqrtc.
   rewrite [LHS](reindex_merge _ ord0 lens_ior) //=.
   rewrite [RHS](reindex_merge _ ord0 lens_roi) //=.

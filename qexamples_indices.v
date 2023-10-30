@@ -27,23 +27,23 @@ Notation "¦ x1 , .. , xn ⟩" :=
   (tpbasis _ [tuple of x1%:O :: .. [:: xn%:O] ..]) (at level 0).
 
 Notation focus := (focus 0%:O).
-Notation tsapp l M := (focus l (tsmor M)).
+Notation mxapp l M := (focus l (mxmor M)).
 Notation tpower := (tpower I).
-Notation tsquare n := (tmatrix I C n n).
+Notation dpsquare n := (dpmatrix I C n n).
 Notation endo n := (mor I C n n).
 
-Definition qnot : tsquare 1 :=
+Definition qnot : dpsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
 
-Definition cnot : tsquare 2 :=
+Definition cnot : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
-Definition hadamard : tsquare 1 :=
+Definition hadamard : dpsquare 1 :=
   (1 / Num.sqrt 2%:R)%:C *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
 
-Definition toffoli : tsquare 3 :=
+Definition toffoli : dpsquare 3 :=
   (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
       ket_bra k k) +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩.
@@ -54,16 +54,16 @@ Definition toffoli : tsquare 3 :=
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
 Definition bit_flip_enc : endo 3 :=
-  tsapp [lens 0; 2] cnot \v  tsapp [lens 0; 1] cnot.
+  mxapp [lens 0; 2] cnot \v  mxapp [lens 0; 1] cnot.
 
 Definition bit_flip_dec : endo 3 :=
-  tsapp [lens 1; 2; 0] toffoli \v bit_flip_enc.
+  mxapp [lens 1; 2; 0] toffoli \v bit_flip_enc.
 
 Definition bit_flip_code (chan : endo 3) : endo 3 :=
   bit_flip_dec \v chan \v bit_flip_enc.
 
 Definition hadamard3 : endo 3 :=
-  tsapp [lens 2] hadamard \v tsapp [lens 1] hadamard \v tsapp [lens 0] hadamard.
+  mxapp [lens 2] hadamard \v mxapp [lens 1] hadamard \v mxapp [lens 0] hadamard.
 
 Definition sign_flip_dec := bit_flip_dec \v hadamard3.
 Definition sign_flip_enc := hadamard3 \v bit_flip_enc.
@@ -82,14 +82,14 @@ Definition shor_dec : endo 9 :=
 Definition shor_code (chan : endo 9) :=
   shor_dec \v chan \v shor_enc.
 
-Definition hadamard2 := tensor_tsquare hadamard hadamard.
+Definition hadamard2 := tensor_dpsquare hadamard hadamard.
 
-Definition cnotH : tsquare 2 :=
+Definition cnotH : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,1⟩ +
   ket_bra ¦1,0⟩ ¦1,0⟩ + ket_bra ¦1,1⟩ ¦0,1⟩.
 
 Definition cnotHe :=
-  tsmor hadamard2 \v tsmor cnot \v tsmor hadamard2.
+  mxmor hadamard2 \v mxmor cnot \v mxmor hadamard2.
 
 Definition enum2 : seq I := [:: 0%:O; 1%:O].
 Lemma uniq_enum2 : uniq enum2. Proof. by []. Qed.
@@ -103,14 +103,14 @@ Local Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 
 (* Checking equality of functions (sum of tensors) *)
-Lemma cnotK : involutive (tsmor cnot Co).
+Lemma cnotK : involutive (mxmor cnot Co).
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: time (by rewrite !(linE,sum_tpbasisK,ffunE)).
 (* 2.8s *)
 Qed.
 
-Lemma qnotK : involutive (tsmor qnot Co).
+Lemma qnotK : involutive (mxmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: by rewrite !(linE,sum_tpbasisK,ffunE).
@@ -122,7 +122,7 @@ Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
-Lemma hadamardK : involutive (tsmor hadamard Co).
+Lemma hadamardK : involutive (mxmor hadamard Co).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
@@ -145,7 +145,7 @@ Proof. by case: eqP => [-> // | H]; apply/esym/eqP => // /val_inj. Qed.
 
 (*
 (* Trying to check the hadamart representation of cnot... *)
-Lemma cnotH_ok : tsmor cnotH Co =1 cnotHe Co.
+Lemma cnotH_ok : mxmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=; apply/eqP.
 all: rewrite !(linE,subr0,ffunE,scalerDl,sum_enum_indices) /=.
@@ -181,12 +181,12 @@ Abort.
 *)
 
 (* Use linearity to extra the global factor first *)
-Lemma cnotH_ok' : tsmor cnotH Co =1 cnotHe Co.
+Lemma cnotH_ok' : mxmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v /=.
 rewrite /hadamard2 /hadamard.
 set hadam := (_ *: (_ + _ + _ - _))%R.
-rewrite (_ : tensor_tsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
+rewrite (_ : tensor_dpsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
 rewrite linearZ_LR.
 set hadam' := (_ + _ + _ - _)%R.
 rewrite (_ : Linear _ _ = Linear (tensor_linearr hadam') hadam) //.
@@ -197,7 +197,7 @@ Abort.
 
 (* Checking equality of matrices *)
 (*
-Lemma cnotK' : mul_tsquare cnot cnot = id_tsquare _ _ _.
+Lemma cnotK' : mul_dpsquare cnot cnot = id_dpsquare _ _ _.
 Proof.
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.

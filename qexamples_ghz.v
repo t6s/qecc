@@ -19,17 +19,17 @@ Definition ghz_state n : Co ^^ n.+1 :=
 (* Uses a recursive embedding through dependent pattern-matching *)
 Fixpoint ghz n :=
   match n as n return endo n.+1 with
-  | 0 => tsmor hadamard
+  | 0 => mxmor hadamard
   | m.+1 =>
-      tsapp (lens_pair (succ_neq (ord_max m))) cnot
+      mxapp (lens_pair (succ_neq (ord_max m))) cnot
       \v focus (lensC (lens_single (ord_max m.+1))) (ghz m)
   end.
 
 (* Alternative flat definition, using iterated composition *)
 Definition ghz' n : endo n.+1 :=
-  compn_mor (fun i : 'I_n => tsapp (lens_pair (succ_neq (rev_ord i))) cnot)
+  compn_mor (fun i : 'I_n => mxapp (lens_pair (succ_neq (rev_ord i))) cnot)
             xpredT
-  \v tsapp [lens 0] hadamard.
+  \v mxapp [lens 0] hadamard.
 
 (* Proof of correctness *)
 Lemma ghz_def n : ghz' n =e ghz n.
@@ -65,10 +65,10 @@ Qed.
 Lemma bump0n n : bump 0 n = n.+1.
 Proof. by rewrite /bump leq0n. Qed.
 
-Lemma ghz_state0 : ghz_state 0 = tsmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
+Lemma ghz_state0 : ghz_state 0 = mxmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
 Proof.
 apply/ffunP => /= vi.
-rewrite tsmorE !ffunE /= sum_enum_indices /=.
+rewrite mxmorE !ffunE /= sum_enum_indices /=.
 have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=;
 rewrite !ffunE !eq_ord_tuple /= enum_ordinalE /= !linE ![_ *: 1]mulr1;
 by rewrite ![_ *: 0]mulr0 !linE.
@@ -89,7 +89,7 @@ congr (_ + _); rewrite dpmerge_dpbasis.
              = [tuple 0; 0].
     apply eq_from_tnth => i; rewrite tnth_extract !tnth_mktuple.
     by case: i => -[|[]].
-  by rewrite Hex' tsmor_cnot0 dpmerge_dpbasis -Hex' merge_extract.
+  by rewrite Hex' mxmor_cnot0 dpmerge_dpbasis -Hex' merge_extract.
 rewrite (_ : extract _ _ = [tuple (0:I) | _ < _]); last first.
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite (_ : merge _ _ _ _ =
@@ -107,7 +107,7 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple.
   case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?(bump0n,eqxx) //.
   by rewrite neq_ltn ltnSn.
-rewrite tsmor_cnot1 dpmerge_dpbasis.
+rewrite mxmor_cnot1 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
 case/boolP: (i \in lens_pair (succ_neq (ord_max n))) => Hi.

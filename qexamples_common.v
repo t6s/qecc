@@ -19,23 +19,23 @@ Notation "¦ x1 , .. , xn ⟩" :=
   (dpbasis _ [tuple of x1 :: .. [:: xn] ..]) (at level 0).
 
 Notation focus := (focus dI).
-Notation tsapp l M := (focus l (tsmor M)).
-Notation tsquare n := (tmatrix I C n n).
+Notation mxapp l M := (focus l (mxmor M)).
+Notation dpsquare n := (dpmatrix I C n n).
 Notation endo n := (mor I C n n).
 Notation "T '^^' n" := (dpower I n T).
 
-Definition qnot : tsquare 1 :=
+Definition qnot : dpsquare 1 :=
   ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
 
-Definition cnot : tsquare 2 :=
+Definition cnot : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
-Definition hadamard : tsquare 1 :=
+Definition hadamard : dpsquare 1 :=
   (1 / Num.sqrt 2)%:C *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
 
-Definition toffoli : tsquare 3 :=
+Definition toffoli : dpsquare 3 :=
   (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
       ket_bra k k) +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩.
@@ -45,7 +45,7 @@ Definition toffoli : tsquare 3 :=
   ket_bra ¦1,0,0⟩ ¦1,0,0⟩ + ket_bra ¦1,0,1⟩ ¦1,0,1⟩ +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
-Definition swap : tsquare 2 :=
+Definition swap : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,0⟩ +
   ket_bra ¦1,0⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩.
 
@@ -99,17 +99,17 @@ Ltac simpl_merge :=
 
 (* Behavior of some gates on basis vectors *)
 
-Lemma tsmor_cnot0 i : tsmor cnot Co ¦0,i⟩ = ¦0,i⟩.
+Lemma mxmor_cnot0 i : mxmor cnot Co ¦0,i⟩ = ¦0,i⟩.
 Proof.
-apply/ffunP => vi; rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi; rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
 
 Definition flip (i : I) := rev_ord i.
-Lemma tsmor_cnot1 i : tsmor cnot Co ¦1, i⟩ = ¦1, flip i⟩.
+Lemma mxmor_cnot1 i : mxmor cnot Co ¦1, i⟩ = ¦1, flip i⟩.
 Proof.
-apply/ffunP => vi; rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi; rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -117,28 +117,28 @@ Qed.
 Lemma flip_addr i : flip i = 1 + i.
 Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP-> ; apply/val_inj. Qed.
 
-Lemma tsmor_cnot (i j : I) : tsmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
+Lemma mxmor_cnot (i j : I) : mxmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
 Proof.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=.
-- by rewrite tsmor_cnot0 add0r.
-- by rewrite tsmor_cnot1 flip_addr.
+- by rewrite mxmor_cnot0 add0r.
+- by rewrite mxmor_cnot1 flip_addr.
 Qed.
 
-Lemma tsmor_swap (i j : I) : tsmor swap Co ¦i, j⟩ = ¦j, i⟩.
+Lemma mxmor_swap (i j : I) : mxmor swap Co ¦i, j⟩ = ¦j, i⟩.
 Proof.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP ->;
 have := mem_enum2 j; rewrite !inE => /orP[] /eqP -> /=;
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(tsmorE,linE,sum_dpbasisK,ffunE)).
+all: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
 Qed.
 
 Lemma addii (i : I) : i + i = 0.
 Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
 
-Lemma tsmor_toffoli00 i : tsmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
+Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.
-rewrite !ffunE tsmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
 rewrite BigOp.bigopE /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
@@ -146,10 +146,10 @@ Qed.
 
 (* Unitarity *)
 
-Lemma swapU : unitary_endo (tsmor swap).
+Lemma swapU : unitary_endo (mxmor swap).
 Proof.
 rewrite /unitary_endo /tinner /= => s t.
-rewrite !sum_enum_indices /= !tsmorE.
+rewrite !sum_enum_indices /= !mxmorE.
 time (rewrite !ffunE /= !linE).
 rewrite !sum_dpbasisK.
 by rewrite !addrA -(addrA (_ * _)) (addrC (_ * _) (_ * _)) !addrA.
@@ -162,11 +162,11 @@ Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
-Lemma hadamardK T : involutive (tsmor hadamard T).
+Lemma hadamardK T : involutive (mxmor hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP => //=.
-time (do! rewrite !(linE,ffunE,tsmorE,scalerDl,sum_enum_indices) /=).
+time (do! rewrite !(linE,ffunE,mxmorE,scalerDl,sum_enum_indices) /=).
 rewrite -mulNrn !mulr1n -!scalerA.
 rewrite !scale1r !scalerDr !scaleN1r !scalerN !scalerA.
 simpc.
