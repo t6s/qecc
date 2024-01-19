@@ -23,21 +23,45 @@ Notation dpmatrixmx := (dpmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
-
-Definition densitymx n (v : dpower I n Co) : dpsquare n :=
-  [ffun vi => [ffun vj => v vi * (v vj)^*]].
-
 Notation "T '^^' n " := (dpower I n T).
 (* Generalized version of density matrices *)
 Definition dsquare (T : lmodType C) n := [lmodType C of T ^^ n ^^ n].
 
+Definition conjCo : Co -> Co := conjc.
+Definition scalerv (T : lmodType C) (v : T) (x : Co) := x *: v.
+Lemma scalerv_is_linear T v : linear (@scalerv T v).
+Proof. by move=> x y z; rewrite /scalerv !linearE/= scalerA mulrC scalerDl. Qed.
+Canonical scalerv_lin T v := Linear (@scalerv_is_linear T v).
+
+Definition densitymx n (v : Co ^^ n) : dpsquare n :=
+  dpmap (scalerv (dpmap conjCo v)) v.
+
+Definition hconj_mor m n (f : mor m n) : mor m n :=
+  mxmor (dpmap (dpmap conjCo) (mormx f)).
+
+(* WIP: application of a morphism to a density matrix *)
+Definition applyU (T : lmodType C) m n (f : mor m n) (M : dsquare T m)
+  : dsquare T n := dpmap (hconj_mor f _) (f _ M).
+
+Lemma applyU_densitymx m n (f : mor m n) (v : Co ^^ m) :
+  applyU f (densitymx v) = densitymx (f _ v).
+Proof.
+apply/ffunP => vi.
+rewrite !ffunE /densitymx -morN /hconj_mor !ffunE /= !linearE.
+congr (_ *: _).
+apply/ffunP => vj.
+rewrite mxmorE /mormx.
+under eq_bigr do rewrite !ffunE.
+rewrite [in RHS](decompose_scaler v) /conjCo.
+rewrite !linear_sum !ffunE sum_ffunE linear_sum /=.
+apply eq_bigr => w _.
+rewrite [in LHS]/GRing.scale /= -rmorphM /=.
+by rewrite linearE mulrC ffunE.
+Qed.
+
 (* The adjoint morphism (going through matrix representation) *)
 Definition hadj_mor m n (f : mor m n) : mor n m :=
   mxmor (hadjts (mormx f)).
-
-(* WIP: application of a morphism to a density matrix *)
-Definition applyU (T : lmodType C) n (f : endo n) (M : dsquare T n) :=
-  dpmap (hadj_mor f _) (f _ M).
 
 (* Focus and adjunction commute *)
 Lemma focus_hadj_mor n m (l : lens n m) (f : endo m) :
