@@ -63,6 +63,21 @@ rewrite [in LHS]/GRing.scale /= -rmorphM /=.
 by rewrite linearE mulrC ffunE.
 Qed.
 
+Lemma focus_hconj_mor n m (l : lens n m) (f : endo m) :
+  focus l (hconj_mor f) =e hconj_mor (focus l f).
+Proof.
+move=> /= T x.
+apply/ffunP => /= v.
+rewrite focusE !ffunE !mxmorE sum_ffunE (reindex_merge _ dI l) /=.
+apply eq_bigr => vi _.
+rewrite !ffunE /= /conjCo.
+under eq_bigr do rewrite !ffunE focusE !ffunE /= curry_dpbasis.
+under eq_bigr do rewrite -morN /= !ffunE extract_merge extractC_merge.
+set flv := f _ _ _; clearbody flv.
+rewrite (bigD1 (extract (lensC l) v)) //= eqxx scale1r big1 ?addr0 // => vj Hj.
+by rewrite (negbTE Hj) scale0r conjc0 scale0r.
+Qed.
+
 (* The adjoint morphism (going through matrix representation) *)
 Definition hadj_mor m n (f : mor m n) : mor n m :=
   mxmor (hadjts (mormx f)).
@@ -73,18 +88,13 @@ Lemma focus_hadj_mor n m (l : lens n m) (f : endo m) :
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
-rewrite focusE !ffunE !mxmorE /=.
-rewrite sum_ffunE /=.
-rewrite (reindex_merge _ dI l) /=.
+rewrite focusE !ffunE !mxmorE sum_ffunE (reindex_merge _ dI l) /=.
 apply eq_bigr => vi _.
 rewrite !ffunE /=.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= extract_merge extractC_merge.
-under eq_bigr do rewrite curry_dpbasis -morN /=.
-set flv := f _ _.
-clearbody flv.
-under eq_bigr do rewrite !ffunE.
-rewrite (bigD1 (extract (lensC l) v)) //= eqxx scale1r.
-rewrite big1 ?addr0 // => vj Hj.
+under eq_bigr do rewrite curry_dpbasis -morN /= !ffunE.
+set flv := f _ _; clearbody flv.
+rewrite (bigD1 (extract (lensC l) v)) //= eqxx scale1r big1 ?addr0 // => vj Hj.
 by rewrite eq_sym (negbTE Hj) scale0r conjc0 scale0r.
 Qed.
 
