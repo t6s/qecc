@@ -9,6 +9,14 @@ Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 Local Open Scope complex_scope.
 
+Section scalerv.
+Variables (R : comRingType) (T : lmodType R) (v : T).
+Definition scalerv (x : R ^o) := x *: v.
+Lemma scalerv_is_linear : linear scalerv.
+Proof. by move=> x y z; rewrite /scalerv !linearE/= scalerA mulrC scalerDl. Qed.
+Canonical scalerv_lin := Linear scalerv_is_linear.
+End scalerv.
+
 Section density.
 Variable R : rcfType.
 Let C := [comRingType of R[i]].
@@ -28,10 +36,6 @@ Notation "T '^^' n " := (dpower I n T).
 Definition dsquare (T : lmodType C) n := [lmodType C of T ^^ n ^^ n].
 
 Definition conjCo : Co -> Co := conjc.
-Definition scalerv (T : lmodType C) (v : T) (x : Co) := x *: v.
-Lemma scalerv_is_linear T v : linear (@scalerv T v).
-Proof. by move=> x y z; rewrite /scalerv !linearE/= scalerA mulrC scalerDl. Qed.
-Canonical scalerv_lin T v := Linear (@scalerv_is_linear T v).
 
 Definition densitymx n (v : Co ^^ n) : dpsquare n :=
   dpmap (scalerv (dpmap conjCo v)) v.
