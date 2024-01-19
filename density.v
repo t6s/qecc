@@ -17,14 +17,14 @@ Variable I : finType.
 Variable dI : I.
 
 (* Type of density matrices over C *)
-Notation tsquare n := (tmatrix I C n n).
+Notation dpsquare n := (dpmatrix I C n n).
 Notation idts := (idts I C).
-Notation tmatrixmx := (tmatrixmx dI).
+Notation dpmatrixmx := (dpmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
 
-Definition densityts n (v : dpower I n Co) : tsquare n :=
+Definition densitymx n (v : dpower I n Co) : dpsquare n :=
   [ffun vi => [ffun vj => v vi * (v vj)^*]].
 
 Notation "T '^^' n " := (dpower I n T).
@@ -33,7 +33,7 @@ Definition dsquare (T : lmodType C) n := [lmodType C of T ^^ n ^^ n].
 
 (* The adjoint morphism (going through matrix representation) *)
 Definition hadj_mor m n (f : mor m n) : mor n m :=
-  tsmor (hadjts (morts f)).
+  mxmor (hadjts (mormx f)).
 
 (* WIP: application of a morphism to a density matrix *)
 Definition applyU (T : lmodType C) n (f : endo n) (M : dsquare T n) :=
@@ -45,7 +45,7 @@ Lemma focus_hadj_mor n m (l : lens n m) (f : endo m) :
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
-rewrite focusE !ffunE !tsmorE /=.
+rewrite focusE !ffunE !mxmorE /=.
 rewrite sum_ffunE /=.
 rewrite (reindex_merge _ dI l) /=.
 apply eq_bigr => vi _.
