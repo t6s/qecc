@@ -53,11 +53,10 @@ all: time (rewrite !sum_enum_indices /= !ffunE /=).
 all: by rewrite !linE.
 Qed.
 
-Lemma cnotU : unitary_endo (tsmor cnot).
+Lemma cnotU : unitary_mor (tsmor cnot).
 Proof.
-rewrite /unitary_endo /tinner /= => s t.
-rewrite !sum_enum_indices /=.
-rewrite !tsmorE.
+move=> /= s t.
+rewrite /tinner !sum_enum_indices /= !tsmorE.
 time (rewrite !ffunE /= !linE).
 rewrite !sum_dpbasisK.
 by rewrite (addrC _ (_ * _)).
@@ -86,10 +85,10 @@ par: time (rewrite !ffunE;
 Qed.
 
 (* The direct proof is fast but verbose *)
-Lemma hadamardU_direct : unitary_endo (tsmor hadamard).
+Lemma hadamardU_direct : unitary_mor (tsmor hadamard).
 Proof.
-rewrite /unitary_endo /tinner /= => s t.
-rewrite !sum_enum_indices /= !tsmorE.
+move=> /= s t.
+rewrite /tinner !sum_enum_indices /= !tsmorE.
 time (rewrite !sum_enum_indices /= !ffunE /= !linE).
 rewrite /GRing.scale /= !mulr1.
 rewrite mulr1n mulrN mulr1.

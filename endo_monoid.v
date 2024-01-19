@@ -238,7 +238,7 @@ Proof.
 rewrite /comp_fendo /=.
 case: Bool.bool_dec => //.
 case: f => -[|m] l Sl e /= H; last first.
-  elimtype False; case: l {Sl e} H => -[] [] //= a t Hsz Hu.
+  have [] : False; case: l {Sl e} H => -[] [] //= a t Hsz Hu.
   by rewrite disjoint_sym disjoint_has /= mem_enum.
 have Hn : (n = n + 0)%N by rewrite addn0.
 apply eq_foc_endo => //=.
@@ -456,7 +456,7 @@ Variable n : nat.
 
 Hypothesis cardI_gt1 : (#|I| > 1)%N.
 
-Lemma err_fendo_notU : ~ unitary_endo (fendo_mor (@err_fendo C n)).
+Lemma err_fendo_notU : ~ unitary_mor (fendo_mor (@err_fendo C n)).
 Proof.
 move => /(_ [ffun _ => 1%:R] [ffun _ => 1%:R]).
 rewrite fendo_mor_err /tinner /=.
@@ -473,9 +473,9 @@ Qed.
 
 Variables (m : nat) (F : 'I_m -> foc_endo C n) (P : pred 'I_m).
 Hypothesis Hdisj : all_disjoint F.
-Hypothesis FU : forall i, unitary_endo (F i).
+Hypothesis FU : forall i, unitary_mor (F i).
 
-Lemma compn_mor_FU : unitary_endo (compn_mor_F F P).
+Lemma compn_mor_FU : unitary_mor (compn_mor_F F P).
 Proof.
 apply: big_ind.
 - exact: idmorU.
@@ -483,13 +483,13 @@ apply: big_ind.
 - move=> i _. exact/unitary_focus/FU.
 Qed.
 
-Lemma compn_fendo_unitary : unitary_endo (compn_fendo F P).
+Lemma compn_fendo_unitary : unitary_mor (compn_fendo F P).
 Proof.
-suff: unitary_endo (compn_fendo F P) \/ compn_fendo F P = err_fendo C n.
+suff: unitary_mor (compn_fendo F P) \/ compn_fendo F P = err_fendo C n.
   case => //.
   move/(f_equal (@fendo_mor C n)).
   rewrite -compn_mor_disjoint // => Herr.
-  elimtype False; move: compn_mor_FU.
+  have [] : False; move: compn_mor_FU.
   rewrite Herr. exact: err_fendo_notU.
 rewrite /compn_fendo.
 apply big_ind.

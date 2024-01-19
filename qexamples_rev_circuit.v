@@ -24,7 +24,7 @@ Definition rev_circuit n : endo n :=
 
 (* Semantics of rev_circuit *)
 
-Lemma rev_circuitU n : unitary_endo (rev_circuit n).
+Lemma rev_circuitU n : unitary_mor (rev_circuit n).
 Proof.
 apply: big_ind.
 - exact: idmorU.
@@ -114,7 +114,7 @@ Lemma rev_circuit_fendo :
   rev_circuit n = fendo_mor 0 (compn_fendo 0 fendo_swap xpredT).
 Proof. rewrite -compn_mor_disjoint //; exact/all_disjoint_swap. Qed.
 
-Lemma swap_asym_focusU P : unitary_endo (compn_fendo ord0 fendo_swap P).
+Lemma swap_asym_focusU P : unitary_mor (compn_fendo ord0 fendo_swap P).
 Proof.
 apply/compn_fendo_unitary.
 - by rewrite card_ord.

@@ -146,9 +146,9 @@ Qed.
 
 (* Unitarity *)
 
-Lemma swapU : unitary_endo (tsmor swap).
+Lemma swapU : unitary_mor (tsmor swap).
 Proof.
-rewrite /unitary_endo /tinner /= => s t.
+rewrite /unitary_mor /tinner /= => s t.
 rewrite !sum_enum_indices /= !tsmorE.
 time (rewrite !ffunE /= !linE).
 rewrite !sum_dpbasisK.

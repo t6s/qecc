@@ -93,20 +93,20 @@ Proof. rewrite !unitarytsE tmatrixmx_mul; exact/unitarymx_mul. Qed.
 Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxtmatrix M).
 Proof. by rewrite unitarytsE mxtmatrixK. Qed.
 
-Section unitary_endo.
+Section unitary_mor.
 (* One could probably replace tinner by any bilinear form *)
 Definition tinner n (s t : Co ^^ n) := \sum_i (s i)^* * (t i).
-Definition unitary_endo m n (f : mor m n) :=
+Definition unitary_mor m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 (* Actually this only makes sense for n >= m, since the rank must be at
    least m to be unitary *)
 
-Lemma idmorU n : unitary_endo (idmor I C n).
+Lemma idmorU n : unitary_mor (idmor I C n).
 Proof. done. Qed.
 
-Lemma unitary_endoP n M : reflect (@unitary_endo n n (tsmor M)) (unitaryts M).
+Lemma unitary_morP n M : reflect (@unitary_mor n n (tsmor M)) (unitaryts M).
 Proof.
-rewrite /unitaryts /unitary_endo.
+rewrite /unitaryts /unitary_mor.
 apply/(iffP idP).
 - move=> Uf s t; move/eqP: Uf.
   move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
@@ -127,13 +127,13 @@ apply/(iffP idP).
 Qed.
 
 Lemma unitary_comp m n p (f : mor n p) (g : mor m n) :
-  unitary_endo f -> unitary_endo g -> unitary_endo (f \v g).
+  unitary_mor f -> unitary_mor g -> unitary_mor (f \v g).
 Proof. move=> Hf Hg s t /=; by rewrite Hf. Qed.
 
 Lemma unitary_focus n m (l : lens n m) (f : endo m) :
-  unitary_endo f -> unitary_endo (focus l f).
+  unitary_mor f -> unitary_mor (focus l f).
 Proof.
-rewrite /unitary_endo /tinner => /= Uf s t.
+rewrite /unitary_mor /tinner => /= Uf s t.
 rewrite 2!(reindex_merge _ dI l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
@@ -145,7 +145,7 @@ rewrite focusE /=.
 rewrite /uncurry !ffunE !extract_merge !extractC_merge.
 by rewrite -!(morN f) !ffunE.
 Qed.
-End unitary_endo.
+End unitary_mor.
 
 Section projection.
 Variables (n m : nat) (l : lens n m).
@@ -156,7 +156,7 @@ Definition proj (t : Co ^^ n) : Co ^^ m :=
   dpmap (@norm _) (curry dI l t).
 
 Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : Co ^^ n) :
-  [disjoint l & l'] -> unitary_endo f ->
+  [disjoint l & l'] -> unitary_mor f ->
   proj (focus l' f Co t) = proj t.
 Proof.
 move=> Hdisj Uf.

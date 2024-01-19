@@ -22,7 +22,7 @@ Qed.
 Definition rev_circuit n : endo n :=
   compn_mor (fun i => tsapp (lens_pair (rev_ord_neq i)) swap) xpredT.
 
-Lemma rev_circuitU n : unitary_endo (rev_circuit n).
+Lemma rev_circuitU n : unitary_mor (rev_circuit n).
 Proof.
 apply: big_ind.
 - exact: idmorU.
