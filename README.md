@@ -1,7 +1,37 @@
-# qecc
-This is an attempt at formalizing quantum circuit an a bit of kindergarten quantum mechanics in Coq/mathcomp.
+## Compilation
 
-File contents
+$ opam repo add coq-released https://coq.inria.fr/opam/released
+$ opam install coq-mathcomp-real-closed
+$ eval `opam env`
+$ make
+
+We have checked the compilation with the following versions of OPAM packages:
+base-bigarray            base
+base-threads             base
+base-unix                base
+conf-findutils           1
+conf-gmp                 4
+coq                      8.17.1
+coq-core                 8.17.1
+coq-mathcomp-algebra     1.17.0
+coq-mathcomp-bigenough   1.0.1
+coq-mathcomp-field       1.17.0
+coq-mathcomp-fingroup    1.17.0
+coq-mathcomp-real-closed 1.1.4
+coq-mathcomp-solvable    1.17.0
+coq-mathcomp-ssreflect   1.17.0
+coq-stdlib               8.17.1
+coqide-server            8.17.1
+dune                     3.10.0
+ocaml                    4.12.2
+ocaml-config             2
+ocaml-variants           4.12.2+trunk
+ocamlfind                1.9.6
+zarith                   1.13
+
+
+## File contents
+
 * lens.v: definition of lens, extract, merge, and lemmas
 * dpower.v: definition of dpower, morphisms, focus, and lemmas
 * unitary.v: definition of unitaryts and unitary_endo
@@ -11,10 +41,3 @@ File contents
 * qexamples_shor.v: proof of Shor's 9-qubit code
 * qexamples_ghz.v: proof of Greenberger-Horne-Zeilinger preparation
 * qexamples_rev_circuit.v: proof of the reverse circuit (using swap gates)
-
-Presentation materials:
-* Formalizing quantum circuits with MathComp/Ssreflect, Takafumi Saikawa and Jacques Garrigue, TPP 2021. [Slides](http://www.math.nagoya-u.ac.jp/~garrigue/papers/tpp2021-tpower-slides.pdf).
-* Idem, PPL 2022. [Poster](http://www.math.nagoya-u.ac.jp/~garrigue/papers/tpower-poster-ppl2022.pdf).
-* Idem, PlanQC 2022. [Poster](https://www.math.nagoya-u.ac.jp/~garrigue/papers/poster-planqc22.pdf)
-
-By [Takefumi Saikawa](https://github.com/t6s) and [Jacques Garrigue](https://github.com/garrigue).

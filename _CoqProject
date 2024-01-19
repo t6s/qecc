@@ -9,6 +9,7 @@
 lens.v
 dpower.v
 unitary.v
+density.v
 endo_monoid.v
 kqm.v
 qexamples_common.v
