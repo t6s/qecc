@@ -179,9 +179,11 @@ Lemma uncurry_dpmap (T : lmodType C) n m p q  (l : lens n m) (f : mor p q)
   uncurry l (dpmap (dpmap (f T)) X) = dpmap (f T) (uncurry l X).
 Proof. by apply/ffunP=> v; rewrite !ffunE. Qed.
 
-Print dptranspose.
+Lemma dpmap_id T m (X : T ^^ m) : dpmap id X = X.
+Proof. by apply/ffunP => v; rewrite ffunE. Qed.
+
 (* Application of adjunction commutes with focus *)
-Lemma focusds_applyU (T : lmodType C) n m (l : lens n m) (f : endo m)
+Lemma applyU_focus (T : lmodType C) n m (l : lens n m) (f : endo m)
       (M : dsquare T n) :
   applyU (focus l f) M = uncurryds l (applyU f (curryds l M)).
 Proof.
@@ -189,22 +191,15 @@ rewrite /applyU /curryds /uncurryds.
 rewrite -(eq_dpmap (@focus_hconj_mor _ _ l f T)).
 rewrite -2!morN.
 set fc := hconj_mor f.
-rewrite /=.
-rewrite -(dpmap_compose (fc _)).
+rewrite /= -(dpmap_compose (fc _)).
 rewrite -(eq_dpmap (dpmap_dptranspose fc)).
-rewrite (_ : (fun X : (ffun_lmodType (tuple_finType (n - m) I) T ^^ (n - m)) ^^ m => dpmap _ (dptranspose X)) = dpmap (fc (ffun_lmodType (tuple_finType (n - m) I) T)) \o dptranspose (n:=n-m)) //.
-rewrite [in RHS]dpmap_compose.
+rewrite (dpmap_compose (dptranspose (n:=n-m)) (dpmap (fc _))).
 rewrite -(dpmap_compose (dptranspose (n:=m))).
-rewrite (eq_dpmap (@dptransposeK _ (n-m) m)).
-rewrite -(dpmap_compose _ id).
-rewrite (_ : id \o _ = dpmap (curry dI l)) //.
-rewrite -dpmap_compose.
-rewrite -(eq_dpmap (dpmap_compose (curry dI l) (fc _))).
-rewrite -dpmap_compose.
-rewrite -(eq_dpmap (dpmap_compose (fc _ \o curry dI l) (uncurry l))).
+rewrite (eq_dpmap (@dptransposeK _ (n-m) m)) dpmap_id.
+rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ (uncurry l))).
+rewrite -dpmap_compose -(eq_dpmap (dpmap_compose (curry dI l) _)).
 rewrite -[X in uncurry l (dpmap (dpmap X) _)](focusE dI l fc _).
-rewrite uncurry_dpmap.
-by rewrite [in X in dpmap _ X]focusE.
+by rewrite uncurry_dpmap (focusE _ _ f).
 Qed.
 
 End density.
