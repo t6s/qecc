@@ -24,12 +24,12 @@ Notation endo n := (mor n n).
 Notation focus := (focus dI).
 Local Notation "T '^^' n " := (dpower I n T).
 
-Definition hadjmx n m (M : 'M[C]_(n,m)) := \matrix_(i,j) (M j i)^*.
+Definition adjointmx n m (M : 'M[C]_(n,m)) := \matrix_(i,j) (M j i)^*.
 
-Definition unitarymx n M := @hadjmx n n M *m M == 1%:M.
+Definition unitarymx n M := @adjointmx n n M *m M == 1%:M.
 
-Lemma hadjmx_mul n m p (M : 'M[C]_(n,m)) (N : 'M[C]_(m,p)) :
-  hadjmx (M *m N) = hadjmx N *m hadjmx M.
+Lemma adjointmx_mul n m p (M : 'M[C]_(n,m)) (N : 'M[C]_(m,p)) :
+  adjointmx (M *m N) = adjointmx N *m adjointmx M.
 Proof.
 apply/matrixP => i j; rewrite !mxE.
 rewrite rmorph_sum; apply eq_bigr => /= k _.
@@ -40,31 +40,31 @@ Lemma unitarymx_mul n (M N : 'M[C]_n) :
   unitarymx M -> unitarymx N -> unitarymx (M *m N).
 Proof.
 move => /eqP UM /eqP UN; apply/eqP.
-by rewrite hadjmx_mul mulmxA -(mulmxA (hadjmx N)) UM mulmx1.
+by rewrite adjointmx_mul mulmxA -(mulmxA (adjointmx N)) UM mulmx1.
 Qed.
 
 Section unitary_dpmatrix.
 Variable n : nat.
 Variable M : dpsquare n.
 
-Definition hadjts m (N : dpmatrix I C m n) : dpmatrix I C n m :=
+Definition adjointts m (N : dpmatrix I C m n) : dpmatrix I C n m :=
   [ffun vi => [ffun vj => (N vj vi)^*]].
 
-Definition unitaryts := mults (hadjts M) M == idts n.
+Definition unitaryts := mults (adjointts M) M == idts n.
 
-Lemma hadjtsE m (N : dpmatrix I C m n) :
-  dpmatrixmx (hadjts N) = hadjmx (dpmatrixmx N).
+Lemma adjointtsE m (N : dpmatrix I C m n) :
+  dpmatrixmx (adjointts N) = adjointmx (dpmatrixmx N).
 Proof. apply/matrixP => i j; by rewrite !mxE !ffunE. Qed.
 
 Lemma unitarytsE : unitaryts = unitarymx (dpmatrixmx M).
 Proof.
 case/boolP: unitaryts => /eqP Hts; apply/esym/eqP.
-- by rewrite -hadjtsE -dpmatrixmx_mul Hts dpmatrixmx_id.
+- by rewrite -adjointtsE -dpmatrixmx_mul Hts dpmatrixmx_id.
 - move=> Hmx; elim Hts.
-  by rewrite -mxdpmatrix_id // -Hmx mxdpmatrix_mul // -hadjtsE !dpmatrixmxK.
+  by rewrite -mxdpmatrix_id // -Hmx mxdpmatrix_mul // -adjointtsE !dpmatrixmxK.
 Qed.
 
-Lemma unitary_invP : hadjts M = M ->
+Lemma unitary_invP : adjointts M = M ->
   reflect (forall T, involutive (mxmor M T)) unitaryts.
 Proof.
 rewrite /unitaryts => ->.
@@ -80,17 +80,19 @@ apply: (iffP idP) => [/eqP|] Hinv.
 Qed.
 End unitary_dpmatrix.
 
-Lemma hadjts_mul n m p M N : hadjts (M *t N) = @hadjts p m N *t @hadjts m n M.
+Lemma adjointts_mul n m p M N :
+  adjointts (M *t N) = @adjointts p m N *t @adjointts m n M.
 Proof.
-rewrite -[LHS](dpmatrixmxK dI) hadjtsE dpmatrixmx_mul.
-by rewrite hadjmx_mul -!hadjtsE -dpmatrixmx_mul dpmatrixmxK.
+rewrite -[LHS](dpmatrixmxK dI) adjointtsE dpmatrixmx_mul.
+by rewrite adjointmx_mul -!adjointtsE -dpmatrixmx_mul dpmatrixmxK.
 Qed.
 
 Lemma unitaryts_mul n (M N : dpsquare n) :
   unitaryts M -> unitaryts N -> unitaryts (mults M N).
 Proof. rewrite !unitarytsE dpmatrixmx_mul; exact/unitarymx_mul. Qed.
 
-Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) : unitarymx M = unitaryts (mxdpmatrix M).
+Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) :
+  unitarymx M = unitaryts (mxdpmatrix M).
 Proof. by rewrite unitarytsE mxdpmatrixK. Qed.
 
 Section unitary_mor.
@@ -109,8 +111,9 @@ Proof.
 rewrite /unitaryts /unitary_mor.
 apply/(iffP idP).
 - move=> Uf s t; move/eqP: Uf.
-  move/(f_equal (fun ts => mults (hadjts (curryn0 s)) (mults ts (curryn0 t)))).
-  rewrite !multsA -multsA -hadjts_mul mul1ts //.
+  move/(f_equal
+          (fun ts => mults (adjointts (curryn0 s)) (mults ts (curryn0 t)))).
+  rewrite !multsA -multsA -adjointts_mul mul1ts //.
   move/(f_equal (fun M : dpsquare 0 => M [tuple] [tuple])).
   rewrite !ffunE. under [RHS]eq_bigr do rewrite !ffunE.
   move=> Uf; rewrite -{}[RHS]Uf.

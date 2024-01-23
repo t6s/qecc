@@ -37,34 +37,42 @@ Definition dsquare (T : lmodType C) n := [lmodType C of T ^^ n ^^ n].
 
 Definition conjCo : Co -> Co := conjc.
 
-Definition densitymx n (v : Co ^^ n) : dpsquare n :=
+(* Density matrix of a pure quantum state *)
+Definition pure_density n (v : Co ^^ n) : dpsquare n :=
   dpmap (scalerv (dpmap conjCo v)) v.
 
-Definition hconj_mor m n (f : mor m n) : mor m n :=
+(* Complex conjugate vector space functor *)
+Definition conj_mor m n (f : mor m n) : mor m n :=
   mxmor (dpmap (dpmap conjCo) (mormx f)).
 
 (* WIP: application of a morphism to a density matrix *)
+(* U rho U^dagger *)
 Definition applyU (T : lmodType C) m n (f : mor m n) (M : dsquare T m)
-  : dsquare T n := dpmap (hconj_mor f _) (f _ M).
+  : dsquare T n := dpmap (conj_mor f _) (f _ M).
 
-Lemma applyU_densitymx m n (f : mor m n) (v : Co ^^ m) :
-  applyU f (densitymx v) = densitymx (f _ v).
+Lemma dpmap_conjCo m n (f : mor m n) v :
+  dpmap conjCo (f Co v) = conj_mor f Co (dpmap conjCo v).
 Proof.
-apply/ffunP => vi.
-rewrite !ffunE /densitymx -morN /hconj_mor !ffunE /= !linearE.
-congr (_ *: _).
+(* Does mathcomp 2.0 improve the type printed for v ? *)
 apply/ffunP => vj.
 rewrite mxmorE /mormx.
-under eq_bigr do rewrite !ffunE.
-rewrite [in RHS](decompose_scaler v) /conjCo.
+under eq_bigr do rewrite !ffunE /=.
+rewrite [in LHS](decompose_scaler v) /conjCo.
 rewrite !linear_sum !ffunE sum_ffunE linear_sum /=.
 apply eq_bigr => w _.
-rewrite [in LHS]/GRing.scale /= -rmorphM /=.
+rewrite [in RHS]/GRing.scale /= -rmorphM /=.
 by rewrite linearE mulrC ffunE.
 Qed.
 
-Lemma focus_hconj_mor n m (l : lens n m) (f : endo m) :
-  focus l (hconj_mor f) =e hconj_mor (focus l f).
+Lemma applyU_pure m n (f : mor m n) (v : Co ^^ m) :
+  applyU f (pure_density v) = pure_density (f _ v).
+Proof.
+apply/ffunP => vi.
+by rewrite !ffunE /pure_density -morN !ffunE /= !linearE dpmap_conjCo.
+Qed.
+
+Lemma focus_conj_mor n m (l : lens n m) (f : endo m) :
+  focus l (conj_mor f) =e conj_mor (focus l f).
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
@@ -79,12 +87,12 @@ by rewrite (negbTE Hj) scale0r conjc0 scale0r.
 Qed.
 
 (* The adjoint morphism (going through matrix representation) *)
-Definition hadj_mor m n (f : mor m n) : mor n m :=
-  mxmor (hadjts (mormx f)).
+Definition adjoint_mor m n (f : mor m n) : mor n m :=
+  mxmor (adjointts (mormx f)).
 
 (* Focus and adjunction commute *)
-Lemma focus_hadj_mor n m (l : lens n m) (f : endo m) :
-  focus l (hadj_mor f) =e hadj_mor (focus l f).
+Lemma focus_adjoint_mor n m (l : lens n m) (f : endo m) :
+  focus l (adjoint_mor f) =e adjoint_mor (focus l f).
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
@@ -188,9 +196,9 @@ Lemma applyU_focus (T : lmodType C) n m (l : lens n m) (f : endo m)
   applyU (focus l f) M = uncurryds l (applyU f (curryds l M)).
 Proof.
 rewrite /applyU /curryds /uncurryds.
-rewrite -(eq_dpmap (@focus_hconj_mor _ _ l f T)).
+rewrite -(eq_dpmap (@focus_conj_mor _ _ l f T)).
 rewrite -2!morN.
-set fc := hconj_mor f.
+set fc := conj_mor f.
 rewrite /= -(dpmap_compose (fc _)).
 rewrite -(eq_dpmap (dpmap_dptranspose fc)).
 rewrite (dpmap_compose (dptranspose (n:=n-m)) (dpmap (fc _))).
