@@ -45,16 +45,11 @@ Definition pure_density n (v : Co ^^ n) : dpsquare n :=
 Definition conj_mor m n (f : mor m n) : mor m n :=
   mxmor (dpmap (dpmap conjCo) (mormx f)).
 
-Section applyU.
-Variables (T : lmodType C) (m n : nat) (f : mor m n).
 (* WIP: application of a morphism to a density matrix *)
 (* U rho U^dagger *)
-Definition applyU (M : dsquare T m) : dsquare T n :=
-  dpmap (conj_mor f _) (f _ M).
-Definition applyU_is_linear : linear applyU.
-Proof. by move=> x y z; rewrite /applyU !linearE. Qed.
-Canonical applyU_lin := Linear applyU_is_linear.
-End applyU.
+Definition applyU (T : lmodType C) m n (f : mor m n) :
+  dsquare T m -> dsquare T n := dpmap (conj_mor f _) \o f _.
+Canonical applyU_lin T m n f := [linear of @applyU T m n f].
 
 Lemma dpmap_conjCo m n (f : mor m n) v :
   dpmap conjCo (f Co v) = conj_mor f Co (dpmap conjCo v).
@@ -202,7 +197,7 @@ Proof. by apply/ffunP => v; rewrite ffunE. Qed.
 Lemma applyU_focus (T : lmodType C) n m (l : lens n m) (f : endo m) M :
   applyU (T:=T) (focus l f) M = focusds l (applyU f) M.
 Proof.
-rewrite /focusds /applyU /curryds /uncurryds.
+rewrite /focusds /applyU /curryds /uncurryds /=.
 rewrite -(eq_dpmap (@focus_conj_mor _ _ l f T)) -2!morN.
 set fc := conj_mor f.
 rewrite /= -(dpmap_compose (fc _)) -(eq_dpmap (dpmap_dptranspose fc)).
