@@ -20,7 +20,7 @@ End scalerv.
 Section density.
 Variable R : rcfType.
 Let C := [comRingType of R[i]].
-Let Co := [lmodType C of C^o].
+Let Co := GRing.regular_lmodType C.
 Variable I : finType.
 Variable dI : I.
 
@@ -45,18 +45,24 @@ Definition pure_density n (v : Co ^^ n) : dpsquare n :=
 Definition conj_mor m n (f : mor m n) : mor m n :=
   mxmor (dpmap (dpmap conjCo) (mormx f)).
 
+Section applyU.
+Variables (T : lmodType C) (m n : nat) (f : mor m n).
 (* WIP: application of a morphism to a density matrix *)
 (* U rho U^dagger *)
-Definition applyU (T : lmodType C) m n (f : mor m n) (M : dsquare T m)
-  : dsquare T n := dpmap (conj_mor f _) (f _ M).
+Definition applyU (M : dsquare T m) : dsquare T n :=
+  dpmap (conj_mor f _) (f _ M).
+Definition applyU_is_linear : linear applyU.
+Proof. by move=> x y z; rewrite /applyU !linearE. Qed.
+Canonical applyU_lin := Linear applyU_is_linear.
+End applyU.
 
 Lemma dpmap_conjCo m n (f : mor m n) v :
   dpmap conjCo (f Co v) = conj_mor f Co (dpmap conjCo v).
 Proof.
 (* Does mathcomp 2.0 improve the type printed for v ? *)
 apply/ffunP => vj.
-rewrite mxmorE /mormx.
-under eq_bigr do rewrite !ffunE /=.
+rewrite mxmorE.
+under eq_bigr do rewrite !ffunE /= -/Co.
 rewrite [in LHS](decompose_scaler v) /conjCo.
 rewrite !linear_sum !ffunE sum_ffunE linear_sum /=.
 apply eq_bigr => w _.
@@ -157,6 +163,8 @@ Lemma currydsK : cancel curryds uncurryds.
 Proof.
 move=> M; apply/ffunP=> v; apply/ffunP=> w; by rewrite !ffunE !merge_extract.
 Qed.
+
+Definition focusds f M := uncurryds (f (curryds M)).
 End curryds.
 
 Lemma eq_dpmap (T1 T2 : lmodType C) m (f g : T1 -> T2) :
@@ -191,23 +199,19 @@ Lemma dpmap_id T m (X : T ^^ m) : dpmap id X = X.
 Proof. by apply/ffunP => v; rewrite ffunE. Qed.
 
 (* Application of adjunction commutes with focus *)
-Lemma applyU_focus (T : lmodType C) n m (l : lens n m) (f : endo m)
-      (M : dsquare T n) :
-  applyU (focus l f) M = uncurryds l (applyU f (curryds l M)).
+Lemma applyU_focus (T : lmodType C) n m (l : lens n m) (f : endo m) M :
+  applyU (T:=T) (focus l f) M = focusds l (applyU f) M.
 Proof.
-rewrite /applyU /curryds /uncurryds.
-rewrite -(eq_dpmap (@focus_conj_mor _ _ l f T)).
-rewrite -2!morN.
+rewrite /focusds /applyU /curryds /uncurryds.
+rewrite -(eq_dpmap (@focus_conj_mor _ _ l f T)) -2!morN.
 set fc := conj_mor f.
-rewrite /= -(dpmap_compose (fc _)).
-rewrite -(eq_dpmap (dpmap_dptranspose fc)).
-rewrite (dpmap_compose (dptranspose (n:=n-m)) (dpmap (fc _))).
+rewrite /= -(dpmap_compose (fc _)) -(eq_dpmap (dpmap_dptranspose fc)).
+rewrite (dpmap_compose (dptranspose (n:=n-m))).
 rewrite -(dpmap_compose (dptranspose (n:=m))).
 rewrite (eq_dpmap (@dptransposeK _ (n-m) m)) dpmap_id.
-rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ (uncurry l))).
-rewrite -dpmap_compose -(eq_dpmap (dpmap_compose (curry dI l) _)).
-rewrite -[X in uncurry l (dpmap (dpmap X) _)](focusE dI l fc _).
-by rewrite uncurry_dpmap (focusE _ _ f).
+rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ _)).
+rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ _)).
+by rewrite -(focusE dI l fc _) uncurry_dpmap (focusE _ _ f).
 Qed.
 
 End density.
