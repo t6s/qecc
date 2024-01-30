@@ -79,9 +79,9 @@ move=> /= T x.
 apply/ffunP => /= v.
 rewrite focusE !ffunE !mxmorE sum_ffunE (reindex_merge _ dI l) /=.
 apply eq_bigr => vi _.
-rewrite !ffunE /= /conjCo.
+rewrite !ffunE /= /conjCo -/Co.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= curry_dpbasis.
-under eq_bigr do rewrite -morN /= !ffunE extract_merge extractC_merge.
+under eq_bigr do rewrite -morN /= !ffunE extract_merge extractC_merge -/Co.
 set flv := f _ _ _; clearbody flv.
 rewrite (bigD1 (extract (lensC l) v)) //= eqxx scale1r big1 ?addr0 // => vj Hj.
 by rewrite (negbTE Hj) scale0r conjc0 scale0r.
@@ -99,9 +99,9 @@ move=> /= T x.
 apply/ffunP => /= v.
 rewrite focusE !ffunE !mxmorE sum_ffunE (reindex_merge _ dI l) /=.
 apply eq_bigr => vi _.
-rewrite !ffunE /=.
+rewrite !ffunE -/Co.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= extract_merge extractC_merge.
-under eq_bigr do rewrite curry_dpbasis -morN /= !ffunE.
+under eq_bigr do rewrite curry_dpbasis -morN /= !ffunE -/Co.
 set flv := f _ _; clearbody flv.
 rewrite (bigD1 (extract (lensC l) v)) //= eqxx scale1r big1 ?addr0 // => vj Hj.
 by rewrite eq_sym (negbTE Hj) scale0r conjc0 scale0r.
