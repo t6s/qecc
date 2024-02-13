@@ -262,12 +262,17 @@ Proof.
 move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
 by rewrite !ffunE /= mulrDl scalerA.
 Qed.
+Definition tensor_dpsquare' M2 := tensor_dpsquare ^~ M2.
+HB.instance Definition _ M :=
+  GRing.isLinear.Build _ _ _ _ (tensor_dpsquare' M) (tensor_linearl M).
 
 Lemma tensor_linearr (M1 : dpsquare m) : linear (tensor_dpsquare M1).
 Proof.
 move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
 by rewrite !ffunE /= mulrDr !scalerA (mulrC x) -scalerA.
 Qed.
+HB.instance Definition _ M :=
+  GRing.isLinear.Build _ _ _ _ (tensor_dpsquare M) (tensor_linearr M).
 End tensor_dpsquare.
 
 Section curry.

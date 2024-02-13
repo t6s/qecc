@@ -17,8 +17,8 @@ rewrite (decompose_scaler v) !linear_sum.
 apply eq_bigr => i _.
 rewrite 2!linearZ_LR; congr (_ *: _).
 case: i => -[|i [|j []]] Hj //=.
-rewrite !focus_dpbasis; simpl_extract.
-rewrite mxmor_cnot mxmor_swap !dpmerge_dpbasis.
+rewrite [RHS]focus_dpbasis [in LHS]focus_dpbasis; simpl_extract.
+rewrite {1}(mxmor_cnot i j) mxmor_swap !dpmerge_dpbasis.
 do 2 simpl_merge.
 rewrite focus_dpbasis mxmor_cnot addrAC addii add0r dpmerge_dpbasis.
 simpl_merge.
@@ -30,15 +30,15 @@ Qed.
 
 Lemma cnotK : involutive (mxmor cnot Co).
 Proof.
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
-(* 2.8s *)
+move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //.
+all: time do 2 (rewrite !mxmorE !{1}ffunE /= !linE !sum_dpbasisK //).
+(* 1.8s *)
 Qed.
 
 Lemma qnotK : involutive (mxmor qnot Co).
 Proof. (* exactly the same proof *)
 move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE).
+all: time do 2 (rewrite !mxmorE !{1}ffunE /= !linE !sum_dpbasisK //).
 Qed.
 
 (* Unitarity: matrix or endomorphism *)
@@ -49,7 +49,7 @@ apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: rewrite !(linE,sum_dpbasisK,ffunE).
 all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: rewrite !(linE,sum_dpbasisK,ffunE).
-all: time (rewrite !sum_enum_indices /= !ffunE /=).
+all: time (rewrite !sum_enum_indices /= !{1}ffunE /=).
 all: by rewrite !linE.
 Qed.
 
@@ -57,8 +57,7 @@ Lemma cnotU : unitary_mor (mxmor cnot).
 Proof.
 move=> /= s t.
 rewrite /tinner !sum_enum_indices /= !mxmorE.
-time (rewrite !ffunE /= !linE).
-rewrite !sum_dpbasisK.
+rewrite !{1}ffunE /= !scale0r !scale1r !add0r !addr0 !sum_dpbasisK.
 by rewrite (addrC _ (_ * _)).
 Qed.
 
@@ -67,7 +66,7 @@ Proof. (* Fast proof using hadamardK *)
 apply/unitary_invP; last exact: hadamardK.
 apply/eq_from_indicesP; do !(apply/andP; split) => //=;
   apply/eqP/eq_from_indicesP; do !(apply/andP; split); apply /eqP => //=.
-all: time (rewrite !ffunE /= !linE).
+all: time (rewrite !{1}ffunE /= !linE).
 all: rewrite /GRing.scale /= ?mulr1 //.
 by simpc.
 Qed.
@@ -77,11 +76,11 @@ Lemma hadamardU' : unitaryts hadamard.
 Proof.
 apply/eqP/eq_from_indicesP; do !(apply/andP; split) => //=;
   apply/eqP/eq_from_indicesP; do !(apply/andP; split); apply /eqP => //=.
-par: time (rewrite !ffunE;
-     rewrite sum_enum_indices /= !ffunE !eq_ord_tuple /= !linE;
+par: time (rewrite !{1}ffunE;
+     rewrite sum_enum_indices /= !{1}ffunE !eq_ord_tuple /= !linE;
      simpc => //;
      rewrite -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //;
-     by rewrite -mulr2n -mulr_natl divrr // nat_unit).
+     by rewrite -mulr2n -(mulr_natl (_^-1)) divrr // nat_unit).
 Qed.
 
 (* The direct proof is fast but verbose *)
@@ -89,7 +88,7 @@ Lemma hadamardU_direct : unitary_mor (mxmor hadamard).
 Proof.
 move=> /= s t.
 rewrite /tinner !sum_enum_indices /= !mxmorE.
-time (rewrite !sum_enum_indices /= !ffunE /= !linE).
+time (rewrite !sum_enum_indices /= !{1}ffunE /= !linE).
 rewrite /GRing.scale /= !mulr1.
 rewrite mulr1n mulrN mulr1.
 simpc.
@@ -154,13 +153,11 @@ Lemma cnotH_ok' : mxmor cnotH Co =1 cnotHe Co.
 Proof.
 move=> v /=.
 rewrite /hadamard2 /hadamard.
-set hadam := (_ *: (_ + _ + _ - _))%R.
-rewrite (_ : tensor_dpsquare _ _ = Linear (tensor_linearl hadam) hadam) //.
-rewrite linearZ_LR.
-set hadam' := (_ + _ + _ - _)%R.
-rewrite (_ : Linear _ _ = Linear (tensor_linearr hadam') hadam) //.
-rewrite linearZ_LR scalerA.
-rewrite -!rmorphM.
+set hadam := (_ *: (- _ + _ + _ + _))%R.
+rewrite (_ : tensor_dpsquare hadam hadam = tensor_dpsquare' hadam hadam) //.
+rewrite linearZ_LR /= /tensor_dpsquare' /hadam.
+set hadam' := (- _ + _ + _ + _)%R.
+rewrite linearZ_LR scalerA -!rmorphM.
 rewrite !mul1r -!invrM ?sqrt_nat_unit // -!expr2 sqr_sqrtr ?ler0n //=.
 Abort.
 
