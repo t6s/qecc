@@ -11,8 +11,8 @@ Local Open Scope complex_scope.
 
 Section unitary.
 Variable R : rcfType.
-Let C := [comRingType of R[i]].
-Let Co := [lmodType C of C^o].
+Let C : comRingType := R[i].
+Let Co : lmodType C := C^o.
 Variable I : finType.
 Variable dI : I.
 

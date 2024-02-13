@@ -1,4 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra complex.
+From HB Require Import structures.
 Require Import lens dpower unitary.
 
 Set Implicit Arguments.
@@ -9,18 +10,10 @@ Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 Local Open Scope complex_scope.
 
-Section scalerv.
-Variables (R : comRingType) (T : lmodType R) (v : T).
-Definition scalerv (x : R ^o) := x *: v.
-Lemma scalerv_is_linear : linear scalerv.
-Proof. by move=> x y z; rewrite /scalerv !linearE/= scalerA mulrC scalerDl. Qed.
-Canonical scalerv_lin := Linear scalerv_is_linear.
-End scalerv.
-
 Section density.
 Variable R : rcfType.
-Let C := [comRingType of R[i]].
-Let Co := GRing.regular_lmodType C.
+Let C : comRingType := R[i].
+Let Co : lmodType C := C^o.
 Variable I : finType.
 Variable dI : I.
 
@@ -33,7 +26,7 @@ Notation endo n := (mor n n).
 Notation focus := (focus dI).
 Notation "T '^^' n " := (dpower I n T).
 (* Generalized version of density matrices *)
-Definition dsquare (T : lmodType C) n := [lmodType C of T ^^ n ^^ n].
+Definition dsquare (T : lmodType C) n : lmodType C := T ^^ n ^^ n.
 
 Definition conjCo : Co -> Co := conjc.
 
@@ -49,7 +42,6 @@ Definition conj_mor m n (f : mor m n) : mor m n :=
 (* U rho U^dagger *)
 Definition applyU (T : lmodType C) m n (f : mor m n) :
   dsquare T m -> dsquare T n := dpmap (conj_mor f _) \o f _.
-Canonical applyU_lin T m n f := [linear of @applyU T m n f].
 
 Lemma dpmap_conjCo m n (f : mor m n) v :
   dpmap conjCo (f Co v) = conj_mor f Co (dpmap conjCo v).
@@ -113,7 +105,8 @@ Definition dptranspose (M : T ^^ n ^^ m) : T ^^ m ^^ n :=
   [ffun vi => [ffun vj => M vj vi]].
 Lemma dptranspose_is_linear : linear dptranspose.
 Proof. by move=> x y z; apply/ffunP=> vi; apply/ffunP=> vj; rewrite !ffunE. Qed.
-Canonical dptranspose_lin := Linear dptranspose_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build _ _ _ _ _ dptranspose_is_linear.
 End dptranspose.
 
 Lemma dptransposeK T m n : cancel (@dptranspose T m n) (@dptranspose T _ _).
@@ -124,7 +117,6 @@ Variables (T : lmodType C) (n m : nat) (l : lens n m).
 
 Definition curryds : dsquare T n -> dsquare (dsquare T (n-m)) m :=
   dpmap (@dptranspose _ (n-m) m) \o dpmap (dpmap (curry dI l)) \o curry dI l.
-Canonical curryds_lin := [linear of curryds].
 
 Lemma currydsE M :
   curryds M =
@@ -139,7 +131,6 @@ Qed.
 
 Definition uncurryds : dsquare (dsquare T (n-m)) m -> dsquare T n :=
   uncurry l \o dpmap (dpmap (uncurry l)) \o dpmap (@dptranspose _ m (n-m)).
-Canonical uncurryds_lin := [linear of uncurryds].
 
 Definition uncurrydsE M :
   uncurryds M =

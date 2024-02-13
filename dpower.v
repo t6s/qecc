@@ -1,4 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra.
+From HB Require Import structures.
 Require Import lens.
 
 Set Implicit Arguments.
@@ -51,7 +52,7 @@ Coercion appmorlin : morlin >-> Funclass.
 Lemma dpmap_linear m (T1 T2 : lmodType R) (f : {linear T1 -> T2}) :
   linear (dpmap (m:=m) f).
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE !linearE. Qed.
-Canonical dpmap_lin m T1 T2 f := Linear (@dpmap_linear m T1 T2 f).
+HB.instance Definition _ m T1 T2 f := GRing.isLinear.Build _ _ _ _ _ (@dpmap_linear m T1 T2 f).
 
 Lemma dpmap_comp m (T1 T2 T3 : lmodType R) (f : T2 -> T3) (g : T1 -> T2) :
   dpmap (m:=m) (f \o g) =1 dpmap f \o dpmap g.
@@ -73,14 +74,15 @@ Proof. by apply/ffunP => v; rewrite !ffunE; f_equal; apply/val_inj. Qed.
 
 Lemma dpcast_linear (T : lmodType R) n m (H : n = m) : linear (dpcast (T:=T) H).
 Proof. move=> x y z /=; apply/ffunP => vi; by rewrite !ffunE. Qed.
+HB.instance Definition _ T n m H :=
+  GRing.isLinear.Build _ _ _ _ _ (@dpcast_linear T n m H).
 
 Lemma map_dpcastE T m n (H : n = n) v :
   dpmap (m:=m) (dpcast (T:=T) H) v = v.
 Proof. by apply/ffunP => w /=; rewrite !ffunE dpcastE. Qed.
 
 Definition morlin_dpcast n m (H : n = m) : morlin n m :=
-  fun T : lmodType R => Linear (dpcast_linear (T:=T) H).
-Canonical morlin_dpcast.
+  fun T : lmodType R => dpcast (T:=T) H.
 
 Lemma dpcastN m n (H : n = m) : naturality (morlin_dpcast H).
 Proof. move=> T1 T2 h v; apply/ffunP => vi; by rewrite !ffunE. Qed.
@@ -99,9 +101,11 @@ move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
 rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
+HB.instance Definition _ m n M T :=
+  GRing.isLinear.Build _ _ _ _ _ (@mxmor_is_linear m n M T).
 
 Definition mxmorfun m n (M : dpmatrix n m) : morlin m n :=
-  fun T => Linear (@mxmor_is_linear m n M T).
+  fun T => @mxmor_fun m n M T.
 Definition mxmorlin m n (M : dpmatrix n m) : morlin m n :=
   locked (mxmorfun M).
 
@@ -155,8 +159,16 @@ rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
+Section scalerv.
+Variables (T : lmodType R) (v : T).
+Definition scalerv (x : R ^o) := x *: v.
+Lemma scalerv_is_linear : linear scalerv.
+Proof. by move=> x y z; rewrite /scalerv !linearE/= scalerA mulrC scalerDl. Qed.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ scalerv_is_linear.
+End scalerv.
+
 Lemma decompose_dpower m (T : lmodType R) (v : T^^m) :
-  v = (\sum_i dpmap ( *:%R^~ (v i)) (dpbasis i)).
+  v = (\sum_i dpmap (scalerv (v i)) (dpbasis i)).
 Proof.
 apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_dpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE dpbasisC.
@@ -168,9 +180,7 @@ move=> T v.
 rewrite [in RHS](decompose_dpower v) linear_sum.
 apply/ffunP => /= vi; rewrite mxmorE !ffunE sum_ffunE /=.
 apply eq_bigr => /= vj _; rewrite !ffunE.
-set h : R^o -> T := *:%R^~ _.
-have hlin : linear h by move=> x y z; rewrite /h scalerDl !scalerA.
-by rewrite -(morN f (Linear hlin) (dpbasis vj)) ffunE.
+by rewrite -(morN f (scalerv (v vj)) (dpbasis vj)) ffunE.
 Qed.
 
 Lemma naturalityP m n (f : morlin m n) :
@@ -181,17 +191,15 @@ split.
 - case=> M Nf T1 T2 h v. by rewrite !Nf mxmorN.
 Qed.
 
-Let Ro := [lmodType R of R^o].
+Let Ro : lmodType R := R^o.
 Lemma lift_mor_eq m n (f g : mor m n) :
   f Ro =1 g Ro -> f =e g.
 Proof.
 move=> fg T v.
 rewrite (decompose_dpower v) !linear_sum.
 apply eq_bigr => i _.
-set scl := *:%R^~ _.
-have Hlin : linear ( scl : Ro -> T).
-  by move=> x y z /=; rewrite /scl !scalerDl scalerA.
-by rewrite -(morN f (Linear Hlin)) -(morN g (Linear Hlin)) fg.
+set scl := scalerv _.
+by rewrite -(morN f scl) -(morN g scl) fg.
 Qed.
 
 Lemma decompose_scaler n (v : Ro^^n) :
@@ -220,7 +228,7 @@ by rewrite !ffunE big_distrr /=; apply eq_bigr => vl _; rewrite mulrA.
 Qed.
 
 Definition idts m : dpsquare m := [ffun vi => dpbasis vi].
-Definition idmorlin n : morlin n n := fun T => GRing.idfun_linear _.
+Definition idmorlin n : morlin n n := fun T => idfun.
 Lemma idmorN n : naturality (idmorlin n).
 Proof. done. Qed.
 Definition idmor n := Mor (@idmorN n).
@@ -283,20 +291,18 @@ Proof. move=> v; apply/ffunP => w; by rewrite !ffunE merge_extract. Qed.
 
 Lemma curry_is_linear : linear curry.
 Proof. move=>x y z; apply/ffunP=>vi; apply/ffunP =>vj; by rewrite !ffunE. Qed.
-Canonical curry_lin := Linear curry_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ curry_is_linear.
 
 Lemma uncurry_is_linear : linear uncurry.
 Proof. move => x y z; apply/ffunP=> vi; by rewrite !ffunE. Qed.
-Canonical uncurry_lin := Linear uncurry_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ uncurry_is_linear.
 
 (* Special cases of curry/uncurry *)
 Definition curry0 (v : T) : T^^0 := [ffun _ => v].
-Definition curryn0 : T^^n -> T^^0^^n :=
-  dpmap curry0.
+Definition curryn0 : T^^n -> T^^0^^n := dpmap curry0.
 Definition uncurry0 (v : T^^0) : T := v [tuple].
 
-Lemma curryn0E :
-  curryn0 = fun v => [ffun vi => [ffun _ => v vi]].
+Lemma curryn0E : curryn0 = fun v => [ffun vi => [ffun _ => v vi]].
 Proof. reflexivity. Qed.
 
 Lemma curry0_is_linear : linear curry0.
@@ -305,9 +311,9 @@ Lemma curryn0_is_linear : linear curryn0.
 Proof. move=> x y z. apply/ffunP=> vi. apply/ffunP=> vj. by rewrite !ffunE. Qed.
 Lemma uncurry0_is_linear : linear uncurry0.
 Proof. move=> x y z. by rewrite /uncurry0 !ffunE. Qed.
-Canonical curry0_lin := Linear curry0_is_linear.
-Canonical curryn0_lin := Linear curryn0_is_linear.
-Canonical uncurry0_lin := Linear uncurry0_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ curry0_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ curryn0_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ uncurry0_is_linear.
 End curry.
 
 
@@ -328,7 +334,7 @@ Variables (k : nat) (T : lmodType R).
 Definition dpall (v : T) : T^^k := [ffun => v].
 Lemma dpall_linear : linear dpall.
 Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE. Qed.
-Canonical dpall_lin := Linear dpall_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ dpall_linear.
 
 Definition dpsum (v : T^^k) : T := \sum_i v i.
 Lemma dpsum_linear : linear dpsum.
@@ -336,19 +342,19 @@ Proof.
 rewrite/dpsum => a x y /=. rewrite scaler_sumr -big_split /=.
 apply eq_bigr=> i _; by rewrite !ffunE.
 Qed.
-Canonical dpsum_lin := Linear dpsum_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ dpsum_linear.
 
 Variable vi : k.-tuple I.
 Definition dpsingle (v : T) : T^^k :=
   [ffun vj => (vi == vj)%:R *: v].
 Lemma dpsingle_linear : linear dpsingle.
 Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE /= linearP. Qed.
-Canonical dpsingle_lin := Linear dpsingle_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ dpsingle_linear.
 
 Definition dpsel (v : T^^k) := v vi.
 Lemma dpsel_is_linear : linear dpsel.
 Proof. by move=> x y z; rewrite /dpsel !ffunE. Qed.
-Canonical dpsel_lin := Linear dpsel_is_linear.
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ dpsel_is_linear.
 End dpaux.
 
 Lemma dp_single_basis n (vi : n.-tuple I) : dpsingle vi (1:R^o) = dpbasis vi.
@@ -369,18 +375,18 @@ Proof.
 move=> a x y; rewrite /ptracefun !linear_sum -big_split /=.
 apply eq_bigr => vi _; by rewrite !linearP.
 Qed.
-
-Definition ptracelin : morlin m m := fun T => Linear (@ptrace_is_linear T).
+HB.instance Definition _ T :=
+  GRing.isLinear.Build _ _ _ _ _ (@ptrace_is_linear T).
 
 Lemma uncurry_dpsingle_naturality vi :
- naturality (fun T => [linear of uncurry (T:=T) l \o dpmap (dpsingle vi)]).
+ naturality (fun T => uncurry (T:=T) l \o dpmap (dpsingle vi)).
 Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite !ffunE linearE. Qed.
 
 Lemma dpsel_curry_naturality vi :
-  naturality (fun T => [linear of dpmap (dpsel vi) \o curry (T:=T) l]).
-Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite /dpsel !ffunE. Qed.
+  naturality (fun T => dpmap (dpsel vi) \o curry (T:=T) l).
+Proof. by move=> T1 T2 h v; apply/ffunP => i; rewrite /= /dpsel !ffunE. Qed.
 
-Lemma ptrace_naturality : naturality ptracelin.
+Lemma ptrace_naturality : naturality ptracefun.
 Proof.
 move=> T1 T2 h v.
 rewrite /= /ptracefun linear_sum.
@@ -392,7 +398,7 @@ Qed.
 
 Definition ptrace : endo m := Mor ptrace_naturality.
 
-Definition antifocus T := [linear of curry l \o f T \o uncurry l].
+Definition antifocus T : {linear _ -> _} := curry l \o f T \o uncurry l.
 (* Lemma antifocus_naturality :
   naturality f -> naturality antifocus. *)
 End partial_trace.
@@ -434,7 +440,7 @@ Variables (n m : nat) (l : lens n m).
 Section focuslin.
 Variable tr : endo m.
 Definition focuslin : endolin n :=
-  fun T => [linear of uncurry l \o tr _ \o curry l].
+  fun T => uncurry l \o tr (T ^^ (n-m)) \o curry l.
 End focuslin.
 
 Lemma focusN f : naturality (focuslin f).
@@ -467,8 +473,9 @@ case/boolP: (_ == vj) => /eqP Hvj; last by rewrite scaler0.
 by elim Hvi; rewrite -Hvk -Hvj merge_extract.
 Qed.
 
-Definition dpmerge vi : {linear R^o^^m -> R^o^^n} :=
-  locked [linear of uncurry l \o dpmap (dpsingle (extract (lensC l) vi))].
+Definition dpmerge vi :=
+  locked (uncurry l \o dpmap (dpsingle (extract (lensC l) vi))
+          : {linear R^o^^m -> R^o^^n}).
 
 Lemma dpmergeE vi v :
   dpmerge vi v = uncurry l (dpmap (dpsingle (extract (lensC l) vi)) v).
@@ -478,7 +485,7 @@ Lemma focus_dpbasis f (vi : n.-tuple I) :
   focus f Ro (dpbasis vi) = dpmerge vi (f Ro (dpbasis (extract l vi))).
 Proof.
 apply/ffunP => v.
-by rewrite focusE !ffunE curry_dpbasis -(morN f) dpmergeE !ffunE.
+by rewrite focusE !ffunE /= curry_dpbasis -(morN f) dpmergeE !ffunE.
 Qed.
 
 Lemma dpmerge_dpbasis (vi : n.-tuple I) (vj : m.-tuple I) :
@@ -516,19 +523,17 @@ Lemma asym_focus_is_linear T : linear (@asym_focus_fun T).
 Proof.
 move=> x y z.
 apply/ffunP => vi. rewrite !ffunE.
-have -> : curry l (T := T) = Linear (curry_is_linear l (T:=T)) by [].
 by rewrite !linearP !ffunE.
 Qed.
-
-Definition asym_focuslin : morlin (m + n) (p + n) :=
-  fun T => Linear (@asym_focus_is_linear T).
+HB.instance Definition _ T :=
+  GRing.isLinear.Build _ _ _ _ _ (@asym_focus_is_linear T).
 End asym_focus.
 
 Lemma asym_focusN n m p l l' tr :
-  naturality (@asym_focuslin n m p l l' tr).
+  naturality (@asym_focus_fun n m p l l' tr).
 Proof.
 case/naturalityP: (morN tr) => M /= NM; apply/naturalityP.
-exists (mormx (asym_focuslin l l' (mxmor M))).
+exists (mormx (asym_focus_fun l l' (mxmor M))).
 move=> T /= v; apply/ffunP => /= vi; rewrite mxmorE !ffunE NM mxmorE sum_ffunE.
 under [RHS]eq_bigr do rewrite !ffunE mxmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
@@ -572,7 +577,7 @@ Proof. by move=> T v; rewrite /= focusE /= curryK. Qed.
 Section comp_mor.
 Variables (r q s : nat) (tr : mor q s) (tr' : mor r q).
 Definition comp_morlin : morlin r s :=
-  fun A => GRing.comp_linear (tr A) (tr' A).
+  fun A => tr A \o tr' A.
 
 Lemma comp_morN : naturality comp_morlin.
 Proof. move=> T1 T2 f v; by rewrite (morN tr) (morN tr'). Qed.
@@ -977,7 +982,7 @@ Proof. elim: m => //= m IH; by rewrite size_allpairs IH expnS. Qed.
 
 Lemma uniq_enum_indices m : uniq (enum_indices m).
 Proof.
-rewrite /is_true -(enum_uniq (tuple_finType m I)).
+rewrite /is_true -(@enum_uniq (m.-tuple I) xpredT).
 apply eq_uniq.
   rewrite -cardT card_tuple size_enum_indices; congr expn.
   move/card_uniqP: uniq_enumI => <-.
@@ -1011,7 +1016,7 @@ Qed.
 End enum_indices.
 
 Section enum2.
-Let I := [finType of 'I_2].
+Let I : finType := 'I_2.
 
 Definition enum2 : seq I := [:: 0; 1].
 Lemma uniq_enum2 : uniq enum2. Proof. by []. Qed.

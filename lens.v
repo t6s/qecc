@@ -1,4 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra.
+From HB Require Import structures.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -125,7 +126,7 @@ Section lens.
 Variables (T : Type) (n m : nat).
 
 Record lens := mkLens {lens_t :> m.-tuple 'I_n ; lens_uniq : uniq lens_t}.
-Canonical lens_subType := Eval hnf in [subType for lens_t].
+HB.instance Definition _ := [isSub for lens_t].
 Canonical lens_predType := PredType (pred_of_seq : lens -> pred 'I_n).
 
 Definition endo1 := m.-tuple T -> m.-tuple T.
