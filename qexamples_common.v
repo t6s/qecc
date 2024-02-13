@@ -31,9 +31,12 @@ Definition cnot : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
+Definition minus1 : C := -1.
+Definition opp_ket_bra n (v1 v2 : Co ^^ n) := - ket_bra v1 v2.
+
 Definition hadamard : dpsquare 1 :=
   (1 / Num.sqrt 2)%:C *:
-    (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
+    (-ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩).
 
 Definition toffoli : dpsquare 3 :=
   (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
@@ -129,7 +132,7 @@ Proof.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP ->;
 have := mem_enum2 j; rewrite !inE => /orP[] /eqP -> /=;
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
+par: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
 Qed.
 
 Lemma addii (i : I) : i + i = 0.
@@ -139,7 +142,7 @@ Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.
 rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
-rewrite BigOp.bigopE /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+rewrite unlock /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
