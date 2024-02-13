@@ -160,8 +160,8 @@ pose lens_roi := lens_single (lens_index Hroi).
 (* Main case: i < rev_ord i *)
 case/boolP: (i < n.+2./2)%N => Hi.
 + have Hdisj := disjoint_compn_lens_swap Hi.
-  rewrite /compn_fendo (bigD1 (Ordinal Hi)) //.
-  rewrite [compf_comoid _ _ _ _ _]comp_fendoC fendo_mor_comp //.
+  rewrite /compn_fendo (bigD1 (Ordinal Hi)) //=.
+  rewrite comp_fendoC fendo_mor_comp //.
   rewrite proj_focusE; first last.
   - exact/swap_asym_focusU.
   - apply/disjointP => j; rewrite inE => /eqP ji Hj.
@@ -207,8 +207,8 @@ case/boolP: (i < n.+2./2)%N => Hi.
     rewrite -Hi -{2}(odd_double_half n.+2) /=.
     by rewrite negbK -addnn addSnnS addnA addnK Hodd.
   have Hdisj := disjoint_compn_lens_swap Hi'.
-  rewrite /compn_fendo (bigD1 (Ordinal Hi')) //.
-  rewrite [compf_comoid _ _ _ _ _]comp_fendoC fendo_mor_comp //.
+  rewrite /compn_fendo (bigD1 (Ordinal Hi')) //=.
+  rewrite comp_fendoC fendo_mor_comp //.
   rewrite proj_focusE; first last.
   - exact/swap_asym_focusU.
   - apply/disjointP => j; rewrite inE => /eqP ji Hj.

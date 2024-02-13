@@ -151,11 +151,11 @@ Qed.
 
 Lemma swapU : unitary_mor (mxmor swap).
 Proof.
-rewrite /unitary_mor /tinner /= => s t.
+rewrite /unitary_mor /tinner => s t.
 rewrite !sum_enum_indices /= !mxmorE.
-time (rewrite !ffunE /= !linE).
-rewrite !sum_dpbasisK.
-by rewrite !addrA -(addrA (_ * _)) (addrC (_ * _) (_ * _)) !addrA.
+rewrite !addrA !addr0 [X in X + _]addrAC.
+do !congr GRing.add;
+  by rewrite 22!{1}(ffunE _ [tuple _;_]) /= !linE !sum_dpbasisK.
 Qed.
 
 (* Hadamard gate is involutive *)
@@ -169,15 +169,17 @@ Lemma hadamardK T : involutive (mxmor hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP => //=.
-time (do! rewrite !(linE,ffunE,mxmorE,scalerDl,sum_enum_indices) /=).
-rewrite -mulNrn !mulr1n -!scalerA.
-rewrite !scale1r !scalerDr !scaleN1r !scalerN !scalerA.
+rewrite !mxmorE !sum_enum_indices /= !linE /=.
+rewrite !{1}(ffunE _ [tuple _]) /= !linE.
+rewrite !mxmorE !sum_enum_indices /= !linE.
+rewrite !{1}(ffunE _ [tuple _]) /= !linE.
+rewrite ![_ *: 1]mulr1.
+rewrite !scalerDr !scalerN ![_ *: 1]mulr1 !scalerA !(mulrN,mulNr).
 simpc.
-rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
-do! (apply/andP; split) => //=.
-1: rewrite addrCA -addrA subrr linE -scalerDl.
-2: rewrite opprK addrAC !addrA subrr linE -scalerDl.
-all: rewrite -mulr2n -mulr_natl -rmorphMn /=; simpc.
-all: by rewrite Hnn mul0r scale1r.
+rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //=.
+rewrite !addrA [X in X + _]addrAC opprK -scalerDl -addrA -scalerDl.
+rewrite (addrAC (_ *: _)) -scalerDl -addrA -scalerDl.
+simpc.
+by rewrite subrr !linE -mulr2n -(mulr_natl (_^-1)) Hnn !scale1r !eqxx.
 Qed.
 
