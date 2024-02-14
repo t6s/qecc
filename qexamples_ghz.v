@@ -68,9 +68,9 @@ Proof. by rewrite /bump leq0n. Qed.
 Lemma ghz_state0 : ghz_state 0 = mxmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
 Proof.
 apply/ffunP => /= vi.
-rewrite mxmorE !ffunE /= sum_enum_indices /=.
+rewrite mxmorE !{1}ffunE /= sum_enum_indices /=.
 have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=;
-rewrite !ffunE !eq_ord_tuple /= enum_ordinalE /= !linE ![_ *: 1]mulr1;
+rewrite !{1}ffunE !eq_ord_tuple /= enum_ordinalE /= !linE ![_ *: 1]mulr1;
 by rewrite ![_ *: 0]mulr0 !linE.
 Qed.
 

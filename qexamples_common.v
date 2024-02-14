@@ -10,9 +10,9 @@ Open Scope ring_scope.
 Open Scope complex_scope.
 
 Axiom R : rcfType.
-Definition C := [comRingType of R[i]].
-Definition Co := [lmodType C of C^o].
-Definition I := [finType of 'I_2].
+Definition C : comRingType := R[i].
+Definition Co : lmodType C := C^o.
+Definition I : finType := 'I_2.
 Definition dI : I := 0.
 
 Notation "¦ x1 , .. , xn ⟩" :=
@@ -31,9 +31,12 @@ Definition cnot : dpsquare 2 :=
   ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
   ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
 
+Definition minus1 : C := -1.
+Definition opp_ket_bra n (v1 v2 : Co ^^ n) := - ket_bra v1 v2.
+
 Definition hadamard : dpsquare 1 :=
   (1 / Num.sqrt 2)%:C *:
-    (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩ - ket_bra ¦1⟩ ¦1⟩).
+    (-ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩).
 
 Definition toffoli : dpsquare 3 :=
   (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
@@ -101,7 +104,8 @@ Ltac simpl_merge :=
 
 Lemma mxmor_cnot0 i : mxmor cnot Co ¦0,i⟩ = ¦0,i⟩.
 Proof.
-apply/ffunP => vi; rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi;
+  rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -109,7 +113,8 @@ Qed.
 Definition flip (i : I) := rev_ord i.
 Lemma mxmor_cnot1 i : mxmor cnot Co ¦1, i⟩ = ¦1, flip i⟩.
 Proof.
-apply/ffunP => vi; rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi;
+  rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -129,7 +134,7 @@ Proof.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP ->;
 have := mem_enum2 j; rewrite !inE => /orP[] /eqP -> /=;
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
+all: time (by rewrite !mxmorE !{1}ffunE /= !linE sum_dpbasisK {1}ffunE).
 Qed.
 
 Lemma addii (i : I) : i + i = 0.
@@ -138,8 +143,8 @@ Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
 Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.
-rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
-rewrite BigOp.bigopE /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
+rewrite !scaler0 !addr0 unlock /= !{1}ffunE !eq_ord_tuple /= !scaler0 !addr0.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -148,11 +153,10 @@ Qed.
 
 Lemma swapU : unitary_mor (mxmor swap).
 Proof.
-rewrite /unitary_mor /tinner /= => s t.
+rewrite /unitary_mor /tinner => s t.
 rewrite !sum_enum_indices /= !mxmorE.
-time (rewrite !ffunE /= !linE).
-rewrite !sum_dpbasisK.
-by rewrite !addrA -(addrA (_ * _)) (addrC (_ * _) (_ * _)) !addrA.
+rewrite !addrA !addr0 [X in X + _]addrAC.
+do !congr GRing.add; by rewrite 22!{1}ffunE /= !linE !sum_dpbasisK.
 Qed.
 
 (* Hadamard gate is involutive *)
@@ -166,15 +170,14 @@ Lemma hadamardK T : involutive (mxmor hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP => //=.
-time (do! rewrite !(linE,ffunE,mxmorE,scalerDl,sum_enum_indices) /=).
-rewrite -mulNrn !mulr1n -!scalerA.
-rewrite !scale1r !scalerDr !scaleN1r !scalerN !scalerA.
+rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
+rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
+rewrite ![_ *: 1]mulr1.
+rewrite !scalerDr !scalerN ![_ *: 1]mulr1 !scalerA !(mulrN,mulNr); simpc.
 simpc.
-rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //.
-do! (apply/andP; split) => //=.
-1: rewrite addrCA -addrA subrr linE -scalerDl.
-2: rewrite opprK addrAC !addrA subrr linE -scalerDl.
-all: rewrite -mulr2n -mulr_natl -rmorphMn /=; simpc.
-all: by rewrite Hnn mul0r scale1r.
+rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //=.
+rewrite !addrA [X in X + _]addrAC opprK -scalerDl -addrA -scalerDl.
+rewrite (addrAC (_ *: _)) -scalerDl -addrA -scalerDl.
+simpc.
+by rewrite subrr !linE -mulr2n -(mulr_natl (_^-1)) Hnn !scale1r !eqxx.
 Qed.
-

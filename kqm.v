@@ -12,7 +12,7 @@ Import GRing.Theory.
 Section transpose.
 
 Variables (R : comRingType).
-Let I := [finType of 'I_2].
+Let I : finType := 'I_2.
 Let dI : I := ord0.
 
 Notation idmor n := (idmor I R n).

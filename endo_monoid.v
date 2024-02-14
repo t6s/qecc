@@ -1,5 +1,6 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
+From HB Require Import structures.
 Require Import lens dpower unitary.
 Require Import JMeq ProofIrrelevance FunctionalExtensionality. (* Wooh *)
 
@@ -34,10 +35,14 @@ Lemma LinP (T1 T2 : lmodType R) (f g : {linear T1 -> T2}) :
   f =1 g -> f = g.
 Proof.
 move/functional_extensionality.
-case: f => /= f Hf.
-case: g => /= g Hg fg.
+case: f => /= f [[Hf1] [Hf2]] /=.
+case: g => /= g [[Hg1] [Hg2]] /= fg.
 subst g.
-by rewrite (proof_irrelevance _ Hf).
+have -> : Hf1 = Hg1 by apply/proof_irrelevance.
+congr (_ _).
+congr (_ _).
+congr (_ _).
+exact/proof_irrelevance.
 Qed.
 
 Lemma morP : forall m n (f g : mor m n), f =e g <-> f = g.
@@ -57,8 +62,9 @@ Lemma comp_morf1 (f : endo n) : f \v idmor I R n = f.
 Proof. by apply/morP . Qed.
 Lemma comp_morA' : associative (@comp_mor I R n n n).
 Proof. move=> f g h; apply/morP/comp_morA. Qed.
-Canonical comp_monoid :=
-  Monoid.Law comp_morA' comp_mor1f comp_morf1.
+HB.instance Definition _ :=
+  Monoid.isLaw.Build (endo n) (idmor I R n) (@comp_mor I R n n n)
+    comp_morA' comp_mor1f comp_morf1.
 
 Definition compn_mor m (F : 'I_n -> endo m) (P : pred 'I_n) :=
   \big[@comp_mor I R m m m/idmor I R m]_(i < n | P i) F i.
@@ -89,10 +95,15 @@ Lemma mkFendoE : fendo_mor mkFendo = focus l f.
 Proof. by apply/morP => T v; rewrite -focusM // lens_basis_perm. Qed.
 End mkFendo.
 
-Lemma null_lin p q (T : lmodType R) :
-  linear (fun v : T ^^ p => (0 : T ^^ q)).
+Section null.
+Variables (p q : nat) (T : lmodType R).
+Definition null_fun : T^^p -> T^^q := fun => 0.
+Lemma null_lin : linear null_fun.
 Proof. move=> x y z; by rewrite scaler0 add0r. Qed.
-Definition nullmorlin p q : morlin _ _ p q := fun T => Linear (@null_lin p q T).
+HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ null_lin.
+End null.
+
+Definition nullmorlin p q : morlin _ _ p q := @null_fun p q.
 Lemma nullmorN p q : naturality (nullmorlin p q).
 Proof. by move=> T1 T2 h v; apply/ffunP => vi; rewrite !ffunE linearE. Qed.
 Definition nullmor p q : mor p q := Mor (@nullmorN p q).
@@ -339,8 +350,9 @@ apply eq_foc_endo => /=.
   by rewrite !dpcastE !cast_lens_ordE.
 Qed.
 
-Canonical compf_monoid := Monoid.Law comp_fendoA comp_fendo1f comp_fendof1.
-Canonical compf_comoid := Monoid.ComLaw comp_fendoC.
+HB.instance Definition _ :=
+  Monoid.isComLaw.Build foc_endo id_fendo comp_fendo
+    comp_fendoA comp_fendoC comp_fendo1f.
 
 Lemma disjoint_comp_fendo m (l : lens n m) g h :
   [disjoint l & foc_l g] -> [disjoint l & foc_l h] ->
@@ -446,8 +458,8 @@ End com_ring.
 
 Section unitary.
 Variable R : rcfType.
-Let C := [comRingType of R[i]].
-Let Co := [lmodType C of C^o].
+Let C : comRingType := R[i].
+Let Co : lmodType C := C^o.
 
 Local Notation mor := (mor I C).
 Local Notation endo n := (mor n n).
