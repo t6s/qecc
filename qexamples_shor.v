@@ -5,6 +5,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Section shor_code.
+
 Definition bit_flip_enc : endo 3 :=
   mxapp [lens 0; 2] cnot \v  mxapp [lens 0; 1] cnot.
 
@@ -166,3 +168,5 @@ rewrite sign_flip_toffoli focus_dpbasis_id //.
 simpl_extract.
 by rewrite mxmor_toffoli00.
 Qed.
+
+End shor_code.
