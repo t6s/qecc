@@ -104,7 +104,8 @@ Ltac simpl_merge :=
 
 Lemma mxmor_cnot0 i : mxmor cnot Co ¦0,i⟩ = ¦0,i⟩.
 Proof.
-apply/ffunP => vi; rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi;
+  rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -112,7 +113,8 @@ Qed.
 Definition flip (i : I) := rev_ord i.
 Lemma mxmor_cnot1 i : mxmor cnot Co ¦1, i⟩ = ¦1, flip i⟩.
 Proof.
-apply/ffunP => vi; rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /=.
+apply/ffunP => vi;
+  rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -132,7 +134,7 @@ Proof.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP ->;
 have := mem_enum2 j; rewrite !inE => /orP[] /eqP -> /=;
 apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-par: time (by rewrite !(mxmorE,linE,sum_dpbasisK,ffunE)).
+all: time (by rewrite !mxmorE !{1}ffunE /= !linE sum_dpbasisK {1}ffunE).
 Qed.
 
 Lemma addii (i : I) : i + i = 0.
@@ -141,8 +143,8 @@ Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
 Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.
-rewrite !ffunE mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0.
-rewrite unlock /= !ffunE !eq_ord_tuple /= !scaler0 !addr0.
+rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
+rewrite !scaler0 !addr0 unlock /= !{1}ffunE !eq_ord_tuple /= !scaler0 !addr0.
 have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
 by rewrite !scaler0 !linE [LHS]mulr1.
 Qed.
@@ -154,8 +156,7 @@ Proof.
 rewrite /unitary_mor /tinner => s t.
 rewrite !sum_enum_indices /= !mxmorE.
 rewrite !addrA !addr0 [X in X + _]addrAC.
-do !congr GRing.add;
-  by rewrite 22!{1}(ffunE _ [tuple _;_]) /= !linE !sum_dpbasisK.
+do !congr GRing.add; by rewrite 22!{1}ffunE /= !linE !sum_dpbasisK.
 Qed.
 
 (* Hadamard gate is involutive *)
@@ -169,12 +170,10 @@ Lemma hadamardK T : involutive (mxmor hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP => //=.
-rewrite !mxmorE !sum_enum_indices /= !linE /=.
-rewrite !{1}(ffunE _ [tuple _]) /= !linE.
-rewrite !mxmorE !sum_enum_indices /= !linE.
-rewrite !{1}(ffunE _ [tuple _]) /= !linE.
+rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
+rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
 rewrite ![_ *: 1]mulr1.
-rewrite !scalerDr !scalerN ![_ *: 1]mulr1 !scalerA !(mulrN,mulNr).
+rewrite !scalerDr !scalerN ![_ *: 1]mulr1 !scalerA !(mulrN,mulNr); simpc.
 simpc.
 rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //=.
 rewrite !addrA [X in X + _]addrAC opprK -scalerDl -addrA -scalerDl.
@@ -182,4 +181,3 @@ rewrite (addrAC (_ *: _)) -scalerDl -addrA -scalerDl.
 simpc.
 by rewrite subrr !linE -mulr2n -(mulr_natl (_^-1)) Hnn !scale1r !eqxx.
 Qed.
-

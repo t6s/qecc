@@ -65,9 +65,7 @@ Qed.
 Lemma toffoli_involutive :
   mxmor toffoli \v mxmor toffoli =e idmor I C 3.
 Proof.
-move=> V v.
-
-Admitted.
+Abort.
 
 (* Not used
 Lemma mxmor_hadamard0 :
@@ -114,7 +112,7 @@ rewrite [mxapp [lens 0] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
 rewrite [mxapp [lens 0] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
 rewrite [mxapp [lens 1] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
 have HK (l : lens 3 1) : mxapp l hadamard \v mxapp l hadamard =e idmor I C 3.
-  move=> {T v} T v.
+  move=> U w.
   rewrite -focus_comp (focus_eq dI l (f2:=idmor I C 1)) ?focus_idmor //.
   exact/hadamardK.
 rewrite [mxapp [lens 0] _ _ _]HK.

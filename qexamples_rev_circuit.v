@@ -50,12 +50,12 @@ Definition swap_asym_focus : endo n.+2 :=
 Lemma mxapp_swap_asym_focus : mxapp (lens_pair Hir) swap =e swap_asym_focus.
 Proof.
 move=> T v; apply/ffunP => /= vi.
-rewrite focusE !(ffunE,mxmorE) /=.
+rewrite focusE !{1}(ffunE,mxmorE) /=.
 have -> : lensC (lens_pair Hri) = lensC (lens_pair Hir).
   apply/val_inj/val_inj/eq_lensC => k; by rewrite !inE orbC.
 have -> : esym (addKn_any n 2 2) = erefl by apply eq_irrelevance.
 rewrite cast_tupleE.
-under eq_bigr do rewrite 11!ffunE.
+under eq_bigr do rewrite 11!{1}ffunE.
 move: (extract (lensC _) vi) => vi'.
 simpl_extract.
 simpl_extract.
@@ -67,9 +67,9 @@ set F := curry _ _ _.
 have sumK : forall (vi : 2.-tuple I),
     \sum_vj (vi == vj)%:R *: F vj = F vi.
   move=> vk; rewrite -[RHS]sum_dpbasisK.
-  apply eq_bigr => vj _; by rewrite !ffunE.
+  apply eq_bigr => vj _; by rewrite !{1}ffunE.
 do 2 (case/orP => /eqP ->);
- under eq_bigr do rewrite /= !linE; by rewrite sumK !ffunE.
+ under eq_bigr do rewrite /= !linE; by rewrite sumK !{1}ffunE.
 Qed.
 End swap_asym_focus.
 
