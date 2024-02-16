@@ -55,25 +55,18 @@ have -> : lensC (lens_pair Hri) = lensC (lens_pair Hir).
   apply/val_inj/val_inj/eq_lensC => k; by rewrite !inE orbC.
 have -> : esym (addKn_any n 2 2) = erefl by apply eq_irrelevance.
 rewrite cast_tupleE.
-under eq_bigr do rewrite {1}ffunE.
-move: (extract (lensC _) vi) => vi'.
+move: (extract (lensC _) vi) => vi' /=.
 simpl_extract.
 simpl_extract.
-move: (vi`_i) (vi`_j) => a b.
-have := mem_enum2 b.
-have := mem_enum2 a.
-rewrite !inE.
+move: (vi`_i) (vi`_j) => /= a b.
 set F := curry _ _ _.
-have sumK : forall (vi : 2.-tuple I),
-    \sum_vj (vi == vj)%:R *: F vj = F vi.
-  move=> vk; rewrite -[RHS]sum_dpbasisK.
-  by apply eq_bigr => vj _; rewrite !{1}ffunE eq_sym.
-Admitted.
-(*
-do 2 (case/orP => /eqP ->);
- under eq_bigr do rewrite /= !linE; by rewrite sumK !{1}ffunE eq_sym.
+have -> :  \sum_vj swap vj [tuple a; b] *: F vj = F [tuple b; a].
+  rewrite -[RHS]sum_dpbasisK.
+  apply eq_bigr => vj _.
+  rewrite 2!ffunE -[_ == _](inj_eq (@rev_inj _)) /rev /= [dpbasis _ _ _]ffunE.
+  by rewrite {4}(tuple_map_ord vj) eq_ord_tuple /= enum_ordinalE /= !(tnth_nth 0).
+by rewrite !ffunE.
 Qed.
-*)
 End swap_asym_focus.
 
 (* Prove spec using foc_endo *)
