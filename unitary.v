@@ -47,27 +47,28 @@ Section unitary_dpmatrix.
 Variable n : nat.
 Variable M : dpsquare n.
 
-Definition adjointts m (N : dpmatrix I C m n) : dpmatrix I C n m :=
+Definition dpmxadjoint m (N : dpmatrix I C m n) : dpmatrix I C n m :=
   [ffun vi => [ffun vj => (N vj vi)^*]].
 
-Definition unitaryts := mults (adjointts M) M == idts n.
+Definition dpmxunitary := dpmul (dpmxadjoint M) M == idts n.
 
-Lemma adjointtsE m (N : dpmatrix I C m n) :
-  dpmatrixmx (adjointts N) = adjointmx (dpmatrixmx N).
+Lemma dpmxadjointE m (N : dpmatrix I C m n) :
+  dpmatrixmx (dpmxadjoint N) = adjointmx (dpmatrixmx N).
 Proof. apply/matrixP => i j; by rewrite !mxE !ffunE. Qed.
 
-Lemma unitarytsE : unitaryts = unitarymx (dpmatrixmx M).
+Lemma dpmxunitaryE : dpmxunitary = unitarymx (dpmatrixmx M).
 Proof.
-case/boolP: unitaryts => /eqP Hts; apply/esym/eqP.
-- by rewrite -adjointtsE -dpmatrixmx_mul Hts dpmatrixmx_id.
+case/boolP: dpmxunitary => /eqP Hts; apply/esym/eqP.
+- by rewrite -dpmxadjointE -dpmatrixmx_mul Hts dpmatrixmx_id.
 - move=> Hmx; elim Hts.
-  by rewrite -mxdpmatrix_id // -Hmx mxdpmatrix_mul // -adjointtsE !dpmatrixmxK.
+  rewrite -mxdpmatrix_id // -Hmx mxdpmatrix_mul //.
+  by rewrite -dpmxadjointE !dpmatrixmxK.
 Qed.
 
-Lemma unitary_invP : adjointts M = M ->
-  reflect (forall T, involutive (mxmor M T)) unitaryts.
+Lemma unitary_invP : dpmxadjoint M = M ->
+  reflect (forall T, involutive (mxmor M T)) dpmxunitary.
 Proof.
-rewrite /unitaryts => ->.
+rewrite /dpmxunitary => ->.
 apply: (iffP idP) => [/eqP|] Hinv.
 - move=> T v.
   move: (f_equal (fun M => mxmor M T v) Hinv).
@@ -80,20 +81,20 @@ apply: (iffP idP) => [/eqP|] Hinv.
 Qed.
 End unitary_dpmatrix.
 
-Lemma adjointts_mul n m p M N :
-  adjointts (M *t N) = @adjointts p m N *t @adjointts m n M.
+Lemma dpmxadjoint_mul n m p M N :
+  dpmxadjoint (M *t N) = @dpmxadjoint m p N *t @dpmxadjoint n m M.
 Proof.
-rewrite -[LHS](dpmatrixmxK dI) adjointtsE dpmatrixmx_mul.
-by rewrite adjointmx_mul -!adjointtsE -dpmatrixmx_mul dpmatrixmxK.
+rewrite -[LHS](dpmatrixmxK dI) dpmxadjointE dpmatrixmx_mul.
+by rewrite adjointmx_mul -!dpmxadjointE -dpmatrixmx_mul dpmatrixmxK.
 Qed.
 
-Lemma unitaryts_mul n (M N : dpsquare n) :
-  unitaryts M -> unitaryts N -> unitaryts (mults M N).
-Proof. rewrite !unitarytsE dpmatrixmx_mul; exact/unitarymx_mul. Qed.
+Lemma dpmxunitary_mul n (M N : dpsquare n) :
+  dpmxunitary M -> dpmxunitary N -> dpmxunitary (dpmul M N).
+Proof. rewrite !dpmxunitaryE dpmatrixmx_mul; exact/unitarymx_mul. Qed.
 
 Lemma unitarymxE n (M : 'M[C]_(#|I|^n)) :
-  unitarymx M = unitaryts (mxdpmatrix M).
-Proof. by rewrite unitarytsE mxdpmatrixK. Qed.
+  unitarymx M = dpmxunitary (mxdpmatrix M).
+Proof. by rewrite dpmxunitaryE mxdpmatrixK. Qed.
 
 Section unitary_mor.
 (* One could probably replace tinner by any bilinear form *)
@@ -106,14 +107,15 @@ Definition unitary_mor m n (f : mor m n) :=
 Lemma idmorU n : unitary_mor (idmor I C n).
 Proof. done. Qed.
 
-Lemma unitary_morP n M : reflect (@unitary_mor n n (mxmor M)) (unitaryts M).
+Lemma unitary_morP n M :
+  reflect (@unitary_mor n n (mxmor M)) (dpmxunitary M).
 Proof.
-rewrite /unitaryts /unitary_mor.
+rewrite /dpmxunitary /unitary_mor.
 apply/(iffP idP).
 - move=> Uf s t; move/eqP: Uf.
   move/(f_equal
-          (fun ts => mults (adjointts (curryn0 s)) (mults ts (curryn0 t)))).
-  rewrite !multsA -multsA -adjointts_mul mul1ts //.
+          (fun ts => dpmul (dpmxadjoint (curry0 _ s)) (dpmul ts (curry0 _ t)))).
+  rewrite !dpmulA -dpmulA -dpmxadjoint_mul mul1dp //.
   move/(f_equal (fun M : dpsquare 0 => M [tuple] [tuple])).
   rewrite !ffunE. under [RHS]eq_bigr do rewrite !ffunE.
   move=> Uf; rewrite -{}[RHS]Uf.
@@ -121,12 +123,12 @@ apply/(iffP idP).
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
 - move=> Uf; apply/eqP/ffunP => vi; apply/ffunP => vj.
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
-  have := Uf (dpbasis C vi) (dpbasis C vj).
+  have := Uf (dpbasis C vj) (dpbasis C vi).
   rewrite /tinner.
   under eq_bigr do rewrite !mxmorE !sum_dpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
-  by rewrite sum_muleqr [LHS]conjc_nat.
+  by rewrite sum_muleqr [LHS]conjc_nat eq_sym.
 Qed.
 
 Lemma unitary_comp m n p (f : mor n p) (g : mor m n) :

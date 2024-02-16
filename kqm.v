@@ -63,16 +63,19 @@ rewrite !ffunE -!extract_comp.
 rewrite -(lens_comp_rev_left Hrev) -(lens_comp_rev_left (l1:=l2) (l2:=l1));
   last by rewrite -Hrev revK.
 rewrite [in RHS]eq_sym.
+Abort.
+(*
 case H: (_ == _); last by rewrite !scale0r.
 rewrite !scale1r !merge_empty.
 do 3!f_equal.
 apply/lens_inj/eq_filter => /= i.
 by rewrite !mem_lensE /= -Hrev mem_rev.
 Qed.
+*)
 
 Lemma transpose_cup (M : dpsquare 1) :
   focus [lens 0] (mxmor M) \v cup (n:=1) [lens 0; 1] =e
-  focus [lens 1] (mxmor (transpose_dpsquare M)) \v cup [lens 0; 1].
+  focus [lens 1] (mxmor (dptranspose M)) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
@@ -91,7 +94,7 @@ have := mem_enum_indices (extract [lens 1] vi).
 by rewrite !inE => /orP[] /eqP -> /orP[] /eqP -> /=;
    rewrite !(mulr0,addr0,add0r).
 all: by rewrite disjoint_has //= /seq_lensC enum_ordinalE.
-Qed.  
+Qed.
 
 Lemma cat_2tuple A (x y : A) : [tuple of [tuple x]++[tuple y]] =  [tuple x; y].
 Proof. exact/val_inj. Qed.
@@ -116,23 +119,23 @@ split; apply/eqP/f_equal/eqP;
 Qed.
 
 Lemma transpose_focus (M : dpsquare 1) :
-  mxmor (transpose_dpsquare M) =e
+  mxmor (dptranspose M) =e
   cap [lens 1; 2] \v focus [lens 1] (mxmor M) \v cup [lens 0; 1].
 Proof.
-rewrite -{2}(transpose_dpsquare_involutive M).
+rewrite -{2}(dptransposeK M).
 move=> T v.
 rewrite -comp_morA comp_morE comp_morE.
-move: (transpose_cup (transpose_dpsquare M) v) => /= <-.
+move: (transpose_cup (dptranspose M) v) => /= <-.
 set mycup := asym_focus_fun dI ([lens] : lens (0+1) 0)
                   ([lens 0; 1] : lens (2+1) 2) (inner_coprod I R 1) v.
 move: (asym_focusC dI ([lens 1; 2] : lens (2+1) 2) ([lens] : lens (0+1) 0)
-                   (inner_prod I R 1) (mxmor (transpose_dpsquare M)) mycup).
+                   (inner_prod I R 1) (mxmor (dptranspose M)) mycup).
 rewrite !cast_lensE.
 have -> : lensC [lens 1; 2] = [lens 0] by eq_lens.
 move=> /= <-.
 subst mycup.
 move: (straighten v) => /= ->.
 have <- : lens_id 1 = lensC [lens] by eq_lens.
-by rewrite (focusI dI (mxmor (transpose_dpsquare M)) v).
+by rewrite (focusI dI (mxmor (dptranspose M)) v).
 Qed.
 End transpose.

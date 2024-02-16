@@ -81,7 +81,7 @@ Qed.
 
 (* The adjoint morphism (going through matrix representation) *)
 Definition adjoint_mor m n (f : mor m n) : mor n m :=
-  mxmor (adjointts (mormx f)).
+  mxmor (dpmxadjoint (mormx f)).
 
 (* Focus and adjunction commute *)
 Lemma focus_adjoint_mor n m (l : lens n m) (f : endo m) :
@@ -99,24 +99,12 @@ rewrite (bigD1 (extract (lensC l) v)) //= eqxx scale1r big1 ?addr0 // => vj Hj.
 by rewrite eq_sym (negbTE Hj) scale0r conjc0 scale0r.
 Qed.
 
-Section dptranspose.
-Variables (T : lmodType C) (m n : nat).
-Definition dptranspose (M : T ^^ n ^^ m) : T ^^ m ^^ n :=
-  [ffun vi => [ffun vj => M vj vi]].
-Lemma dptranspose_is_linear : linear dptranspose.
-Proof. by move=> x y z; apply/ffunP=> vi; apply/ffunP=> vj; rewrite !ffunE. Qed.
-HB.instance Definition _ :=
-  GRing.isLinear.Build _ _ _ _ _ dptranspose_is_linear.
-End dptranspose.
-
-Lemma dptransposeK T m n : cancel (@dptranspose T m n) (@dptranspose T _ _).
-Proof. by move=> x; apply/ffunP=> v; apply/ffunP=> w; rewrite !ffunE. Qed.
-
 Section curryds.
 Variables (T : lmodType C) (n m : nat) (l : lens n m).
 
 Definition curryds : dsquare T n -> dsquare (dsquare T (n-m)) m :=
-  dpmap (@dptranspose _ (n-m) m) \o dpmap (dpmap (curry dI l)) \o curry dI l.
+  dpmap (@dptranspose _ _ _ (n-m) m) \o dpmap (dpmap (curry dI l))
+  \o curry dI l.
 
 Lemma currydsE M :
   curryds M =
@@ -130,7 +118,7 @@ by rewrite !ffunE.
 Qed.
 
 Definition uncurryds : dsquare (dsquare T (n-m)) m -> dsquare T n :=
-  uncurry l \o dpmap (dpmap (uncurry l)) \o dpmap (@dptranspose _ m (n-m)).
+  uncurry l \o dpmap (dpmap (uncurry l)) \o dpmap (@dptranspose _ _ _ m (n-m)).
 
 Definition uncurrydsE M :
   uncurryds M =
@@ -162,7 +150,7 @@ Lemma dpmap_compose (T1 T2 T3 : lmodType C) m (f : T1 -> T2) (g : T2 -> T3) X :
 Proof. by apply/ffunP=> v; rewrite !ffunE. Qed.
 
 Lemma dpmap_dptranspose (T : lmodType C) m n p (f : mor m p) X :
-  dpmap (f T) (@dptranspose T m n X) = dptranspose (f _ X).
+  dpmap (f T) (@dptranspose _ _ T m n X) = dptranspose (f _ X).
 Proof.
 apply/ffunP=> v; apply/ffunP=> w /=.
 rewrite ffunE.
@@ -173,7 +161,7 @@ by rewrite !ffunE.
 Qed.
 
 Lemma dptranspose_dpmap (T : lmodType C) m n p (f : mor m p) X :
-  @dptranspose T n p (dpmap (f T) X) = f _ (dptranspose X).
+  @dptranspose _ _ T n p (dpmap (f T) X) = f _ (dptranspose X).
 Proof. by rewrite -[in LHS](dptransposeK X) dpmap_dptranspose dptransposeK. Qed.
 
 Lemma uncurry_dpmap (T : lmodType C) n m p q  (l : lens n m) (f : mor p q)
@@ -194,7 +182,7 @@ set fc := conj_mor f.
 rewrite /= -(dpmap_compose (fc _)) -(eq_dpmap (dpmap_dptranspose fc)).
 rewrite (dpmap_compose (dptranspose (n:=n-m))).
 rewrite -(dpmap_compose (dptranspose (n:=m))).
-rewrite (eq_dpmap (@dptransposeK _ (n-m) m)) dpmap_id.
+rewrite (eq_dpmap (@dptransposeK _ _ _ (n-m) m)) dpmap_id.
 rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ _)).
 rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ _)).
 by rewrite -(focusE dI l fc _) uncurry_dpmap (focusE _ _ f).
