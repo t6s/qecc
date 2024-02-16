@@ -30,20 +30,21 @@ Qed.
 
 Lemma cnotK : involutive (mxmor cnot Co).
 Proof.
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //.
-all: time do 2 (rewrite !mxmorE !{1}ffunE /= !linE !sum_dpbasisK //).
-(* 1.8s *)
+move=> v; rewrite (decompose_scaler v) !linear_sum.
+apply eq_bigr => /= -[] [|a [|b []]] //= Hi _.
+by rewrite !linearE /= !mxmor_cnot addrA addii add0r.
 Qed.
 
 Lemma qnotK : involutive (mxmor qnot Co).
 Proof. (* exactly the same proof *)
-move=> v; apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time do 2 (rewrite !mxmorE !{1}ffunE /= !linE !sum_dpbasisK //).
+move=> v; rewrite (decompose_scaler v) !linear_sum.
+apply eq_bigr => /= -[] [|a [|b []]] //= Hi _.
+by rewrite !linearE /= !mxmor_qnot addrA addii add0r.
 Qed.
 
 (* Unitarity: matrix or endomorphism *)
 
-Lemma qnotU : unitaryts qnot.
+Lemma qnotU : dpmxunitary qnot.
 Proof.
 apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
 all: rewrite !(linE,sum_dpbasisK,ffunE).
@@ -56,12 +57,12 @@ Qed.
 Lemma cnotU : unitary_mor (mxmor cnot).
 Proof.
 move=> /= s t.
-rewrite /tinner !sum_enum_indices /= !mxmorE.
-rewrite !{1}ffunE /= !scale0r !scale1r !add0r !addr0 !sum_dpbasisK.
+rewrite /tinner !sum_enum_indices /= !mxmorE !sum_enum_indices /=.
+time rewrite !{1}ffunE !(tnth_nth 0) /= !linE.
 by rewrite (addrC _ (_ * _)).
 Qed.
 
-Lemma hadamardU : unitaryts hadamard.
+Lemma hadamardU : dpmxunitary hadamard.
 Proof. (* Fast proof using hadamardK *)
 apply/unitary_invP; last exact: hadamardK.
 apply/eq_from_indicesP; do !(apply/andP; split) => //=;
@@ -72,7 +73,7 @@ by simpc.
 Qed.
 
 (* Try on a fast machine ... *)
-Lemma hadamardU' : unitaryts hadamard.
+Lemma hadamardU' : dpmxunitary hadamard.
 Proof.
 apply/eqP/eq_from_indicesP; do !(apply/andP; split) => //=;
   apply/eqP/eq_from_indicesP; do !(apply/andP; split); apply /eqP => //=.

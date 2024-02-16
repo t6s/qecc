@@ -100,6 +100,12 @@ Ltac simpl_merge :=
 
 (* Behavior of some gates on basis vectors *)
 
+Lemma mxmor_qnot (i : I) : mxmor qnot Co ¦i⟩ = ¦1 + i⟩.
+Proof.
+apply/ffunP => vi.
+by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
+Qed.
+
 Lemma mxmor_cnot (i j : I) : mxmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
 Proof.
 apply/ffunP => vi.

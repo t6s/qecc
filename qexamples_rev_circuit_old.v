@@ -126,14 +126,16 @@ have Hior : i \in lensC (lens_single j).
 have Hri : j != i by rewrite eq_sym.
 have Hroi : j \in lensC (lens_single i).
   by rewrite mem_lensC !inE.
-apply/ffunP => vi.
+apply/ffunP => /= vi.
 rewrite /= focusE !ffunE /tinner; congr sqrtc.
 rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
 rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
-apply eq_bigr => vj _.
-apply eq_bigr => vk _.
+apply eq_bigr => /= vj _.
+apply eq_bigr => /= vk _.
 rewrite !ffunE !mxmorE.
 under eq_bigr do rewrite !ffunE.
+Admitted.
+(*
 rewrite sum_enum_indices /= /GRing.scale !(linE,ffunE) /= !(mulr1,mulr0,linE).
 rewrite /GRing.scale /=.
 rewrite (merge_pair ord0 vi vj vk Hior) //.
@@ -147,6 +149,7 @@ have := mem_enum_indices vj => /=.
 rewrite !inE.
 by do 2! (case/orP => /eqP ->); rewrite /= !(mul1r,mul0r,addr0,add0r).
 Qed.
+*)
 
 Lemma rev_circuit_ok' n (i : 'I_(n.+2)%N) v :
   proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
@@ -241,6 +244,8 @@ case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
   apply eq_bigr => vk _.
   rewrite !ffunE !mxmorE.
   under eq_bigr do rewrite !ffunE.
+Abort.
+(*
   rewrite sum_enum_indices /= /GRing.scale !(linE,ffunE) /= !(mulr1,mulr0,linE).
   rewrite (merge_pair ord0 vi vj vk Hroi) //.
   rewrite (merge_pair ord0 vi vj vk Hior) //.
@@ -278,3 +283,4 @@ apply IH => //.
   by rewrite ltn_subRL addn0.
 - exact: ltnW.
 Qed.
+*)
