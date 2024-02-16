@@ -25,11 +25,10 @@ Notation endo n := (mor I C n n).
 Notation "T '^^' n" := (dpower I n T).
 
 Definition qnot : dpsquare 1 :=
-  ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩.
+  [ffun vi => let i := tnth vi 0 in ¦1+i⟩].
 
 Definition cnot : dpsquare 2 :=
-  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦0,1⟩ +
-  ket_bra ¦1,0⟩ ¦1,1⟩ + ket_bra ¦1,1⟩ ¦1,0⟩.
+  [ffun vi => let i := tnth vi 0 in let j := tnth vi 1 in ¦i, i+j⟩].
 
 Definition minus1 : C := -1.
 Definition opp_ket_bra n (v1 v2 : Co ^^ n) := - ket_bra v1 v2.
@@ -39,9 +38,9 @@ Definition hadamard : dpsquare 1 :=
     (-ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩).
 
 Definition toffoli : dpsquare 3 :=
-  (\sum_(k <- [:: ¦0,0,0⟩; ¦0,0,1⟩; ¦0,1,0⟩; ¦0,1,1⟩; ¦1,0,0⟩; ¦1,0,1⟩])
-      ket_bra k k) +
-  ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩.
+  [ffun vi =>
+     let i := tnth vi 0 in let j := tnth vi 1 in let k := tnth vi 2 in
+     ¦i,j,i*j+k⟩ ].
 (* =
   ket_bra ¦0,0,0⟩ ¦0,0,0⟩ + ket_bra ¦0,0,1⟩ ¦0,0,1⟩ +
   ket_bra ¦0,1,0⟩ ¦0,1,0⟩ + ket_bra ¦0,1,1⟩ ¦0,1,1⟩ +
@@ -49,8 +48,7 @@ Definition toffoli : dpsquare 3 :=
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
 Definition swap : dpsquare 2 :=
-  ket_bra ¦0,0⟩ ¦0,0⟩ + ket_bra ¦0,1⟩ ¦1,0⟩ +
-  ket_bra ¦1,0⟩ ¦0,1⟩ + ket_bra ¦1,1⟩ ¦1,1⟩.
+  [ffun vi => let i := tnth vi 0 in let j := tnth vi 1 in ¦j,i⟩ ].
 
 (* Enumeration lemmas *)
 Notation enum_indices := (enum_indices enum2).
@@ -102,39 +100,16 @@ Ltac simpl_merge :=
 
 (* Behavior of some gates on basis vectors *)
 
-Lemma mxmor_cnot0 i : mxmor cnot Co ¦0,i⟩ = ¦0,i⟩.
-Proof.
-apply/ffunP => vi;
-  rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
-have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
-by rewrite !scaler0 !linE [LHS]mulr1.
-Qed.
-
-Definition flip (i : I) := rev_ord i.
-Lemma mxmor_cnot1 i : mxmor cnot Co ¦1, i⟩ = ¦1, flip i⟩.
-Proof.
-apply/ffunP => vi;
-  rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
-have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
-by rewrite !scaler0 !linE [LHS]mulr1.
-Qed.
-
-Lemma flip_addr i : flip i = 1 + i.
-Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP-> ; apply/val_inj. Qed.
-
 Lemma mxmor_cnot (i j : I) : mxmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
 Proof.
-have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=.
-- by rewrite mxmor_cnot0 add0r.
-- by rewrite mxmor_cnot1 flip_addr.
+apply/ffunP => vi.
+by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
 Qed.
 
 Lemma mxmor_swap (i j : I) : mxmor swap Co ¦i, j⟩ = ¦j, i⟩.
 Proof.
-have := mem_enum2 i; rewrite !inE => /orP[] /eqP ->;
-have := mem_enum2 j; rewrite !inE => /orP[] /eqP -> /=;
-apply/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: time (by rewrite !mxmorE !{1}ffunE /= !linE sum_dpbasisK {1}ffunE).
+apply/ffunP => vi.
+by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
 Qed.
 
 Lemma addii (i : I) : i + i = 0.
@@ -143,20 +118,46 @@ Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
 Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof.
 apply/ffunP => vi.
-rewrite !{1}ffunE mxmorE sum_dpbasisKo !{1}ffunE !eq_ord_tuple /=.
-rewrite !scaler0 !addr0 unlock /= !{1}ffunE !eq_ord_tuple /= !scaler0 !addr0.
-have := mem_enum2 i; rewrite !inE => /orP[] /eqP -> /=;
-by rewrite !scaler0 !linE [LHS]mulr1.
+by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0) /= !linE.
 Qed.
 
 (* Unitarity *)
 
+Lemma rev_inj A : injective (@rev A).
+Proof.
+elim => [|a l1 IH] [|b l2] //=.
+- move/(f_equal size). by rewrite !size_rev.
+- move/(f_equal size). by rewrite !size_rev.
+- by rewrite !rev_cons => /rcons_inj [] /IH -> ->.
+Qed.
+
+Lemma swapS : dptranspose swap = swap.
+Proof.
+apply/ffunP=> vi; apply/ffunP=> vj.
+rewrite !ffunE.
+case: vi => [] [|i1 [|i2 []]] // Hi.
+case: vj => [] [|j1 [|j2 []]] // Hj /=.
+rewrite !eq_ord_tuple /= !(tnth_nth 0) /=.
+by rewrite -(inj_eq (@rev_inj _) [::nat_of_ord j2;_]) eq_sym.
+Qed.
+
 Lemma swapU : unitary_mor (mxmor swap).
 Proof.
 rewrite /unitary_mor /tinner => s t.
-rewrite !sum_enum_indices /= !mxmorE.
+under eq_bigr => vi _. rewrite !mxmorE.
+  under eq_bigr do rewrite -swapS !ffunE.
+  set u := [tuple _;_].
+  rewrite (bigD1 u) //= eqxx /= scale1r big1; last first.
+    by move=> i Hi; rewrite eq_sym (negbTE Hi) scale0r.
+  rewrite addr0.
+  under eq_bigr do rewrite -swapS !ffunE -/u.
+  rewrite (bigD1 u) //= eqxx /= scale1r big1; last first.
+    by move=> i Hi; rewrite eq_sym (negbTE Hi) scale0r.
+  rewrite addr0 /u.
+  over.
+rewrite !sum_enum_indices /=.
 rewrite !addrA !addr0 [X in X + _]addrAC.
-do !congr GRing.add; by rewrite 22!{1}ffunE /= !linE !sum_dpbasisK.
+do !congr GRing.add; by rewrite !{1}ffunE /= !linE !sum_dpbasisK.
 Qed.
 
 (* Hadamard gate is involutive *)

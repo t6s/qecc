@@ -89,7 +89,7 @@ congr (_ + _); rewrite dpmerge_dpbasis.
   have Hex': extract lp [tuple (0:I) | _ < n.+2] = [tuple 0; 0].
     apply eq_from_tnth => i; rewrite tnth_extract !tnth_mktuple.
     by case: i => -[|[]].
-  by rewrite Hex' mxmor_cnot0 dpmerge_dpbasis -Hex' merge_extract.
+  by rewrite Hex' mxmor_cnot add0r dpmerge_dpbasis -Hex' merge_extract.
 rewrite {Hex} (_ : extract _ _ = [tuple 0 | _ < _]); last first.
   apply eq_from_tnth => i; by rewrite tnth_extract !tnth_map.
 rewrite (_ : merge _ _ _ _ =
@@ -105,7 +105,7 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple -(inj_eq val_inj).
   case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?[_ == _]eqxx //.
   by rewrite neq_ltn ltnSn.
-rewrite mxmor_cnot1 dpmerge_dpbasis.
+rewrite mxmor_cnot addr0 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
 case/boolP: (i \in lp) => Hi.
