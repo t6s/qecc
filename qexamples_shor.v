@@ -67,7 +67,12 @@ Qed.
 Lemma toffoli_involutive :
   mxmor toffoli \v mxmor toffoli =e idmor I C 3.
 Proof.
-Abort.
+apply/lift_mor_eq => v.
+rewrite (decompose_dpower v) !linear_sum.
+apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
+simpl_tuple (Tuple Hi).
+by rewrite dpmap_scale !linearZ_LR comp_morE !mxmor_toffoli addrA addii add0r.
+Qed.
 
 (* Not used
 Lemma mxmor_hadamard0 :

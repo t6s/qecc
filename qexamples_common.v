@@ -121,11 +121,14 @@ Qed.
 Lemma addii (i : I) : i + i = 0.
 Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
 
-Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
+Lemma mxmor_toffoli i j k : mxmor toffoli Co ¦i,j,k⟩ = ¦i,j,i*j+k⟩.
 Proof.
 apply/ffunP => vi.
-by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0) /= !linE.
+by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
 Qed.
+
+Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
+Proof. by rewrite mxmor_toffoli !linE. Qed.
 
 (* Unitarity *)
 
