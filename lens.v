@@ -600,6 +600,19 @@ rewrite !tnth_map !tnth_ord_tuple nth_lens_out //.
 by rewrite (make_lens_index Hil) -!tnth_nth.
 Qed.
 
+Lemma mem_lensCF i : ~ (i \in l) -> i \in lensC.
+Proof. by rewrite mem_lensC => /negP. Qed.
+
+Lemma tnth_merge_cases i vi vj :
+  tnth (merge vi vj) i =
+  match Bool.bool_dec (i \in l) true with
+  | left H => tnth vi (lens_index H)
+  | right H => tnth vj (lens_index (mem_lensCF H))
+  end.
+Proof.
+case: Bool.bool_dec => ?; by rewrite -(tnth_merge _ vj,tnth_mergeC vi).
+Qed.
+
 Lemma extract_merge v1 v2 : extract l (merge v1 v2) = v1.
 Proof.
 apply eq_from_tnth => i; rewrite tnth_extract.
@@ -790,17 +803,14 @@ Lemma merge_basis vi vj :
 Proof.
 apply eq_from_tnth => i.
 case/boolP: (i \in lens_basis l) => Hib.
-  rewrite tnth_merge.
-  have Hil : i \in l.
-    by rewrite -(lens_basis_perm l) mem_lens_comp mem_lens_full.
-  rewrite tnth_merge tnth_extract.
+  rewrite 2!tnth_merge => [|Hil]. by rewrite -mem_lens_basis.
+  rewrite tnth_extract.
   congr tnth.
   apply/(tnth_inj (lens_basis l)); first by apply lens_uniq.
   by rewrite -tnth_comp lens_basis_perm !tnth_lens_index.
 rewrite -mem_lensC in Hib.
-have Hil : i \in lensC l.
+rewrite !tnth_mergeC => [|Hil].
   by rewrite -(lens_basis_perm l) lensC_comp_full.
-rewrite !tnth_mergeC.
 congr tnth; apply/val_inj => /=.
 congr index.
 move/(f_equal (val \o val)): (lensC_comp_full (lens_basis l) (lens_perm l)).
@@ -1233,26 +1243,23 @@ case/boolP: (i \in l) => Hil.
   rewrite (tnth_merge _ _ _ Hil).
   case/boolP: (lens_index Hil \in l') => Hill'.
     rewrite (tnth_merge _ _ _ Hill').
-    have Hilcl' : i \in lens_comp l l' by rewrite mem_lens_comp.
-    rewrite (tnth_merge _ _ _ Hilcl').
+    rewrite tnth_merge => [|Hilcl']. by rewrite mem_lens_comp.
     congr tnth; apply/val_inj => /=; by rewrite -index_lens_comp.
   have Hilo : i \in lensC_comp by rewrite mem_lensC mem_lens_comp.
   rewrite -mem_lensC in Hill'.
   rewrite tnth_mergeC [RHS]tnth_mergeC.
   have Hic : i \in lens_comp l (lensC l') by rewrite mem_lens_comp.
-  have Hilol : lens_index Hilo \in lensC_in_l.
+  rewrite tnth_merge => [|Hilol].
     by rewrite -lensC_in_l_comp mem_lens_comp in Hic.
-  rewrite tnth_merge.
   congr tnth; apply (tnth_lens_inj (l:=lens_comp l (lensC l'))).
   by rewrite -{1}lensC_in_l_comp !tnth_comp !tnth_lens_index.
 case/boolP: (i \in lens_comp l l') => [/lens_comp_sub|] Hic.
   by rewrite Hic in Hil.
 rewrite -!mem_lensC in Hil Hic.
 rewrite tnth_mergeC [RHS]tnth_mergeC.
-have Hlil : lens_index Hic \in lensC lensC_in_l.
+rewrite tnth_mergeC => [|Hlil].
   rewrite -mem_lens_comp mem_lensE /=.
   by move/(f_equal (val \o val)): lensC_notin_l_comp => /= ->.
-rewrite tnth_mergeC.
 set a := tnth vl _; rewrite /a (tnth_nth a) /= Hlm [RHS](tnth_nth a) /=.
 congr nth. 
 have /(f_equal (val \o val)) := lensC_notin_l_comp; rewrite [RHS]/= => <-.
@@ -1269,11 +1276,10 @@ Proof.
 set l2 := lens_comp (lensC l) l1.
 apply eq_from_tnth => i.
 case/boolP: (i \in l) => Hl.
-  rewrite [RHS]tnth_merge.
-  have Hl2: i \notin l2.
+  rewrite [RHS]tnth_merge tnth_mergeC => [|Hl2].
+    rewrite mem_lensC.
     apply/negP => /lens_comp_sub; by rewrite mem_lensC Hl.
-  rewrite -mem_lensC in Hl2.
-  by rewrite tnth_mergeC !tnth_extract !tnth_lens_index.
+  by rewrite !tnth_extract !tnth_lens_index.
 rewrite -mem_lensC in Hl.
 rewrite [RHS]tnth_mergeC.
 case/boolP: (i \in l2) => Hl2.
@@ -1291,9 +1297,8 @@ Lemma merge_lensC_notin_l (vj : (m - p).-tuple I) (vk : (n - m).-tuple I) :
 Proof.
 apply eq_from_tnth => i.
 case/boolP: (i \in lensC_in_l) => Hill.
-rewrite (tnth_merge _ _ _ Hill).
-have Hinl : i \notin lensC_notin_l by rewrite mem_lensC Hill.
-  rewrite -mem_lensC in Hinl.
+  rewrite (tnth_merge _ _ _ Hill).
+  have Hinl : i \in lensC lensC_notin_l by rewrite !mem_lensC Hill.
   rewrite tnth_mergeC tnth_extract.
   have Hill' := Hill.
   rewrite -(lens_basis_perm lensC_in_l) in Hill'.
@@ -1355,9 +1360,8 @@ Lemma merge_perm (l1 : lens m m) (vi : m.-tuple I) vk :
 Proof.
 apply/eq_from_tnth => i.
 case/boolP: (i \in l) => Hil.
-  rewrite [RHS]tnth_merge.
-  have Hil1 : i \in lens_comp l l1 by rewrite mem_lens_comp mem_lens_full.
-  rewrite tnth_merge tnth_extract.
+  rewrite !tnth_merge => [|Hil1]. by rewrite mem_lens_comp mem_lens_full.
+  rewrite tnth_extract.
   congr tnth; apply (tnth_lens_inj (l:=l)).
   by rewrite -tnth_comp !tnth_lens_index.
 rewrite -mem_lensC in Hil.

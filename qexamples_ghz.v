@@ -96,10 +96,8 @@ rewrite (_ : merge _ _ _ _ =
              [tuple if i != ord_max n.+1 then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
   case: ifPn => Hi.
-  - have Hi' : i \in lensC ls by rewrite mem_lensC inE Hi.
-    by rewrite tnth_merge tnth_mktuple.
-  - have Hi' : i \in lensC (lensC ls) by rewrite !mem_lensC inE Hi.
-    by rewrite tnth_mergeC tnth_mktuple.
+  - rewrite tnth_merge => [|Hi']; by rewrite !(mem_lensC,inE,tnth_mktuple).
+  - rewrite tnth_mergeC => [|Hi']; by rewrite !(mem_lensC,inE,tnth_mktuple).
 rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple -(inj_eq val_inj).
@@ -113,6 +111,6 @@ case/boolP: (i \in lp) => Hi.
   by congr tnth; eq_lens.
 - rewrite -mem_lensC in Hi.
   rewrite tnth_mergeC tnth_extract tnth_mktuple tnth_lens_index ifT //.
-  move: Hi; rewrite mem_lensC !inE negb_or => /andP[] _.
-  by apply/contra => /eqP ->; apply/eqP/val_inj.
+  move: Hi; rewrite mem_lensC; apply contra => /eqP ->.
+  by rewrite !inE; apply/orP/or_intror/eqP/val_inj.
 Qed.
