@@ -89,16 +89,14 @@ congr (_ + _); rewrite dpmerge_dpbasis.
   by rewrite Hex' mxmor_cnot add0r dpmerge_dpbasis -Hex' merge_extract.
 rewrite extract_cst.
 rewrite (_ : merge _ _ _ _ =
-             [tuple if i != ord_max n.+1 then 1 else 0 | i < n.+2]); last first.
+             [tuple if i != n.+1 :> nat then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
   case: ifPn => Hi.
   - rewrite tnth_merge => [|Hi']; by rewrite !(mem_lensC,inE,tnth_mktuple).
   - rewrite tnth_mergeC => [|Hi']; by rewrite !(mem_lensC,inE,tnth_mktuple).
 rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
-  apply eq_from_tnth => i; rewrite !tnth_map tnth_ord_tuple -(inj_eq val_inj).
-  case: i => -[|[]] //= Hi; rewrite !(tnth_nth 0) ?[_ == _]eqxx //.
-  by rewrite neq_ltn ltnSn.
+  by eq_lens; rewrite -!tnth_nth !tnth_mktuple neq_ltn ltnSn eqxx.
 rewrite mxmor_cnot addr0 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
@@ -107,6 +105,6 @@ case/boolP: (i \in lp) => Hi.
   by congr tnth; eq_lens.
 - rewrite -mem_lensC in Hi.
   rewrite tnth_mergeC tnth_extract tnth_mktuple tnth_lens_index ifT //.
-  move: Hi; rewrite mem_lensC; apply contra => /eqP ->.
+  move: Hi; rewrite mem_lensC; apply contra => /eqP Hi.
   by rewrite !inE; apply/orP/or_intror/eqP/val_inj.
 Qed.
