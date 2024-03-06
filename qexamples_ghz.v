@@ -62,9 +62,6 @@ rewrite [LHS]lift_max !(tnth_nth 0) /=.
 by case: j => -[|[]].
 Qed.
 
-Lemma bump0n n : bump 0 n = n.+1.
-Proof. by rewrite /bump leq0n. Qed.
-
 Lemma ghz_state0 : ghz_state 0 = mxmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
 Proof.
 apply/ffunP => /= vi.
