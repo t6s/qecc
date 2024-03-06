@@ -129,8 +129,7 @@ by rewrite -[RHS]bit_flip_toffoli.
 Qed.
 
 (* Shor code on a perfect channel *)
-Let shor_input i : 9.-tuple I :=
-      [tuple of [:: i; 0; 0; 0; 0; 0; 0; 0; 0]].
+Let shor_input (i:I) := [tuple of [:: i; 0; 0; 0; 0; 0; 0; 0; 0]].
 Lemma shor_code_id i :
  shor_code (idmor I C 9) Co (dpbasis C (shor_input i)) =
  dpbasis C (shor_input i).
