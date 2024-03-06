@@ -74,24 +74,20 @@ rewrite !{1}ffunE !eq_ord_tuple /= enum_ordinalE /= !linE ![_ *: 1]mulr1;
 by rewrite ![_ *: 0]mulr0 !linE.
 Qed.
 
-Lemma extractl0 n m (l : lens n m) :
-  extract l [tuple (0:I) | _ < n] = [tuple 0 | _ < m].
-Proof. apply eq_from_tnth => i; by rewrite tnth_extract !tnth_mktuple. Qed.
-
 Lemma ghz_ok n : ghz n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
 Proof.
 elim: n => [| n IH] /=. by rewrite ghz_state0.
 rewrite focus_dpbasis.
 set ls := lens_single (ord_max n.+1).
-rewrite extractl0 {}IH /ghz_state !linearZ_LR /=.
+rewrite extract_cst {}IH /ghz_state !linearZ_LR /=.
 congr (_ *: _); rewrite !linearE /=.
 set lp := lens_pair (succ_neq (ord_max n)).
 congr (_ + _); rewrite dpmerge_dpbasis.
-  rewrite -(extractl0 (lensC ls)) merge_extract focus_dpbasis.
+  rewrite -(extract_cst (lensC ls)) merge_extract focus_dpbasis.
   have Hex': extract lp [tuple (0:I) | _ < n.+2] = [tuple 0; 0].
-    by rewrite extractl0; eq_lens.
+    by rewrite extract_cst; eq_lens.
   by rewrite Hex' mxmor_cnot add0r dpmerge_dpbasis -Hex' merge_extract.
-rewrite extractl0.
+rewrite extract_cst.
 rewrite (_ : merge _ _ _ _ =
              [tuple if i != ord_max n.+1 then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.

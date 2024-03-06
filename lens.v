@@ -167,6 +167,9 @@ Proof. move=> x y H; exact/val_inj/val_inj. Qed.
 Lemma tnth_lens_inj : injective (tnth l).
 Proof. exact/tnth_inj/lens_uniq. Qed.
 
+Lemma extract_cst (a : T) : extract [tuple a | _ < n] = [tuple a | _ < m].
+Proof. apply eq_from_tnth => i; by rewrite tnth_extract !tnth_mktuple. Qed.
+
 Lemma lens_sortedP :
   reflect (exists p, l = [seq i <- enum 'I_n | p i] :> seq _) (lens_sorted l).
 Proof.
