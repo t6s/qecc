@@ -46,20 +46,17 @@ Qed.
 
 Lemma qnotU : dpmxunitary qnot.
 Proof.
-apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: rewrite !(linE,sum_dpbasisK,ffunE).
-all: apply/eqP/eq_from_indicesP; do! (apply/andP; split) => //=.
-all: rewrite !(linE,sum_dpbasisK,ffunE).
-all: time (rewrite !sum_enum_indices /= !{1}ffunE /=).
-all: by rewrite !linE.
+apply/eqP/eq_from_indicesP; do! (apply/andP; split => //);
+  apply/eqP/eq_from_indicesP; do! (apply/andP; split => //=).
+all: by rewrite !ffunE /= !sum_dpbasisKo !ffunE conjc_nat !(tnth_nth 0).
 Qed.
 
 Lemma cnotU : unitary_mor (mxmor cnot).
 Proof.
-move=> /= s t.
-rewrite /tinner !sum_enum_indices /= !mxmorE !sum_enum_indices /=.
-time rewrite !{1}ffunE !(tnth_nth 0) /= !linE.
-by rewrite (addrC _ (_ * _)).
+apply/(unitary_morP dI).
+apply/eqP/eq_from_indicesP; do! (apply/andP; split => //);
+  apply/eqP/eq_from_indicesP; do! (apply/andP; split => //=).
+all: by rewrite !ffunE /= !sum_dpbasisKo !ffunE conjc_nat !(tnth_nth 0).
 Qed.
 
 Lemma hadamardU : dpmxunitary hadamard.

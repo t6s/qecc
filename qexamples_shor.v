@@ -50,7 +50,7 @@ simpl_merge.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite mxmor_cnot dpmerge_dpbasis.
-by congr dpbasis; eq_lens.
+by simpl_merge.
 Qed.
 
 Lemma bit_flip_toffoli :
@@ -115,16 +115,16 @@ Lemma sign_flip_toffoli :
   (sign_flip_dec \v sign_flip_enc) =e mxapp [lens 1; 2; 0] toffoli.
 Proof.
 rewrite /sign_flip_dec /sign_flip_enc => T v /=.
-rewrite [mxapp [lens 0] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
-rewrite [mxapp [lens 0] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
-rewrite [mxapp [lens 1] _ _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [mxapp [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [mxapp [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [mxapp [lens 1] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
 have HK (l : lens 3 1) : mxapp l hadamard \v mxapp l hadamard =e idmor I C 3.
   move=> U w.
   rewrite -focus_comp (focus_eq dI l (f2:=idmor I C 1)) ?focus_idmor //.
   exact/hadamardK.
-rewrite [mxapp [lens 0] _ _ _]HK.
-rewrite [mxapp [lens 1] _ _ _]HK.
-rewrite [mxapp [lens 2] _ _ _]HK.
+rewrite [mxapp [lens 0] hadamard _ _]HK.
+rewrite [mxapp [lens 1] hadamard _ _]HK.
+rewrite [mxapp [lens 2] hadamard _ _]HK.
 by rewrite -[RHS]bit_flip_toffoli.
 Qed.
 
@@ -153,24 +153,24 @@ transitivity (focus [lens 0; 3; 6]
   rewrite dpmerge_dpbasis.
   case: j => -[|a [|b [|c []]]] Hj //=.
   simpl_merge.
-  rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
-  rewrite [focus [lens 6; 7; 8] _ _ _]focusC /= ; last by rewrite disjoint_has.
-  rewrite [focus [lens 3; 4; 5] _ _ _]focusC /= ; last by rewrite disjoint_has.
+  rewrite [focus [lens 6; 7; 8] bit_flip_dec _ _]focusC ?disjoint_has //=.
+  rewrite [focus [lens 6; 7; 8] bit_flip_dec _ _]focusC ?disjoint_has //=.
+  rewrite [focus [lens 3; 4; 5] bit_flip_dec _ _]focusC ?disjoint_has //=.
   rewrite -3![focus _ bit_flip_dec _ _]focus_comp.
   rewrite 3!(focus_eq _ _ bit_flip_toffoli).
-  rewrite -!focusM.
+  rewrite -3![focus (mkLens _) _ _ _]focusM.
   do 3 simpl_lens_comp.
   rewrite focus_dpbasis_id; last first.
     simpl_extract.
-    rewrite mxmor_toffoli00.
-    reflexivity.
+    rewrite mxmor_toffoli.
+    by rewrite !linE.
   by do 2!(rewrite focus_dpbasis_id;
-           last by simpl_extract; rewrite mxmor_toffoli00).
+           last by simpl_extract; rewrite mxmor_toffoli !linE).
 rewrite focus_dpbasis_id //.
 simpl_extract.
 rewrite sign_flip_toffoli focus_dpbasis_id //.
 simpl_extract.
-by rewrite mxmor_toffoli00.
+by rewrite mxmor_toffoli !linE.
 Qed.
 
 End shor_code.

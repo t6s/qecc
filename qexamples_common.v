@@ -142,31 +142,17 @@ Qed.
 
 Lemma swapS : dptranspose swap = swap.
 Proof.
-apply/ffunP=> vi; apply/ffunP=> vj.
-rewrite !ffunE.
-case: vi => [] [|i1 [|i2 []]] // Hi.
-case: vj => [] [|j1 [|j2 []]] // Hj /=.
-rewrite !eq_ord_tuple /= !(tnth_nth 0) /=.
-by rewrite -(inj_eq (@rev_inj _) [::nat_of_ord j2;_]) eq_sym.
+apply/eq_from_indicesP; do! (apply/andP; split => //);
+  apply/eqP/eq_from_indicesP; do! (apply/andP; split => //=).
+all: by rewrite !ffunE !(tnth_nth 0).
 Qed.
 
 Lemma swapU : unitary_mor (mxmor swap).
 Proof.
-rewrite /unitary_mor /tinner => s t.
-under eq_bigr => vi _. rewrite !mxmorE.
-  under eq_bigr do rewrite -swapS !ffunE.
-  set u := [tuple _;_].
-  rewrite (bigD1 u) //= eqxx /= scale1r big1; last first.
-    by move=> i Hi; rewrite eq_sym (negbTE Hi) scale0r.
-  rewrite addr0.
-  under eq_bigr do rewrite -swapS !ffunE -/u.
-  rewrite (bigD1 u) //= eqxx /= scale1r big1; last first.
-    by move=> i Hi; rewrite eq_sym (negbTE Hi) scale0r.
-  rewrite addr0 /u.
-  over.
-rewrite !sum_enum_indices /=.
-rewrite !addrA !addr0 [X in X + _]addrAC.
-do !congr GRing.add; by rewrite !{1}ffunE /= !linE !sum_dpbasisK.
+apply/(unitary_morP dI)/eqP.
+apply/eq_from_indicesP; do! (apply/andP; split => //);
+  apply/eqP/eq_from_indicesP; do! (apply/andP; split => //=).
+all: by rewrite !ffunE /= !sum_dpbasisKo !ffunE conjc_nat !(tnth_nth 0).
 Qed.
 
 (* Hadamard gate is involutive *)
