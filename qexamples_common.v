@@ -101,31 +101,19 @@ Ltac simpl_merge :=
 (* Behavior of some gates on basis vectors *)
 
 Lemma mxmor_qnot (i : I) : mxmor qnot Co ¦i⟩ = ¦1 + i⟩.
-Proof.
-apply/ffunP => vi.
-by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
-Qed.
+Proof. by rewrite mxmor_dpbasis ffunE. Qed.
 
 Lemma mxmor_cnot (i j : I) : mxmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
-Proof.
-apply/ffunP => vi.
-by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
-Qed.
+Proof. by rewrite mxmor_dpbasis ffunE. Qed.
 
 Lemma mxmor_swap (i j : I) : mxmor swap Co ¦i, j⟩ = ¦j, i⟩.
-Proof.
-apply/ffunP => vi.
-by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
-Qed.
+Proof. by rewrite mxmor_dpbasis ffunE. Qed.
 
 Lemma addii (i : I) : i + i = 0.
 Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
 
 Lemma mxmor_toffoli i j k : mxmor toffoli Co ¦i,j,k⟩ = ¦i,j,i*j+k⟩.
-Proof.
-apply/ffunP => vi.
-by rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
-Qed.
+Proof. by rewrite mxmor_dpbasis ffunE. Qed.
 
 Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof. by rewrite mxmor_toffoli !linE. Qed.
@@ -143,8 +131,7 @@ Qed.
 Lemma swapS : dptranspose swap = swap.
 Proof.
 apply/eq_from_indicesP; do! (apply/andP; split => //);
-  apply/eqP/eq_from_indicesP; do! (apply/andP; split => //=).
-all: by rewrite !ffunE !(tnth_nth 0).
+  apply/eqP/eq_from_indicesP; by rewrite /= !ffunE !(tnth_nth 0) /= !eqxx.
 Qed.
 
 Lemma swapU : unitary_mor (mxmor swap).
@@ -170,7 +157,6 @@ rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
 rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
 rewrite ![_ *: 1]mulr1.
 rewrite !scalerDr !scalerN ![_ *: 1]mulr1 !scalerA !(mulrN,mulNr); simpc.
-simpc.
 rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //=.
 rewrite !addrA [X in X + _]addrAC opprK -scalerDl -addrA -scalerDl.
 rewrite (addrAC (_ *: _)) -scalerDl -addrA -scalerDl.

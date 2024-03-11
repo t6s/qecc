@@ -62,23 +62,22 @@ rewrite [LHS]lift_max !(tnth_nth 0) /=.
 by case: j => -[|[]].
 Qed.
 
+Lemma dpbasis_single (i:I) : dpbasis C [tuple i | _ < 1] = ¦ i ⟩.
+Proof. by congr dpbasis; eq_lens. Qed.
+
 Lemma ghz_state0 : ghz_state 0 = mxmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
 Proof.
-apply/ffunP => /= vi.
-rewrite mxmorE !{1}ffunE /= sum_enum_indices /=.
-have := mem_enum_indices vi; rewrite !inE => /orP[] /eqP -> /=;
-rewrite !{1}ffunE !eq_ord_tuple /= enum_ordinalE /= !linE ![_ *: 1]mulr1;
-by rewrite ![_ *: 0]mulr0 !linE.
+rewrite mxmor_dpbasis !{1}ffunE /= /ghz_state.
+by rewrite !dpbasis_single !eq_ord_tuple /= enum_ordinalE /= !linE.
 Qed.
 
 Lemma ghz_ok n : ghz n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
 Proof.
 elim: n => [| n IH] /=. by rewrite ghz_state0.
-rewrite focus_dpbasis.
-set ls := lens_single (ord_max n.+1).
-rewrite extract_cst {}IH /ghz_state !linearZ_LR /=.
-congr (_ *: _); rewrite !linearE /=.
 set lp := lens_pair (succ_neq (ord_max n)).
+set ls := lens_single (ord_max n.+1).
+rewrite focus_dpbasis extract_cst {}IH /ghz_state !linearZ_LR /=.
+congr (_ *: _); rewrite !linearE /=.
 congr (_ + _); rewrite dpmerge_dpbasis.
   rewrite -(extract_cst (lensC ls)) merge_extract focus_dpbasis.
   have Hex': extract lp [tuple (0:I) | _ < n.+2] = [tuple 0; 0].

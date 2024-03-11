@@ -159,6 +159,10 @@ rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
+Lemma mxmor_dpbasis m n (M : dpmatrix m n) vi :
+  mxmor M R^o (dpbasis vi) = M vi.
+Proof. apply/ffunP => /= vj; by rewrite mxmorE sum_dpbasisKo. Qed.
+
 Section scalerv.
 Variables (T : lmodType R) (v : T).
 Definition scalerv (x : R ^o) := x *: v.
