@@ -698,10 +698,8 @@ Lemma lens_comp_lensC :
   lens_comp (lensC l) (lensC l') =
   lensC (lens_cat disjoint_comp_lensC) :> seq _.
 Proof.
-apply eq_lens_sorted; first last.
-- exact/lens_sorted_lensC.
-- exact/lens_sorted_comp/lens_sorted_lensC/lens_sorted_lensC.
-move=> i.
+apply/eq_lens_sorted/lens_sorted_lensC/lens_sorted_comp/lens_sorted_lensC
+  /lens_sorted_lensC => i.
 rewrite mem_lensC [in RHS]mem_lensE mem_cat negb_or.
 case/boolP: (i \in l) => Hi /=.
   apply/negb_inj; by rewrite mem_lens_comp_out // mem_lensC Hi.
