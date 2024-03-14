@@ -7,6 +7,7 @@
 -arg -async-proofs-tac-j -arg 16
 
 lens.v
+lens_tactics.v
 dpower.v
 unitary.v
 density.v

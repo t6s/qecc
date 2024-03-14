@@ -1,7 +1,7 @@
 (* Kindergarten quantum mechanics *)
 
 From mathcomp Require Import all_ssreflect all_algebra.
-Require Import lens dpower.
+Require Import lens lens_tactics dpower.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

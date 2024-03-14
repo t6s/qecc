@@ -1,5 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra complex ring.
-Require Export lens dpower unitary density endo_monoid.
+Require Export lens lens_tactics dpower unitary density endo_monoid.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -26,14 +26,14 @@ Notation "T '^^' n" := (dpower I n T).
 
 Definition ω : C := (3.-root (-1))^2.
 
-Definition hadamard_dpm : dpsquare 1 :=
+Definition hadamard_dpmatrix : dpsquare 1 :=
   (1 / Num.sqrt 3)%:C *:
     (ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦0⟩ ¦2⟩ +
      ket_bra ¦1⟩ ¦0⟩ + ket_bra ¦2⟩ ¦0⟩ +
      ω *: (ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦2⟩ ¦2⟩) +
      ω^2 *: (ket_bra ¦1⟩ ¦2⟩ + ket_bra ¦2⟩ ¦1⟩)).
 
-Definition hadamard : endo 1 := dpmor hadamard_dpm.
+Definition hadamard : endo 1 := dpmor hadamard_dpmatrix.
 
 Definition qnot12 : endo 1 :=
     dpmor [ffun vi => let i := tnth vi 0 in ¦-i⟩].
@@ -85,21 +85,6 @@ congr (dpmor _ C^o vi).
 apply/eq_from_indicesP => {vi} /=.
 do! (apply/andP; split => //); rewrite ffunE; apply/eqP/ffunP=>/=vi; rewrite ffunE.
 Admitted.
-
-Ltac simpl_tuple x :=
-  let y := fresh "y" in
-  pose y := val x;
-  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
-  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= in y;
-  rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
-
-Ltac simpl_extract :=
-  match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
-  end.
-
-Ltac simpl_merge :=
-  match goal with |- context [ merge ?a ?b ?c ?d] => simpl_tuple (merge a b c d)
-  end.
 
 Lemma swap_def :
   cnot \v cnot \v focus [lens 1; 0] cnot \v focus [lens 0] qnot12 \v cnot =e swap.

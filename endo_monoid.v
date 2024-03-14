@@ -1,7 +1,7 @@
 Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
 From HB Require Import structures.
-Require Import lens dpower unitary.
+Require Import lens lens_tactics dpower unitary.
 Require Import JMeq ProofIrrelevance FunctionalExtensionality. (* Wooh *)
 
 Set Implicit Arguments.

@@ -1,5 +1,5 @@
 From mathcomp Require Import all_ssreflect all_algebra complex.
-Require Export lens dpower unitary endo_monoid.
+Require Export lens lens_tactics dpower unitary endo_monoid.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -56,46 +56,6 @@ Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 Definition dpmerge_dpbasis := dpmerge_dpbasis (0 : I).
-
-(* A bit of automation to avoid stalling on dependent types *)
-
-Ltac succOE H n :=
-  match n with 0%N => rewrite ?succO0 in H
-  | S ?m => succOE H m; rewrite ?(@succOS _ m.+1) in H
-  end.
-
-Ltac simpl_lens x :=
-  let y := fresh "y" in
-  pose y := val (val x);
-  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
-  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= in y; succOE y 10%N;
-  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); first subst y;
-  last by eq_lens; rewrite /= ?enum_ordinalE.
-
-Ltac simpl_lens_comp :=
-  match goal with
-  |- context [ lens_comp ?a ?b ] => simpl_lens (lens_comp a b)
-  end.
-
-Goal lensC ([lens 0; 1] : lens 4 _) = [lens 2; 3].
-set x := lensC _.
-simpl_lens x.
-Abort.
-
-Ltac simpl_tuple x :=
-  let y := fresh "y" in
-  pose y := val x;
-  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
-  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= in y;
-  rewrite (_ : x = [tuple of y]); last (by eq_lens); subst y.
-
-Ltac simpl_extract :=
-  match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
-  end.
-
-Ltac simpl_merge :=
-  match goal with |- context [ merge ?a ?b ?c ?d] => simpl_tuple (merge a b c d)
-  end.
 
 (* Behavior of some gates on basis vectors *)
 

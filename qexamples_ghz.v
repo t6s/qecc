@@ -31,6 +31,19 @@ Definition ghz' n : endo n.+1 :=
             xpredT
   \v focus [lens 0] hadamard.
 
+Ltac simpl_lens x :=
+  let y := fresh "y" in
+  pose y := val (val x);
+  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
+  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= in y; succOE y 10%N;
+  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); first subst y;
+  last by eq_lens; rewrite /= ?enum_ordinalE.
+
+Ltac simpl_lens_comp :=
+  match goal with
+  |- context [ lens_comp ?a ?b ] => simpl_lens (lens_comp a b)
+  end.
+
 (* Proof of correctness *)
 Lemma ghz_def n : ghz' n =e ghz n.
 Proof.
