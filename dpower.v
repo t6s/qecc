@@ -11,7 +11,7 @@ Local Open Scope ring_scope.
 
 Reserved Notation "f \v g" (at level 50, format "f  \v  g").
 Reserved Notation "f =e g" (at level 70).
-Reserved Notation "M1 '*t' M2" (at level 50).
+Reserved Notation "M1 '*d' M2" (at level 50).
 Reserved Notation "T '^^' n " (at level 50).
 
 (* Reduce a linear form *)
@@ -91,45 +91,45 @@ Definition mor_dpcast n m (H : n = m) := Mor (dpcastN H).
 Definition eq_mor m n (f1 f2 : mor m n) := forall T, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
 
-Definition mxmor_fun m n (M : dpmatrix m n) : morfun m n :=
+Definition dpmor_fun m n (M : dpmatrix m n) : morfun m n :=
   fun T v =>
     [ffun vi : n.-tuple I => \sum_(vj : m.-tuple I) (M vj vi : R) *: v vj].
 
-Lemma mxmor_is_linear m n M T : linear (@mxmor_fun m n M T).
+Lemma dpmor_is_linear m n M T : linear (@dpmor_fun m n M T).
 Proof.
 move=> /= x y z; apply/ffunP => /= vi; rewrite !ffunE.
 rewrite scaler_sumr -big_split; apply eq_bigr => /= vj _.
 by rewrite !ffunE scalerDr !scalerA mulrC.
 Qed.
 HB.instance Definition _ m n M T :=
-  GRing.isLinear.Build _ _ _ _ _ (@mxmor_is_linear m n M T).
+  GRing.isLinear.Build _ _ _ _ _ (@dpmor_is_linear m n M T).
 
-Definition mxmorfun m n (M : dpmatrix m n) : morlin m n :=
-  fun T => @mxmor_fun m n M T.
-Definition mxmorlin m n (M : dpmatrix m n) : morlin m n :=
-  locked (mxmorfun M).
+Definition dpmorfun m n (M : dpmatrix m n) : morlin m n :=
+  fun T => @dpmor_fun m n M T.
+Definition dpmorlin m n (M : dpmatrix m n) : morlin m n :=
+  locked (dpmorfun M).
 
-Lemma mxmorN m n M : naturality (@mxmorlin m n M).
+Lemma dpmorN m n M : naturality (@dpmorlin m n M).
 Proof.
 move=> T1 T2 h /= v; apply/ffunP => /= vi.
-rewrite /mxmorlin -lock !ffunE linear_sum; apply eq_bigr => vj _.
+rewrite /dpmorlin -lock !ffunE linear_sum; apply eq_bigr => vj _.
 by rewrite linearZ_LR !ffunE.
 Qed.
 
-Definition mxmor m n (M : dpmatrix m n) : mor m n :=
-  Mor (mxmorN M).
+Definition dpmor m n (M : dpmatrix m n) : mor m n :=
+  Mor (dpmorN M).
 
-Lemma mxmorE m n (M : dpmatrix m n) T v vi :
-  mxmor M T v vi = \sum_(vj : m.-tuple I) (M vj vi : R) *: v vj.
-Proof. by rewrite /mxmor /mxmorlin /= -lock !ffunE. Qed.
+Lemma dpmorE m n (M : dpmatrix m n) T v vi :
+  dpmor M T v vi = \sum_(vj : m.-tuple I) (M vj vi : R) *: v vj.
+Proof. by rewrite /dpmor /dpmorlin /= -lock !ffunE. Qed.
 
 Definition dpbasis m (vi : m.-tuple I) : R^o^^m :=
   [ffun vj => (vi == vj)%:R].
 
-Definition mormx m n (f : morlin m n) : dpmatrix m n :=
+Definition mordp m n (f : morlin m n) : dpmatrix m n :=
   [ffun vi => f _ (dpbasis vi)].
 
-Lemma mormx_eq m n (f g : mor m n) : f =e g -> mormx f = mormx g.
+Lemma mordp_eq m n (f g : mor m n) : f =e g -> mordp f = mordp g.
 Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
 Lemma sum_muleqr (A : finType) (S : comRingType) (F : A -> S) (v : A) :
@@ -143,10 +143,10 @@ Lemma sum_dpbasisKo n (vi : n.-tuple I) (F : n.-tuple I -> R) :
   (\sum_vj (F vj *: dpbasis vi vj) = F vi).
 Proof. under eq_bigr do rewrite !ffunE. by rewrite sum_muleqr. Qed.
 
-Lemma mxmorK m n : cancel (@mxmor m n) (@mormx m n).
+Lemma dpmorK m n : cancel (@dpmor m n) (@mordp m n).
 Proof.
 move=> M; apply/ffunP => vi; apply/ffunP=> vj.
-by rewrite !ffunE !mxmorE sum_dpbasisKo.
+by rewrite !ffunE !dpmorE sum_dpbasisKo.
 Qed.
 
 Lemma dpbasisC m (vi vj : m.-tuple I) : dpbasis vi vj = dpbasis vj vi.
@@ -159,9 +159,9 @@ rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
-Lemma mxmor_dpbasis m n (M : dpmatrix m n) vi :
-  mxmor M R^o (dpbasis vi) = M vi.
-Proof. apply/ffunP => /= vj; by rewrite mxmorE sum_dpbasisKo. Qed.
+Lemma dpmor_dpbasis m n (M : dpmatrix m n) vi :
+  dpmor M R^o (dpbasis vi) = M vi.
+Proof. apply/ffunP => /= vj; by rewrite dpmorE sum_dpbasisKo. Qed.
 
 Section scalerv.
 Variables (T : lmodType R) (v : T).
@@ -178,21 +178,21 @@ apply/ffunP => vi; rewrite sum_ffunE -[LHS]sum_dpbasisK /=.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE dpbasisC.
 Qed.
 
-Lemma mormxK n m (f : mor m n) : mxmor (mormx f) =e f.
+Lemma mordpK n m (f : mor m n) : dpmor (mordp f) =e f.
 Proof.
 move=> T v.
 rewrite [in RHS](decompose_dpower v) linear_sum.
-apply/ffunP => /= vi; rewrite mxmorE sum_ffunE /=.
+apply/ffunP => /= vi; rewrite dpmorE sum_ffunE /=.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 by rewrite -(morN f (scalerv (v vj)) (dpbasis vj)) ffunE.
 Qed.
 
 Lemma naturalityP m n (f : morlin m n) :
-  naturality f <-> exists M, forall T, f T =1 mxmor M T.
+  naturality f <-> exists M, forall T, f T =1 dpmor M T.
 Proof.
 split.
-- move=> Nf. by exists (mormx f) => v T; rewrite (mormxK (Mor Nf)).
-- case=> M Nf T1 T2 h v. by rewrite !Nf mxmorN.
+- move=> Nf. by exists (mordp f) => v T; rewrite (mordpK (Mor Nf)).
+- case=> M Nf T1 T2 h v. by rewrite !Nf dpmorN.
 Qed.
 
 Let Ro : lmodType R := R^o.
@@ -220,10 +220,10 @@ Definition ket_bra m n (ket : R^o^^m) (bra : R^o^^n) : dpmatrix n m :=
 Definition dpmul m n p (M1 : dpmatrix m n) (M2 : dpmatrix p m) : dpmatrix p n :=
   [ffun vj => [ffun vi => \sum_vk M1 vk vi * M2 vj vk]].
 
-Notation "M1 '*t' M2" := (dpmul M1 M2).
+Notation "M1 '*d' M2" := (dpmul M1 M2).
 
 Lemma dpmulA m n p q (M1 : dpmatrix m n) (M2 : dpmatrix p m) (M3 : dpmatrix q p) :
-  (M1 *t M2) *t M3 = M1 *t (M2 *t M3).
+  (M1 *d M2) *d M3 = M1 *d (M2 *d M3).
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE.
 under eq_bigr do rewrite !ffunE big_distrl /=.
@@ -232,16 +232,16 @@ by rewrite !ffunE big_distrr /=; apply eq_bigr => vl _; rewrite mulrA.
 Qed.
 
 (* Find a better name or use ring structure *)
-Definition idts m : dpsquare m := [ffun vi => dpbasis vi].
+Definition id_dpmatrix m : dpsquare m := [ffun vi => dpbasis vi].
 Definition idmorlin n : morlin n n := fun T => idfun.
 Lemma idmorN n : naturality (idmorlin n).
 Proof. done. Qed.
 Definition idmor n := Mor (@idmorN n).
 
-Lemma idmorE n : idmor n =e mxmor (idts n).
+Lemma idmorE n : idmor n =e dpmor (id_dpmatrix n).
 Proof.
 move=> T v; apply/ffunP => vi.
-rewrite /idmor mxmorE /=.
+rewrite /idmor dpmorE /=.
 by under eq_bigr do rewrite ffunE; rewrite sum_dpbasisK.
 Qed.
 
@@ -338,11 +338,11 @@ Section inner_prod_coprod.
 Variable n : nat.
 Let cast_uncurry T := dpmap (m:=n) (dpcast (T:=T) (esym (addKn n n))).
 Definition M_inner_coprod (M : dpsquare n) :=
-  mxmor (curry0 (uncurry (lens_left n n) (cast_uncurry M))).
+  dpmor (curry0 (uncurry (lens_left n n) (cast_uncurry M))).
 Definition M_inner_prod (M : dpsquare n) :=
-  mxmor (curryn0 (uncurry (lens_left n n) (cast_uncurry M))).
-Definition inner_prod : mor (n+n) 0 := M_inner_prod (idts _).
-Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (idts _).
+  dpmor (curryn0 (uncurry (lens_left n n) (cast_uncurry M))).
+Definition inner_prod : mor (n+n) 0 := M_inner_prod (id_dpmatrix _).
+Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (id_dpmatrix _).
 End inner_prod_coprod.
 
 Section dpaux.
@@ -464,10 +464,10 @@ Lemma focusN f : naturality (focuslin f).
 Proof.
 case/naturalityP: (morN f) => M NM.
 apply/naturalityP.
-exists (mormx (focuslin (mxmor M))).
+exists (mordp (focuslin (dpmor M))).
 move=> T /= v; apply/ffunP => /= vi.
-rewrite mxmorE !ffunE NM mxmorE sum_ffunE.
-under [RHS]eq_bigr do rewrite !ffunE mxmorE sum_ffunE scaler_suml.
+rewrite dpmorE !ffunE NM dpmorE sum_ffunE.
+under [RHS]eq_bigr do rewrite !ffunE dpmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_dpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
@@ -550,9 +550,9 @@ Lemma asym_focusN n m p l l' tr :
   naturality (@asym_focus_fun n m p l l' tr).
 Proof.
 case/naturalityP: (morN tr) => M /= NM; apply/naturalityP.
-exists (mormx (asym_focus_fun l l' (mxmor M))).
-move=> T /= v; apply/ffunP => /= vi; rewrite mxmorE !ffunE NM mxmorE sum_ffunE.
-under [RHS]eq_bigr do rewrite !ffunE mxmorE sum_ffunE scaler_suml.
+exists (mordp (asym_focus_fun l l' (dpmor M))).
+move=> T /= v; apply/ffunP => /= vi; rewrite dpmorE !ffunE NM dpmorE sum_ffunE.
+under [RHS]eq_bigr do rewrite !ffunE dpmorE sum_ffunE scaler_suml.
 rewrite exchange_big /=; apply eq_bigr => vj _.
 rewrite [in LHS](decompose_dpower v) !ffunE sum_ffunE scaler_sumr.
 by apply eq_bigr => i _; rewrite !ffunE !scalerA.
@@ -576,7 +576,7 @@ Proof.
 case/naturalityP: (morN tr) => [f Hf] T v.
 rewrite /= focusE.
 apply/ffunP => /= vi.
-rewrite !{}Hf {tr} !ffunE !mxmorE sum_ffunE.
+rewrite !{}Hf {tr} !ffunE !dpmorE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
 congr (_ *: v _).
 apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
@@ -624,13 +624,13 @@ move=> T v; apply/ffunP => /= vi.
 by rewrite !focusE /= uncurryK.
 Qed.
 
-Lemma mxmor_comp (M : dpmatrix m n)  (N : dpmatrix p m) :
-  mxmor (dpmul M N) =e mxmor M \v mxmor N.
+Lemma dpmor_comp (M : dpmatrix m n)  (N : dpmatrix p m) :
+  dpmor (M *d N) =e dpmor M \v dpmor N.
 Proof.
-move=> T v; apply/ffunP => vi; rewrite !mxmorE.
+move=> T v; apply/ffunP => vi; rewrite !dpmorE.
 under eq_bigr do rewrite !ffunE !scaler_suml.
 rewrite exchange_big /=.
-apply eq_bigr => vk _; rewrite mxmorE !(scaler_suml,scaler_sumr).
+apply eq_bigr => vk _; rewrite dpmorE !(scaler_suml,scaler_sumr).
 by apply eq_bigr => vj _; rewrite scalerA.
 Qed.
 
@@ -642,10 +642,10 @@ Proof.
 case/naturalityP: (morN tr) (morN tr') => f Hf /naturalityP [f' Hf'].
 move => Hdisj T v /=; rewrite !focusE.
 apply/ffunP => /= vi.
-rewrite 2!{}Hf 2!{}Hf' {tr tr'} !ffunE !mxmorE !sum_ffunE.
-under eq_bigr do rewrite !ffunE mxmorE !sum_ffunE scaler_sumr.
+rewrite 2!{}Hf 2!{}Hf' {tr tr'} !ffunE !dpmorE !sum_ffunE.
+under eq_bigr do rewrite !ffunE dpmorE !sum_ffunE scaler_sumr.
 rewrite exchange_big; apply eq_bigr => /= vj _.
-rewrite !ffunE mxmorE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
+rewrite !ffunE dpmorE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (f vk _ * f' vj _ *: v _).
 - by rewrite extract_merge_disjoint // disjoint_sym.
@@ -654,12 +654,12 @@ congr (f vk _ * f' vj _ *: v _).
 Qed.
 
 Lemma focus_tensor (M : dpsquare m) (M' : dpsquare n) :
-  focus (lens_left m n) (mxmor M) \v focus (lens_right m n) (mxmor M') =e
-  mxmor (tensor_dpsquare M M').
+  focus (lens_left m n) (dpmor M) \v focus (lens_right m n) (dpmor M') =e
+  dpmor (tensor_dpsquare M M').
 Proof.
 move=> T v; apply/ffunP => /= vi.
-rewrite focusE !(ffunE,mxmorE) !sum_ffunE.
-under eq_bigr do rewrite !focusE !(ffunE,mxmorE) !sum_ffunE scaler_sumr.
+rewrite focusE !(ffunE,dpmorE) !sum_ffunE.
+under eq_bigr do rewrite !focusE !(ffunE,dpmorE) !sum_ffunE scaler_sumr.
 rewrite reindex_left_right.
 apply eq_bigr => /= vj _; rewrite !ffunE !merge_extractC.
 rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
@@ -674,7 +674,7 @@ case/naturalityP: (morN tr) => f Hf T v.
 rewrite /= !focusE /= !Hf.
 rewrite /= !focusE /= !Hf {tr Hf}.
 apply/ffunP => /= vi.
-rewrite !ffunE !mxmorE (extract_lensC_comp dI) -!extract_comp.
+rewrite !ffunE !dpmorE (extract_lensC_comp dI) -!extract_comp.
 rewrite -[in RHS]lensC_in_l_comp -(lensC_notin_l_comp l l') !sum_ffunE.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _).
@@ -690,12 +690,12 @@ Lemma focus_others (l' : lens (n-m) p) (f : endo p) (t : T^^n) :
      focus l (fun _ => Linear (dpmap_linear (focus l' f T))) T t. *)
 Proof.
 case/naturalityP: (morN f) => M Hf; apply/ffunP => vi.
-rewrite /= !focusE !ffunE /= -!extract_comp !Hf !mxmorE /= !sum_ffunE.
+rewrite /= !focusE !ffunE /= -!extract_comp !Hf !dpmorE /= !sum_ffunE.
 apply eq_bigr => vj _; by rewrite !ffunE merge_comp_others.
 Qed.
 End focus_props.
 Notation "f \v g" := (comp_mor f g).
-Notation mxapp l M := (focus l (mxmor M)).
+Notation dpapp l M := (focus l (dpmor M)).
 
 (* Too complicated
 Lemma asym_focusC n m p n' m' p' (l1 : lens (m+n) m) (l2 : lens (p+n) p)
@@ -714,10 +714,10 @@ case/naturalityP: (morN f) (morN g) => Mf Hf /naturalityP [Mg Hg] T v /=.
 rewrite !focusE /=.
 apply/ffunP => /= vi.
 rewrite /asym_focus_fun 2!{}Hf {f} !{}Hg {g}.
-rewrite !ffunE !mxmorE !sum_ffunE.
-under eq_bigr do rewrite !ffunE mxmorE !sum_ffunE scaler_sumr.
+rewrite !ffunE !dpmorE !sum_ffunE.
+under eq_bigr do rewrite !ffunE dpmorE !sum_ffunE scaler_sumr.
 rewrite exchange_big; apply eq_bigr => /= vj _.
-rewrite !ffunE mxmorE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
+rewrite !ffunE dpmorE !sum_ffunE scaler_sumr; apply eq_bigr => /= vk _.
 rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (Mf vk _ * Mg vj _ *: v _).
 - apply val_inj => /=.
@@ -755,10 +755,10 @@ Qed.
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
       (M : dpsquare m) (M' : dpsquare p) :
-  mxapp l M \v mxapp l' M' =e mxapp (lens_cat H) (tensor_dpsquare M M').
+  dpapp l M \v dpapp l' M' =e dpapp (lens_cat H) (tensor_dpsquare M M').
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
-rewrite focusM (focusM _ _ (mxmor M')).
+rewrite focusM (focusM _ _ (dpmor M')).
 have /= <- := focus_comp _ _ _ v.
 move: T v; exact/focus_eq/focus_tensor.
 Qed.
@@ -786,8 +786,8 @@ End tensor_space.
 
 Notation "f1 =e f2" := (eq_mor f1 f2).
 Notation "f \v g" := (comp_mor f g).
-Notation "M1 '*t' M2" := (dpmul M1 M2).
-Notation mxapp l M := (focus l (mxmor M)).
+Notation "M1 '*d' M2" := (dpmul M1 M2).
+Notation dpapp l M := (focus l (dpmor M)).
 
 (* Conversion between dpower and vector space *)
 
@@ -912,7 +912,7 @@ Qed.
 End mxdpmatrix.
 
 Lemma dpmatrixmx_mul m n p (M1 : dpmatrix n m) (M2 : dpmatrix p n) :
-  dpmatrixmx (M1 *t M2) = dpmatrixmx M1 *m dpmatrixmx M2.
+  dpmatrixmx (M1 *d M2) = dpmatrixmx M1 *m dpmatrixmx M2.
 Proof.
 apply/matrixP => i j; rewrite !mxE !ffunE.
 rewrite (reindex (@index_of_vec I n)) /=.
@@ -921,7 +921,7 @@ exists (@vec_of_index _ dI n) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
 Lemma mxdpmatrix_mul m n p (M1 : 'M_(vsz m,vsz n)) (M2 : 'M_(vsz n,vsz p)) :
-  mxdpmatrix (M1 *m M2) = mxdpmatrix M1 *t mxdpmatrix M2.
+  mxdpmatrix (M1 *m M2) = mxdpmatrix M1 *d mxdpmatrix M2.
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE !mxE.
 rewrite (reindex (@index_of_vec I n)) /=.
@@ -929,23 +929,23 @@ rewrite (reindex (@index_of_vec I n)) /=.
 exists (@vec_of_index _ dI n) => x y; by rewrite (vec_of_indexK,index_of_vecK).
 Qed.
 
-Lemma dpmatrixmx_id m : dpmatrixmx (idts I R m) = (1%:M).
+Lemma dpmatrixmx_id m : dpmatrixmx (id_dpmatrix I R m) = (1%:M).
 Proof.
 apply/matrixP => i j; rewrite !mxE !ffunE.
 by rewrite (inj_eq (bij_inj (vec_of_index_bij dI m))) eq_sym.
 Qed.
 
-Lemma mxdpmatrix_id m : mxdpmatrix (1%:M) = idts I R m.
+Lemma mxdpmatrix_id m : mxdpmatrix (1%:M) = id_dpmatrix I R m.
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
 by rewrite (inj_eq (bij_inj (index_of_vec_bij dI m))) eq_sym.
 Qed.
 
-Lemma mul1dp m n (M : dpmatrix n m) : idts I R m *t M = M.
+Lemma mul1dp m n (M : dpmatrix n m) : id_dpmatrix I R m *d M = M.
 Proof.
 by rewrite -[LHS]dpmatrixmxK dpmatrixmx_mul dpmatrixmx_id mul1mx dpmatrixmxK.
 Qed.
-Lemma muldp1 m n (M : dpmatrix n m) : M *t idts I R n = M.
+Lemma muldp1 m n (M : dpmatrix n m) : M *d id_dpmatrix I R n = M.
 Proof.
 by rewrite -[LHS]dpmatrixmxK dpmatrixmx_mul dpmatrixmx_id mulmx1 dpmatrixmxK.
 Qed.

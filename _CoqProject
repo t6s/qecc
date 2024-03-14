@@ -3,7 +3,7 @@
 -arg -w -arg -notation-overridden
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -notation-incompatible-format
--arg -w -arg -elpi.add-const-for-axiom-or-sectionvar
+-arg -w -arg -unrecognized-unicode
 -arg -async-proofs-tac-j -arg 16
 
 lens.v

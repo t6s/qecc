@@ -7,7 +7,7 @@ Unset Printing Implicit Defensive.
 
 Arguments ord_max : clear implicits.
 
-Let succ_neq n (i : 'I_n) : widen_ord (leqnSn n) i != lift ord0 i.
+Definition succ_neq n (i : 'I_n) : widen_ord (leqnSn n) i != lift ord0 i.
 Proof. by rewrite neq_ltn /= /bump leq0n ltnSn. Qed.
 
 (* Specification *)
@@ -19,17 +19,17 @@ Definition ghz_state n : Co ^^ n.+1 :=
 (* Uses a recursive embedding through dependent pattern-matching *)
 Fixpoint ghz n :=
   match n as n return endo n.+1 with
-  | 0 => mxmor hadamard
+  | 0 => hadamard
   | m.+1 =>
-      mxapp (lens_pair (succ_neq (ord_max m))) cnot
+      focus (lens_pair (succ_neq (ord_max m))) cnot
       \v focus (lensC (lens_single (ord_max m.+1))) (ghz m)
   end.
 
 (* Alternative flat definition, using iterated composition *)
 Definition ghz' n : endo n.+1 :=
-  compn_mor (fun i : 'I_n => mxapp (lens_pair (succ_neq (rev_ord i))) cnot)
+  compn_mor (fun i : 'I_n => focus (lens_pair (succ_neq (rev_ord i))) cnot)
             xpredT
-  \v mxapp [lens 0] hadamard.
+  \v focus [lens 0] hadamard.
 
 (* Proof of correctness *)
 Lemma ghz_def n : ghz' n =e ghz n.
@@ -65,9 +65,9 @@ Qed.
 Lemma dpbasis_single (i:I) : dpbasis C [tuple i | _ < 1] = ¦ i ⟩.
 Proof. by congr dpbasis; eq_lens. Qed.
 
-Lemma ghz_state0 : ghz_state 0 = mxmor hadamard Co (dpbasis C [tuple 0| _ < 1]).
+Lemma ghz_state0 : ghz_state 0 = hadamard Co (dpbasis C [tuple 0| _ < 1]).
 Proof.
-rewrite mxmor_dpbasis !{1}ffunE /= /ghz_state.
+rewrite dpmor_dpbasis !{1}ffunE /= /ghz_state.
 by rewrite !dpbasis_single !eq_ord_tuple /= enum_ordinalE /= !linE.
 Qed.
 
@@ -82,7 +82,7 @@ congr (_ + _); rewrite dpmerge_dpbasis.
   rewrite -(extract_cst (lensC ls)) merge_extract focus_dpbasis.
   have Hex': extract lp [tuple (0:I) | _ < n.+2] = [tuple 0; 0].
     by rewrite extract_cst; eq_lens.
-  by rewrite Hex' mxmor_cnot add0r dpmerge_dpbasis -Hex' merge_extract.
+  by rewrite Hex' cnotE add0r dpmerge_dpbasis -Hex' merge_extract.
 rewrite extract_cst.
 rewrite (_ : merge _ _ _ _ =
              [tuple if i != n.+1 :> nat then 1 else 0 | i < n.+2]); last first.
@@ -93,7 +93,7 @@ rewrite (_ : merge _ _ _ _ =
 rewrite focus_dpbasis.
 rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   by eq_lens; rewrite -!tnth_nth !tnth_mktuple neq_ltn ltnSn eqxx.
-rewrite mxmor_cnot addr0 dpmerge_dpbasis.
+rewrite cnotE addr0 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
 case: tnth_mergeP => Hi ->.

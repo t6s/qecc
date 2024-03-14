@@ -19,36 +19,35 @@ Notation "¦ x1 , .. , xn ⟩" :=
   (dpbasis _ [tuple of x1 :: .. [:: xn] ..]) (at level 0).
 
 Notation focus := (focus dI).
-Notation mxapp l M := (focus l (mxmor M)).
+Notation dpapp l M := (focus l (dpmor M)).
 Notation dpsquare n := (dpmatrix I C n n).
 Notation endo n := (mor I C n n).
 Notation "T '^^' n" := (dpower I n T).
+Notation "t '!_' i" := (tnth t i) (at level 9).
 
-Definition qnot : dpsquare 1 :=
-  [ffun vi => let i := tnth vi 0 in ¦1+i⟩].
+Definition qnot : endo 1 :=
+  dpmor [ffun vi => ¦1 + vi!_0⟩].
 
-Definition cnot : dpsquare 2 :=
-  [ffun vi => let i := tnth vi 0 in let j := tnth vi 1 in ¦i, i+j⟩].
+Definition cnot : endo 2 :=
+  dpmor [ffun vi => let i := vi!_0 in let j := vi!_1 in ¦i, i+j⟩].
 
-Definition minus1 : C := -1.
-Definition opp_ket_bra n (v1 v2 : Co ^^ n) := - ket_bra v1 v2.
-
-Definition hadamard : dpsquare 1 :=
+Definition hadamard_dpmatrix : dpsquare 1 :=
   (1 / Num.sqrt 2)%:C *:
     (-ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩).
 
-Definition toffoli : dpsquare 3 :=
-  [ffun vi =>
-     let i := tnth vi 0 in let j := tnth vi 1 in let k := tnth vi 2 in
-     ¦i,j,i*j+k⟩ ].
+Definition hadamard : endo 1 := dpmor hadamard_dpmatrix.
+
+Definition toffoli : endo 3 :=
+  dpmor [ffun vi =>
+           let i := vi!_0 in let j := vi!_1 in let k := vi!_2 in ¦i,j,i*j+k⟩ ].
 (* =
   ket_bra ¦0,0,0⟩ ¦0,0,0⟩ + ket_bra ¦0,0,1⟩ ¦0,0,1⟩ +
   ket_bra ¦0,1,0⟩ ¦0,1,0⟩ + ket_bra ¦0,1,1⟩ ¦0,1,1⟩ +
   ket_bra ¦1,0,0⟩ ¦1,0,0⟩ + ket_bra ¦1,0,1⟩ ¦1,0,1⟩ +
   ket_bra ¦1,1,0⟩ ¦1,1,1⟩ + ket_bra ¦1,1,1⟩ ¦1,1,0⟩. *)
 
-Definition swap : dpsquare 2 :=
-  [ffun vi => let i := tnth vi 0 in let j := tnth vi 1 in ¦j,i⟩ ].
+Definition swap_dpmatrix : dpsquare 2 := [ffun vi => ¦ vi!_1, vi!_0 ⟩ ].
+Definition swap : endo 2 := dpmor swap_dpmatrix.
 
 (* Enumeration lemmas *)
 Notation enum_indices := (enum_indices enum2).
@@ -100,23 +99,23 @@ Ltac simpl_merge :=
 
 (* Behavior of some gates on basis vectors *)
 
-Lemma mxmor_qnot (i : I) : mxmor qnot Co ¦i⟩ = ¦1 + i⟩.
-Proof. by rewrite mxmor_dpbasis ffunE. Qed.
+Lemma qnotE (i : I) : qnot Co ¦i⟩ = ¦1 + i⟩.
+Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
-Lemma mxmor_cnot (i j : I) : mxmor cnot Co ¦i, j⟩ = ¦i, i + j⟩.
-Proof. by rewrite mxmor_dpbasis ffunE. Qed.
+Lemma cnotE (i j : I) : cnot Co ¦i, j⟩ = ¦i, i + j⟩.
+Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
-Lemma mxmor_swap (i j : I) : mxmor swap Co ¦i, j⟩ = ¦j, i⟩.
-Proof. by rewrite mxmor_dpbasis ffunE. Qed.
+Lemma swapE (i j : I) : swap Co ¦i, j⟩ = ¦j, i⟩.
+Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
 Lemma addii (i : I) : i + i = 0.
-Proof. by have:=mem_enum2 i; rewrite !inE => /orP[]/eqP->; apply/val_inj. Qed.
+Proof. by rewrite -mulr2n -mulr_natl (@char_Zp 2) // mul0r. Qed.
 
-Lemma mxmor_toffoli i j k : mxmor toffoli Co ¦i,j,k⟩ = ¦i,j,i*j+k⟩.
-Proof. by rewrite mxmor_dpbasis ffunE. Qed.
+Lemma toffoliE i j k : toffoli Co ¦i,j,k⟩ = ¦i,j,i*j+k⟩.
+Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
-Lemma mxmor_toffoli00 i : mxmor toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
-Proof. by rewrite mxmor_toffoli !linE. Qed.
+Lemma toffoli00E i : toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
+Proof. by rewrite toffoliE !linE. Qed.
 
 (* Unitarity *)
 
@@ -128,13 +127,13 @@ elim => [|a l1 IH] [|b l2] //=.
 - by rewrite !rev_cons => /rcons_inj [] /IH -> ->.
 Qed.
 
-Lemma swapS : dptranspose swap = swap.
+Lemma swapS : dptranspose swap_dpmatrix = swap_dpmatrix.
 Proof.
 apply/eq_from_indicesP; do! (apply/andP; split => //);
   apply/eqP/eq_from_indicesP; by rewrite /= !ffunE !(tnth_nth 0) /= !eqxx.
 Qed.
 
-Lemma swapU : unitary_mor (mxmor swap).
+Lemma swapU : unitary_mor swap.
 Proof.
 apply/(unitary_morP dI)/eqP.
 apply/eq_from_indicesP; do! (apply/andP; split => //);
@@ -149,12 +148,12 @@ Proof. by rewrite unitf_gt0 // -sqrtr0 ltr_sqrt ltr0Sn. Qed.
 Lemma nat_unit n : (n.+1%:R : R)%R \is a GRing.unit.
 Proof. by rewrite unitf_gt0 // ltr0Sn. Qed.
 
-Lemma hadamardK T : involutive (mxmor hadamard T).
+Lemma hadamardK T : involutive (hadamard T).
 Proof.
 have Hnn n : n.+1%:R / n.+1%:R = 1 :>R by rewrite divrr // nat_unit.
 move=> v; apply/eq_from_indicesP => //=.
-rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
-rewrite !mxmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
+rewrite !dpmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
+rewrite !dpmorE !sum_enum_indices /= !linE /= !{1}ffunE /= !linE.
 rewrite ![_ *: 1]mulr1.
 rewrite !scalerDr !scalerN ![_ *: 1]mulr1 !scalerA !(mulrN,mulNr); simpc.
 rewrite !linE -invrM ?sqrt_nat_unit // -expr2 sqr_sqrtr ?ler0n //=.

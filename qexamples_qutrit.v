@@ -33,18 +33,18 @@ Definition hadamard_dpm : dpsquare 1 :=
      ω *: (ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦2⟩ ¦2⟩) +
      ω^2 *: (ket_bra ¦1⟩ ¦2⟩ + ket_bra ¦2⟩ ¦1⟩)).
 
-Definition hadamard : endo 1 := mxmor hadamard_dpm.
+Definition hadamard : endo 1 := dpmor hadamard_dpm.
 
 Definition qnot12 : endo 1 :=
-    mxmor [ffun vi => let i := tnth vi 0 in ¦-i⟩].
+    dpmor [ffun vi => let i := tnth vi 0 in ¦-i⟩].
 
 Definition cnot : endo 2 :=
-    mxmor [ffun vi => let i := tnth vi 0 in
+    dpmor [ffun vi => let i := tnth vi 0 in
                       let j := tnth vi 1 in
                       ¦i, i + j ⟩].
 
 Definition swap : endo 2 :=
-    mxmor [ffun vi => let i := tnth vi 0 in
+    dpmor [ffun vi => let i := tnth vi 0 in
                       let j := tnth vi 1 in
                       ¦j, i ⟩].
 
@@ -64,24 +64,24 @@ Definition sum_enum_indices := sum_enum_indices uniq_enum3 mem_enum3.
 
 Lemma cnotE (i j : I) : cnot Co ¦i, j⟩ = ¦i, i + j⟩.
 Proof.
-by apply/ffunP => vi; rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
+by apply/ffunP => vi; rewrite !ffunE !dpmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
 Qed.
 
 Lemma swapE (i j : I) : swap Co ¦i, j⟩ = ¦j, i⟩.
 Proof.
-by apply/ffunP => vi; rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
+by apply/ffunP => vi; rewrite !ffunE !dpmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
 Qed.
 
 Lemma qnot12E (i : I) : qnot12 Co ¦i⟩ = ¦-i⟩.
 Proof.
-by apply/ffunP => vi; rewrite !ffunE !mxmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
+by apply/ffunP => vi; rewrite !ffunE !dpmorE /= sum_dpbasisKo !ffunE !(tnth_nth 0).
 Qed.
 
 Lemma hadamard2 : hadamard \v hadamard =e qnot12.
 Proof.
 apply/lift_mor_eq => vi.
-rewrite -mxmor_comp.
-congr (mxmor _ C^o vi).
+rewrite -dpmor_comp.
+congr (dpmor _ C^o vi).
 apply/eq_from_indicesP => {vi} /=.
 do! (apply/andP; split => //); rewrite ffunE; apply/eqP/ffunP=>/=vi; rewrite ffunE.
 Admitted.

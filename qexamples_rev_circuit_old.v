@@ -20,7 +20,7 @@ by rewrite -{3}(odd_double_half n) addnn leq_addl.
 Qed.
 
 Definition rev_circuit n : endo n :=
-  compn_mor (fun i => mxapp (lens_pair (rev_ord_neq i)) swap) xpredT.
+  compn_mor (fun i => focus (lens_pair (rev_ord_neq i)) swap) xpredT.
 
 Lemma rev_circuitU n : unitary_mor (rev_circuit n).
 Proof.
@@ -46,7 +46,7 @@ have Hn : (n.+2)./2 = (n.+1)./2.
   by move <-; rewrite -lock addnn uphalf_double half_double.
 rewrite /compn_mor.
 have Hn' : (n./2.+1 = n.+2./2)%N by [].
-set f := fun j => mxapp (lens_pair (rev_ord_neq (cast_ord Hn' (inord j)))) swap.
+set f := fun j => focus (lens_pair (rev_ord_neq (cast_ord Hn' (inord j)))) swap.
 rewrite (eq_bigr (fun j => f (val j))); last first.
   move=> j _. congr focus. congr (lens_pair (rev_ord_neq _)).
   by apply val_inj; rewrite /= inordK.
@@ -75,7 +75,7 @@ Qed.
 
 Lemma proj_focusE_swap n (i : 'I_n.+2) (v : Co ^^ n.+2) h
       (Hn : n./2.+1 = (n.+2)./2) :
-  let f j := mxapp (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap in
+  let f j := focus (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap in
   (h < n./2.+1)%N -> (n./2.+1 - h.+1)%N = i \/ (n./2.+1 - h.+1)%N = rev_ord i ->
   proj ord0 (lens_single i)
        ((\big[comp_mor(s:=n.+2)/idmor I C _]_(n./2.+1 - h <= j < n./2.+1) f j)
@@ -118,7 +118,7 @@ rewrite -IH.
 Qed.
 
 Lemma proj_swapE n (i j : 'I_n.+2) (v : Co ^^ n.+2) (Hir : i != j) :
-  proj ord0 (lens_single j) (mxapp (lens_pair Hir) swap Co v) =
+  proj ord0 (lens_single j) (focus (lens_pair Hir) swap Co v) =
   proj ord0 (lens_single i) v.
 Proof.
 have Hior : i \in lensC (lens_single j).
@@ -132,7 +132,7 @@ rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
 rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
 apply eq_bigr => /= vj _.
 apply eq_bigr => /= vk _.
-rewrite !ffunE !mxmorE.
+rewrite !ffunE !dpmorE.
 under eq_bigr do rewrite !ffunE.
 Admitted.
 (*
@@ -189,7 +189,7 @@ have Hi: ((i < n./2.+1) || (rev_ord i < n./2.+1))%N.
     by rewrite -{2}(odd_double_half n) Ho -addnn !addnA addnK.
 rewrite /rev_circuit.
 have Hn : (n./2.+1 = n.+2./2)%N by [].
-set f := fun j => mxapp (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap.
+set f := fun j => focus (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap.
 rewrite /compn_mor (eq_bigr (fun j => f (val j))); last first.
   move=> j _. congr focus. congr (lens_pair (rev_ord_neq _)).
   by apply val_inj => /=; rewrite inordK // Hn.
@@ -242,7 +242,7 @@ case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
   rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
   apply eq_bigr => vj _.
   apply eq_bigr => vk _.
-  rewrite !ffunE !mxmorE.
+  rewrite !ffunE !dpmorE.
   under eq_bigr do rewrite !ffunE.
 Abort.
 (*

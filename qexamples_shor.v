@@ -8,16 +8,16 @@ Unset Printing Implicit Defensive.
 Section shor_code.
 
 Definition bit_flip_enc : endo 3 :=
-  mxapp [lens 0; 2] cnot \v  mxapp [lens 0; 1] cnot.
+  focus [lens 0; 2] cnot \v  focus [lens 0; 1] cnot.
 
 Definition bit_flip_dec : endo 3 :=
-  mxapp [lens 1; 2; 0] toffoli \v bit_flip_enc.
+  focus [lens 1; 2; 0] toffoli \v bit_flip_enc.
 
 Definition bit_flip_code (chan : endo 3) : endo 3 :=
   bit_flip_dec \v chan \v bit_flip_enc.
 
 Definition hadamard3 : endo 3 :=
-  mxapp [lens 2] hadamard \v mxapp [lens 1] hadamard \v mxapp [lens 0] hadamard.
+  focus [lens 2] hadamard \v focus [lens 1] hadamard \v focus [lens 0] hadamard.
 
 Definition sign_flip_dec := bit_flip_dec \v hadamard3.
 Definition sign_flip_enc := hadamard3 \v bit_flip_enc.
@@ -44,17 +44,17 @@ Proof.
 rewrite /=.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite mxmor_cnot.
+rewrite cnotE.
 rewrite dpmerge_dpbasis.
 simpl_merge.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite mxmor_cnot dpmerge_dpbasis.
+rewrite cnotE dpmerge_dpbasis.
 by simpl_merge.
 Qed.
 
 Lemma bit_flip_toffoli :
-  (bit_flip_dec \v bit_flip_enc) =e mxapp [lens 1; 2; 0] toffoli.
+  (bit_flip_dec \v bit_flip_enc) =e focus [lens 1; 2; 0] toffoli.
 Proof.
 apply/lift_mor_eq => v.
 rewrite (decompose_dpower v) !linear_sum.
@@ -64,23 +64,22 @@ rewrite dpmap_scale !linearZ_LR /bit_flip_dec 2!comp_morE 2!bit_flip_enc_ok.
 by rewrite !addrA !addii !add0r.
 Qed.
 
-Lemma toffoli_involutive :
-  mxmor toffoli \v mxmor toffoli =e idmor I C 3.
+Lemma toffoli_involutive : toffoli \v toffoli =e idmor I C 3.
 Proof.
 apply/lift_mor_eq => v.
 rewrite (decompose_dpower v) !linear_sum.
 apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
 simpl_tuple (Tuple Hi).
-by rewrite dpmap_scale !linearZ_LR comp_morE !mxmor_toffoli addrA addii add0r.
+by rewrite dpmap_scale !linearZ_LR comp_morE !toffoliE addrA addii add0r.
 Qed.
 
 (* Not used
-Lemma mxmor_hadamard0 :
-  mxmor hadamard Co ¦ 0 ⟩ =
+Lemma hadamard0E :
+  hadamard Co ¦ 0 ⟩ =
   (1 / Num.sqrt 2)%:C *: \sum_(vi : 1.-tuple I) (dpbasis C vi).
 Proof.
 apply/ffunP => vi.
-rewrite mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 !subr0.
+rewrite dpmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !addr0 !subr0.
 rewrite ![_ *: 1]mulr1 !linE /= sum_ffun ffunE.
 have -> : \sum_i dpbasis C i vi = \sum_i [ffun _ => 1] i *: dpbasis C vi i.
   by apply eq_bigr=> i _; rewrite ffunE scale1r dpbasisC.
@@ -92,13 +91,13 @@ Qed.
 Definition parity n (vi : n.-tuple I) : nat :=
   \sum_(i <- vi) i.
 
-Lemma mxmor_hadamard1 :
-  mxmor hadamard Co ¦ 1 ⟩ =
+Lemma hadamard1E :
+  hadamard Co ¦ 1 ⟩ =
   (1 / Num.sqrt 2)%:C *:
   \sum_(vi : 1.-tuple I) (-1)^+ (parity vi) *: dpbasis C vi.
 Proof.
 apply/ffunP => vi.
-rewrite mxmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !linE.
+rewrite dpmorE sum_dpbasisKo !ffunE !eq_ord_tuple /= !scaler0 !linE.
 rewrite ![_ *: 1]mulr1 /= sum_ffun ffunE.
 have -> : \sum_i ((-1) ^+ parity i *: dpbasis C i) vi
           = \sum_i [ffun i => (-1) ^+ parity i] i *: dpbasis C vi i.
@@ -112,19 +111,19 @@ Qed.
 
 (* sign flip code *)
 Lemma sign_flip_toffoli :
-  (sign_flip_dec \v sign_flip_enc) =e mxapp [lens 1; 2; 0] toffoli.
+  (sign_flip_dec \v sign_flip_enc) =e focus [lens 1; 2; 0] toffoli.
 Proof.
 rewrite /sign_flip_dec /sign_flip_enc => T v /=.
-rewrite [mxapp [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
-rewrite [mxapp [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
-rewrite [mxapp [lens 1] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
-have HK (l : lens 3 1) : mxapp l hadamard \v mxapp l hadamard =e idmor I C 3.
+rewrite [focus [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [focus [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [focus [lens 1] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
+have HK (l : lens 3 1) : focus l hadamard \v focus l hadamard =e idmor I C 3.
   move=> U w.
   rewrite -focus_comp (focus_eq dI l (f2:=idmor I C 1)) ?focus_idmor //.
   exact/hadamardK.
-rewrite [mxapp [lens 0] hadamard _ _]HK.
-rewrite [mxapp [lens 1] hadamard _ _]HK.
-rewrite [mxapp [lens 2] hadamard _ _]HK.
+rewrite [focus [lens 0] hadamard _ _]HK.
+rewrite [focus [lens 1] hadamard _ _]HK.
+rewrite [focus [lens 2] hadamard _ _]HK.
 by rewrite -[RHS]bit_flip_toffoli.
 Qed.
 
@@ -162,15 +161,15 @@ transitivity (focus [lens 0; 3; 6]
   do 3 simpl_lens_comp.
   rewrite focus_dpbasis_id; last first.
     simpl_extract.
-    rewrite mxmor_toffoli.
+    rewrite toffoliE.
     by rewrite !linE.
   by do 2!(rewrite focus_dpbasis_id;
-           last by simpl_extract; rewrite mxmor_toffoli !linE).
+           last by simpl_extract; rewrite toffoliE !linE).
 rewrite focus_dpbasis_id //.
 simpl_extract.
 rewrite sign_flip_toffoli focus_dpbasis_id //.
 simpl_extract.
-by rewrite mxmor_toffoli !linE.
+by rewrite toffoliE !linE.
 Qed.
 
 End shor_code.

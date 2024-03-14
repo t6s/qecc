@@ -16,7 +16,6 @@ Section endo_monoid.
 Variables (I : finType) (dI : I).
 
 Notation focus := (focus dI).
-Notation mxapp l M := (focus l (mxmor M)).
 Local Notation "T '^^' n" := (dpower I n T).
 
 Section com_ring.

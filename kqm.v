@@ -58,7 +58,7 @@ Lemma cup_sym n (l1 l2 : lens (2+n) 2) :
 Proof.
 move=> Hrev T v.
 apply/ffunP => vi.
-rewrite !(ffunE,mxmorE) !cast_tupleE !(big_pred1 [tuple]); try by case => -[].
+rewrite !(ffunE,dpmorE) !cast_tupleE !(big_pred1 [tuple]); try by case => -[].
 rewrite !ffunE -!extract_comp.
 rewrite -(lens_comp_rev_left Hrev) -(lens_comp_rev_left (l1:=l2) (l2:=l1));
   last by rewrite -Hrev revK.
@@ -74,13 +74,13 @@ Qed.
 *)
 
 Lemma transpose_cup (M : dpsquare 1) :
-  focus [lens 0] (mxmor M) \v cup (n:=1) [lens 0; 1] =e
-  focus [lens 1] (mxmor (dptranspose M)) \v cup [lens 0; 1].
+  focus [lens 0] (dpmor M) \v cup (n:=1) [lens 0; 1] =e
+  focus [lens 1] (dpmor (dptranspose M)) \v cup [lens 0; 1].
 Proof.
 move=> T v /=.
 apply/ffunP => vi /=.
 rewrite /asym_focus_fun !focusE /=.
-do! rewrite !(mxmorE,ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
+do! rewrite !(dpmorE,ffunE,sum_ffunE,sum_enum_indices) /= !addr0 !ffunE.
 rewrite !lens_left_1.
 have -> : lensC [lens 0] = [lens 1] by eq_lens.
 rewrite !cast_tupleE /= -!extract_comp.
@@ -105,10 +105,10 @@ move=> T /= v.
 rewrite /asym_focus_fun.
 apply/ffunP => t /=.
 rewrite /inner_prod /inner_coprod /M_inner_prod /M_inner_coprod.
-rewrite {1}/uncurry !ffunE /= !mxmorE sum_enum_indices /= !ffunE /=.
+rewrite {1}/uncurry !ffunE /= !dpmorE sum_enum_indices /= !ffunE /=.
 rewrite -!cat_2tuple !extract_lens_left.
 rewrite !(extract_eq_cast (lensC_left 1 1)) !extract_lens_right /= !linE.
-rewrite !mxmorE !sum_enum_indices /= !ffunE /= !addr0.
+rewrite !dpmorE !sum_enum_indices /= !ffunE /= !addr0.
 apply/eqP; move: t; apply/forall_indicesP.
 rewrite /= andbT; apply/andP.
 (* brute force *)
@@ -119,8 +119,8 @@ split; apply/eqP/f_equal/eqP;
 Qed.
 
 Lemma transpose_focus (M : dpsquare 1) :
-  mxmor (dptranspose M) =e
-  cap [lens 1; 2] \v focus [lens 1] (mxmor M) \v cup [lens 0; 1].
+  dpmor (dptranspose M) =e
+  cap [lens 1; 2] \v focus [lens 1] (dpmor M) \v cup [lens 0; 1].
 Proof.
 rewrite -{2}(dptransposeK M).
 move=> T v.
@@ -129,13 +129,13 @@ move: (transpose_cup (dptranspose M) v) => /= <-.
 set mycup := asym_focus_fun dI ([lens] : lens (0+1) 0)
                   ([lens 0; 1] : lens (2+1) 2) (inner_coprod I R 1) v.
 move: (asym_focusC dI ([lens 1; 2] : lens (2+1) 2) ([lens] : lens (0+1) 0)
-                   (inner_prod I R 1) (mxmor (dptranspose M)) mycup).
+                   (inner_prod I R 1) (dpmor (dptranspose M)) mycup).
 rewrite !cast_lensE.
 have -> : lensC [lens 1; 2] = [lens 0] by eq_lens.
 move=> /= <-.
 subst mycup.
 move: (straighten v) => /= ->.
 have <- : lens_id 1 = lensC [lens] by eq_lens.
-by rewrite (focusI dI (mxmor (dptranspose M)) v).
+by rewrite (focusI dI (dpmor (dptranspose M)) v).
 Qed.
 End transpose.

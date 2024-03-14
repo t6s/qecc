@@ -19,8 +19,6 @@ Variable dI : I.
 
 (* Type of density matrices over C *)
 Notation dpsquare n := (dpmatrix I C n n).
-Notation idts := (idts I C).
-Notation dpmatrixmx := (dpmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
@@ -36,7 +34,7 @@ Definition pure_density n (v : Co ^^ n) : dpsquare n :=
 
 (* Complex conjugate vector space functor *)
 Definition conj_mor m n (f : mor m n) : mor m n :=
-  mxmor (dpmap (dpmap conjCo) (mormx f)).
+  dpmor (dpmap (dpmap conjCo) (mordp f)).
 
 (* WIP: application of a morphism to a density matrix *)
 (* U rho U^dagger *)
@@ -48,7 +46,7 @@ Lemma dpmap_conjCo m n (f : mor m n) v :
 Proof.
 (* Does mathcomp 2.0 improve the type printed for v ? *)
 apply/ffunP => vj.
-rewrite mxmorE.
+rewrite dpmorE.
 under eq_bigr do rewrite !ffunE /= -/Co.
 rewrite [in LHS](decompose_scaler v) /conjCo.
 rewrite !linear_sum !ffunE sum_ffunE linear_sum /=.
@@ -69,7 +67,7 @@ Lemma focus_conj_mor n m (l : lens n m) (f : endo m) :
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
-rewrite focusE !ffunE !mxmorE sum_ffunE (reindex_merge _ dI l) /=.
+rewrite focusE !ffunE !dpmorE sum_ffunE (reindex_merge _ dI l) /=.
 apply eq_bigr => vi _.
 rewrite !ffunE /= /conjCo -/Co.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= curry_dpbasis.
@@ -81,7 +79,7 @@ Qed.
 
 (* The adjoint morphism (going through matrix representation) *)
 Definition adjoint_mor m n (f : mor m n) : mor n m :=
-  mxmor (dpmxadjoint (mormx f)).
+  dpmor (dpadjoint (mordp f)).
 
 (* Focus and adjunction commute *)
 Lemma focus_adjoint_mor n m (l : lens n m) (f : endo m) :
@@ -89,7 +87,7 @@ Lemma focus_adjoint_mor n m (l : lens n m) (f : endo m) :
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
-rewrite focusE !ffunE !mxmorE sum_ffunE (reindex_merge _ dI l) /=.
+rewrite focusE !ffunE !dpmorE sum_ffunE (reindex_merge _ dI l) /=.
 apply eq_bigr => vi _.
 rewrite !ffunE -/Co.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= extract_merge extractC_merge.
@@ -155,7 +153,7 @@ Proof.
 apply/ffunP=> v; apply/ffunP=> w /=.
 rewrite ffunE.
 move/naturalityP: (morN f) => [M Hf].
-rewrite !Hf !ffunE !mxmorE sum_ffunE.
+rewrite !Hf !ffunE !dpmorE sum_ffunE.
 apply eq_bigr => vj _.
 by rewrite !ffunE.
 Qed.
