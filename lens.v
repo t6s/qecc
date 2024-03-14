@@ -582,6 +582,18 @@ Proof. exact/sorted_filter/sorted_enum/ltn_trans. Qed.
 Definition merge (v : m.-tuple I) (w : (n-m).-tuple I) :=
   [tuple nth (nth dI w (index i lensC)) v (index i l) | i < n].
 
+Definition nth_free_index j :=
+  \big[minn/n-m]_(k:'I_n.+1 | #|[set i | (i \notin l) && (i <= k)]| == j.+1) k.
+(*
+Lemma nth_free_index_ok j : tnth lensC j = nth_free_index j :> nat.
+Proof.
+have Hjn : j < n by rewrite (leq_trans (ltn_ord j)) // leq_subLR leq_addl.
+rewrite (tnth_nth (Ordinal Hjn)) /=.
+case: j Hjn => /= j _.
+elim: j => [|j IH] Hjn.
+rewrite /nth_free_index.
+*)
+
 Lemma tnth_merge i vi vj (Hil : i \in l) :
   tnth (merge vi vj) i = tnth vi (lens_index Hil).
 Proof.
