@@ -31,19 +31,6 @@ Definition ghz' n : endo n.+1 :=
             xpredT
   \v focus [lens 0] hadamard.
 
-Ltac simpl_lens x :=
-  let y := fresh "y" in
-  pose y := val (val x);
-  rewrite /= ?(tnth_nth 0) /= in y; unfold seq_lensC in y;
-  rewrite /= ?enum_ordinalE /= ?(tnth_nth 0) /= in y; succOE y 10%N;
-  rewrite (_ : x = @mkLens _ _ [tuple of y] erefl); first subst y;
-  last by eq_lens; rewrite /= ?enum_ordinalE.
-
-Ltac simpl_lens_comp :=
-  match goal with
-  |- context [ lens_comp ?a ?b ] => simpl_lens (lens_comp a b)
-  end.
-
 (* Proof of correctness *)
 Lemma ghz_def n : ghz' n =e ghz n.
 Proof.
@@ -109,10 +96,13 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
 rewrite cnotE addr0 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
-case: tnth_mergeP => Hi ->.
-- rewrite -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)).
+(* case: tnth_mergeP => Hi ->. *)
+case/boolP: (i \in lp) => Hi.
+- rewrite tnth_merge -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)).
   by congr tnth; eq_lens.
-- rewrite tnth_extract tnth_lens_index tnth_mktuple ifT //.
-  move: Hi; rewrite mem_lensC; apply contra => /eqP Hi.
-  by rewrite !inE; apply/orP/or_intror/eqP/val_inj.
+- rewrite -mem_lensC in Hi.
+  rewrite tnth_mergeC tnth_extract tnth_mktuple.
+  rewrite tnth_lens_index ifT //.
+  move: Hi; rewrite mem_lensC !inE; apply contra.
+  by move/eqP => Hi; apply/orP/or_intror/eqP/val_inj.
 Qed.
