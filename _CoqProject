@@ -6,6 +6,7 @@
 -arg -w -arg -unrecognized-unicode
 -arg -async-proofs-tac-j -arg 16
 
+mathcomp_extra.v
 lens.v
 lens_tactics.v
 dpower.v
