@@ -390,7 +390,10 @@ Definition ptracefun (T : lmodType R) (v : T^^m) : T^^m :=
 Lemma ptrace_is_linear T : linear (@ptracefun T).
 Proof.
 move=> a x y; rewrite /ptracefun !linear_sum -big_split /=.
-apply eq_bigr => vi _; by rewrite !linearP.
+apply eq_bigr => vi _.
+rewrite [dpmap (dpsingle _) _]linearP [uncurry _ _]linearP [f _ _]linearP /=.
+rewrite (@linearP R (T ^^ _) ((T ^^ (n-m)) ^^ m)) /=.
+by rewrite (@linearP R ((T ^^ (n-m)) ^^ m) (T ^^ m)) /=.
 Qed.
 HB.instance Definition _ T :=
   GRing.isLinear.Build _ _ _ _ _ (@ptrace_is_linear T).
@@ -431,7 +434,10 @@ rewrite (reindex_inj (@extract_inj _ (lens_perm (lensC_in_l l1 l2)) _)).
 rewrite (reindex _
     (onW_bij _ (cast_tuple_bij _ (esym (cast_lensC_notin_l' l1 l2))))) /=.
 apply eq_bigr => /= vj _.
-rewrite !linear_sum sum_ffunE.
+rewrite /ptracefun.
+rewrite (@linear_sum R (T ^^ m) ((T ^^ (m-p)) ^^ p)) /=.
+rewrite (@linear_sum R ((T ^^ (m-p)) ^^ p) (T ^^ p)).
+rewrite (*!linear_sum*) sum_ffunE.
 apply eq_bigr => /= vk _.
 rewrite /dpsel !ffunE.
 f_equal; last by rewrite merge_lensC_notin_l; apply: merge_comp.
@@ -538,9 +544,10 @@ Definition asym_focus_fun : morfun (m + n) (p + n) :=
 
 Lemma asym_focus_is_linear T : linear (@asym_focus_fun T).
 Proof.
-move=> x y z.
-apply/ffunP => vi. rewrite !ffunE.
-by rewrite !linearP !ffunE.
+move=> /= x y z.
+apply/ffunP => /= vi. rewrite !ffunE /=.
+rewrite (@linearP R (T ^^ (m+n)) ((T ^^ (m+n-m)) ^^ m)) /=.
+by rewrite linearP !ffunE.
 Qed.
 HB.instance Definition _ T :=
   GRing.isLinear.Build _ _ _ _ _ (@asym_focus_is_linear T).
