@@ -542,12 +542,12 @@ Proof. by rewrite mem_lensC => /negP. Qed.
 
 Lemma tnth_merge_cases i vi vj :
   tnth (merge vi vj) i =
-  match Bool.bool_dec (i \in l) true with
-  | left H => tnth vi (lens_index H)
-  | right H => tnth vj (lens_index (mem_lensCF H))
+  match  i \in l =P true with
+  | ReflectT H => tnth vi (lens_index H)
+  | ReflectF H => tnth vj (lens_index (mem_lensCF H))
   end.
 Proof.
-case: Bool.bool_dec => ?; by rewrite -(tnth_merge _ vj,tnth_mergeC vi).
+case: eqP => ?; by rewrite -(tnth_merge _ vj,tnth_mergeC vi).
 Qed.
 
 Lemma extract_merge v1 v2 : extract l (merge v1 v2) = v1.
