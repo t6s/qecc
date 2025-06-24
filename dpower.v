@@ -809,6 +809,9 @@ Notation "''dpM[' T ]_ ( m , n )" := (dpmatrix _ T m n) (only parsing)
     : type_scope.
 Notation "''dpM[' T ]_ n" := 'dpM[T]_(n, n) (only parsing) : type_scope.
 Notation "''dpM[' T ]_ ( n )" := 'dpM[T]_n (only parsing) : type_scope.
+Notation "''dpM_' ( m , n )" := 'dpM[_ ^o]_(m, n) : type_scope.
+Notation "''dpM_' n" := 'dpM_(n, n) : type_scope.
+Notation "''dpM_' ( n )" := 'dpM_n (only parsing) : type_scope.
 
 (* Conversion between dpower and vector space *)
 
@@ -910,9 +913,6 @@ Section vector.
 Variable (I : finType) (R : comRingType) (dI : I).
 Let vsz m := (#|I| ^ m)%N.
 Local Notation "T '^^' n" := (dpower I n T).
-Notation "''dpM_' ( m , n )" := 'dpM[R^o]_(m, n) : type_scope.
-Notation "''dpM_' n" := 'dpM_(n, n) : type_scope.
-Notation "''dpM_' ( n )" := 'dpM_n (only parsing) : type_scope.
 
 Section mxdpmatrix.
 Variables m n : nat.
