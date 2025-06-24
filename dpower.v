@@ -13,6 +13,16 @@ Reserved Notation "f \v g" (at level 50, format "f  \v  g").
 Reserved Notation "f =e g" (at level 70).
 Reserved Notation "M1 '*d' M2" (at level 50).
 Reserved Notation "T '^^' n " (at level 50).
+Reserved Notation "''dpM_' n"
+  (at level 8, n at level 2, format "''dpM_' n").
+Reserved Notation "''dpM_' ( m , n )"
+  (at level 8, format "''dpM_' ( m ,  n )").
+Reserved Notation "''dpM[' R ]_ n"
+  (at level 8, n at level 2). (* only parsing *)
+Reserved Notation "''dpM[' R ]_ ( n )"
+  (at level 8). (* only parsing *)
+Reserved Notation "''dpM[' R ]_ ( m , n )"
+  (at level 8). (* only parsing *)
 
 (* Reduce a linear form *)
 Definition linE :=
@@ -27,8 +37,15 @@ Local Notation "T '^^' n " := (dpower n T).
 Definition morfun m n := forall T : lmodType R, T^^m -> T^^n.
 Definition morlin m n :=
   forall T : lmodType R, {linear T^^m -> T^^n}.
-Definition dpmatrix m n := R^o ^^n ^^m.
-Notation dpsquare n := (dpmatrix n n).
+Definition dpmatrix T m n := T ^^n ^^m.
+Notation "''dpM[' T ]_ ( m , n )" := (dpmatrix T m n) (only parsing)
+    : type_scope.
+Notation "''dpM[' T ]_ n" := 'dpM[T]_(n, n) (only parsing) : type_scope.
+Notation "''dpM[' T ]_ ( n )" := 'dpM[T]_n (only parsing) : type_scope.
+Notation "''dpM_' ( m , n )" := 'dpM[R^o]_(m, n) : type_scope.
+Notation "''dpM_' n" := 'dpM_(n, n) : type_scope.
+Notation "''dpM_' ( n )" := 'dpM_n (only parsing) : type_scope.
+(*Notation dpsquare T n := (dpmatrix n n).*)
 Notation endofun n := (morfun n n).
 Notation endolin n := (morlin n n).
 
@@ -91,7 +108,7 @@ Definition mor_dpcast n m (H : n = m) := Mor (dpcastN H).
 Definition eq_mor m n (f1 f2 : mor m n) := forall T, f1 T =1 f2 T.
 Notation "f1 =e f2" := (eq_mor f1 f2).
 
-Definition dpmor_fun m n (M : dpmatrix m n) : morfun m n :=
+Definition dpmor_fun m n (M : 'dpM_(m,n)) : morfun m n :=
   fun T v =>
     [ffun vi : n.-tuple I => \sum_(vj : m.-tuple I) (M vj vi : R) *: v vj].
 
@@ -104,9 +121,9 @@ Qed.
 HB.instance Definition _ m n M T :=
   GRing.isLinear.Build _ _ _ _ _ (@dpmor_is_linear m n M T).
 
-Definition dpmorfun m n (M : dpmatrix m n) : morlin m n :=
+Definition dpmorfun m n (M : 'dpM_(m,n)) : morlin m n :=
   fun T => @dpmor_fun m n M T.
-Definition dpmorlin m n (M : dpmatrix m n) : morlin m n :=
+Definition dpmorlin m n (M : 'dpM_(m,n)) : morlin m n :=
   locked (dpmorfun M).
 
 Lemma dpmorN m n M : naturality (@dpmorlin m n M).
@@ -116,17 +133,17 @@ rewrite /dpmorlin -lock !ffunE linear_sum; apply eq_bigr => vj _.
 by rewrite linearZ_LR !ffunE.
 Qed.
 
-Definition dpmor m n (M : dpmatrix m n) : mor m n :=
+Definition dpmor m n (M : 'dpM_(m,n)) : mor m n :=
   Mor (dpmorN M).
 
-Lemma dpmorE m n (M : dpmatrix m n) T v vi :
+Lemma dpmorE m n (M : 'dpM_(m,n)) T v vi :
   dpmor M T v vi = \sum_(vj : m.-tuple I) (M vj vi : R) *: v vj.
 Proof. by rewrite /dpmor /dpmorlin /= -lock !ffunE. Qed.
 
 Definition dpbasis m (vi : m.-tuple I) : R^o^^m :=
   [ffun vj => (vi == vj)%:R].
 
-Definition mordp m n (f : morlin m n) : dpmatrix m n :=
+Definition mordp m n (f : morlin m n) : 'dpM_(m,n) :=
   [ffun vi => f _ (dpbasis vi)].
 
 Lemma mordp_eq m n (f g : mor m n) : f =e g -> mordp f = mordp g.
@@ -159,7 +176,7 @@ rewrite (bigD1 vi) //= !ffunE eqxx big1 ?(addr0,scale1r) //.
 move=> vk; rewrite !ffunE eq_sym => /negbTE ->; by rewrite scale0r.
 Qed.
 
-Lemma dpmor_dpbasis m n (M : dpmatrix m n) vi :
+Lemma dpmor_dpbasis m n (M : 'dpM_(m,n)) vi :
   dpmor M R^o (dpbasis vi) = M vi.
 Proof. apply/ffunP => /= vj; by rewrite dpmorE sum_dpbasisKo. Qed.
 
@@ -214,15 +231,15 @@ rewrite -[LHS]sum_dpbasisKo.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE dpbasisC.
 Qed.
 
-Definition ket_bra m n (ket : R^o^^m) (bra : R^o^^n) : dpmatrix n m :=
+Definition ket_bra m n (ket : R^o^^m) (bra : R^o^^n) : 'dpM_(n,m) :=
   [ffun vj => bra vj *: ket].
 
-Definition dpmul m n p (M1 : dpmatrix m n) (M2 : dpmatrix p m) : dpmatrix p n :=
+Definition dpmul m n p (M1 : 'dpM_(m,n)) (M2 : 'dpM_(p,m)) : 'dpM_(p,n) :=
   [ffun vj => [ffun vi => \sum_vk M1 vk vi * M2 vj vk]].
 
 Notation "M1 '*d' M2" := (dpmul M1 M2).
 
-Lemma dpmulA m n p q (M1 : dpmatrix m n) (M2 : dpmatrix p m) (M3 : dpmatrix q p) :
+Lemma dpmulA m n p q (M1 : 'dpM_(m,n)) (M2 : 'dpM_(p,m)) (M3 : 'dpM_(q,p)) :
   (M1 *d M2) *d M3 = M1 *d (M2 *d M3).
 Proof.
 apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE.
@@ -232,7 +249,7 @@ by rewrite !ffunE big_distrr /=; apply eq_bigr => vl _; rewrite mulrA.
 Qed.
 
 (* Find a better name or use ring structure *)
-Definition id_dpmatrix m : dpsquare m := [ffun vi => dpbasis vi].
+Definition id_dpmatrix m : 'dpM_m := [ffun vi => dpbasis vi].
 Definition idmorlin n : morlin n n := fun T => idfun.
 Lemma idmorN n : naturality (idmorlin n).
 Proof. done. Qed.
@@ -265,12 +282,12 @@ Proof. by move=> x; apply/ffunP=> v; apply/ffunP=> w; rewrite !ffunE. Qed.
 Section tensor_dpsquare.
 Variables m n : nat.
 
-Definition tensor_dpsquare (M1 : dpsquare m) (M2 : dpsquare n) : dpsquare (m + n) :=
+Definition tensor_dpsquare (M1 : 'dpM_m) (M2 : 'dpM_n) : 'dpM_(m + n) :=
   [ffun vi => [ffun vj =>
      M1 (extract (lens_left m n) vi) (extract (lens_left m n) vj) *
      M2 (extract (lens_right m n) vi) (extract (lens_right m n) vj)]].
 
-Lemma tensor_linearl (M2 : dpsquare n) : linear (tensor_dpsquare ^~ M2).
+Lemma tensor_linearl (M2 : 'dpM_n) : linear (tensor_dpsquare ^~ M2).
 Proof.
 move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
 by rewrite !ffunE /= mulrDl scalerA.
@@ -279,7 +296,7 @@ Definition tensor_dpsquare' M2 := tensor_dpsquare ^~ M2.
 HB.instance Definition _ M :=
   GRing.isLinear.Build _ _ _ _ (tensor_dpsquare' M) (tensor_linearl M).
 
-Lemma tensor_linearr (M1 : dpsquare m) : linear (tensor_dpsquare M1).
+Lemma tensor_linearr (M1 : 'dpM_m) : linear (tensor_dpsquare M1).
 Proof.
 move=> x M M'. apply/ffunP => vi. apply/ffunP => vj.
 by rewrite !ffunE /= mulrDr !scalerA (mulrC x) -scalerA.
@@ -337,9 +354,9 @@ End curry.
 Section inner_prod_coprod.
 Variable n : nat.
 Let cast_uncurry T := dpmap (m:=n) (dpcast (T:=T) (esym (addKn n n))).
-Definition M_inner_coprod (M : dpsquare n) :=
+Definition M_inner_coprod (M : 'dpM_n) :=
   dpmor (curry0 (uncurry (lens_left n n) (cast_uncurry M))).
-Definition M_inner_prod (M : dpsquare n) :=
+Definition M_inner_prod (M : 'dpM_n) :=
   dpmor (curryn0 (uncurry (lens_left n n) (cast_uncurry M))).
 Definition inner_prod : mor (n+n) 0 := M_inner_prod (id_dpmatrix _).
 Definition inner_coprod : mor 0 (n+n) := M_inner_coprod (id_dpmatrix _).
@@ -624,7 +641,7 @@ move=> T v; apply/ffunP => /= vi.
 by rewrite !focusE /= uncurryK.
 Qed.
 
-Lemma dpmor_comp (M : dpmatrix m n)  (N : dpmatrix p m) :
+Lemma dpmor_comp (M : 'dpM_(m,n))  (N : 'dpM_(p,m)) :
   dpmor (M *d N) =e dpmor M \v dpmor N.
 Proof.
 move=> T v; apply/ffunP => vi; rewrite !dpmorE.
@@ -653,7 +670,7 @@ congr (f vk _ * f' vj _ *: v _).
 - by rewrite !merge_extractC inject_disjointC.
 Qed.
 
-Lemma focus_tensor (M : dpsquare m) (M' : dpsquare n) :
+Lemma focus_tensor (M : 'dpM_m) (M' : 'dpM_n) :
   focus (lens_left m n) (dpmor M) \v focus (lens_right m n) (dpmor M') =e
   dpmor (tensor_dpsquare M M').
 Proof.
@@ -754,7 +771,7 @@ congr (Mf vk _ * Mg vj _ *: v _).
 Qed.
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
-      (M : dpsquare m) (M' : dpsquare p) :
+      (M : 'dpM_m) (M' : 'dpM_p) :
   dpapp l M \v dpapp l' M' =e dpapp (lens_cat H) (tensor_dpsquare M M').
 Proof.
 rewrite {1}(lens_comp_right H) {1}(lens_comp_left H) => T v /=.
@@ -788,6 +805,10 @@ Notation "f1 =e f2" := (eq_mor f1 f2).
 Notation "f \v g" := (comp_mor f g).
 Notation "M1 '*d' M2" := (dpmul M1 M2).
 Notation dpapp l M := (focus l (dpmor M)).
+Notation "''dpM[' T ]_ ( m , n )" := (dpmatrix _ T m n) (only parsing)
+    : type_scope.
+Notation "''dpM[' T ]_ n" := 'dpM[T]_(n, n) (only parsing) : type_scope.
+Notation "''dpM[' T ]_ ( n )" := 'dpM[T]_n (only parsing) : type_scope.
 
 (* Conversion between dpower and vector space *)
 
@@ -888,15 +909,17 @@ End index_of_vec_bij.
 Section vector.
 Variable (I : finType) (R : comRingType) (dI : I).
 Let vsz m := (#|I| ^ m)%N.
-Let dpmatrix := dpmatrix I R.
 Local Notation "T '^^' n" := (dpower I n T).
+Notation "''dpM_' ( m , n )" := 'dpM[R^o]_(m, n) : type_scope.
+Notation "''dpM_' n" := 'dpM_(n, n) : type_scope.
+Notation "''dpM_' ( n )" := 'dpM_n (only parsing) : type_scope.
 
 Section mxdpmatrix.
 Variables m n : nat.
-Definition mxdpmatrix (M : 'M[R]_(vsz m,vsz n)) : dpmatrix n m :=
+Definition mxdpmatrix (M : 'M[R]_(vsz m,vsz n)) : 'dpM_(n,m) :=
   [ffun vi => [ffun vj => M (index_of_vec vj) (index_of_vec vi)]].
 
-Definition dpmatrixmx (M : dpmatrix n m) : 'M[R]_(vsz m,vsz n) :=
+Definition dpmatrixmx (M : 'dpM_(n,m)) : 'M[R]_(vsz m,vsz n) :=
   \matrix_(i,j) M (vec_of_index dI j) (vec_of_index dI i).
 
 Lemma dpmatrixmxK : cancel dpmatrixmx mxdpmatrix.
@@ -911,7 +934,7 @@ move=> v; apply/matrixP => i j; by rewrite mxE !ffunE !vec_of_indexK.
 Qed.
 End mxdpmatrix.
 
-Lemma dpmatrixmx_mul m n p (M1 : dpmatrix n m) (M2 : dpmatrix p n) :
+Lemma dpmatrixmx_mul m n p (M1 : 'dpM_(n,m)) (M2 : 'dpM_(p,n)) :
   dpmatrixmx (M1 *d M2) = dpmatrixmx M1 *m dpmatrixmx M2.
 Proof.
 apply/matrixP => i j; rewrite !mxE !ffunE.
@@ -941,11 +964,11 @@ apply/ffunP => vi; apply/ffunP => vj; rewrite !ffunE mxE.
 by rewrite (inj_eq (bij_inj (index_of_vec_bij dI m))) eq_sym.
 Qed.
 
-Lemma mul1dp m n (M : dpmatrix n m) : id_dpmatrix I R m *d M = M.
+Lemma mul1dp m n (M : 'dpM_(n,m)) : id_dpmatrix I R m *d M = M.
 Proof.
 by rewrite -[LHS]dpmatrixmxK dpmatrixmx_mul dpmatrixmx_id mul1mx dpmatrixmxK.
 Qed.
-Lemma muldp1 m n (M : dpmatrix n m) : M *d id_dpmatrix I R n = M.
+Lemma muldp1 m n (M : 'dpM_(n,m)) : M *d id_dpmatrix I R n = M.
 Proof.
 by rewrite -[LHS]dpmatrixmxK dpmatrixmx_mul dpmatrixmx_id mulmx1 dpmatrixmxK.
 Qed.
