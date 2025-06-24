@@ -23,6 +23,12 @@ Reserved Notation "''dpM[' R ]_ ( n )"
   (at level 8). (* only parsing *)
 Reserved Notation "''dpM[' R ]_ ( m , n )"
   (at level 8). (* only parsing *)
+Reserved Notation "''dpM[' I , R ]_ n"
+  (at level 8, n at level 2). (* only parsing *)
+Reserved Notation "''dpM[' I , R ]_ ( n )"
+  (at level 8). (* only parsing *)
+Reserved Notation "''dpM[' I , R ]_ ( m , n )"
+  (at level 8). (* only parsing *)
 
 (* Reduce a linear form *)
 Definition linE :=
@@ -805,7 +811,13 @@ Notation "f1 =e f2" := (eq_mor f1 f2).
 Notation "f \v g" := (comp_mor f g).
 Notation "M1 '*d' M2" := (dpmul M1 M2).
 Notation dpapp l M := (focus l (dpmor M)).
-Notation "''dpM[' T ]_ ( m , n )" := (dpmatrix _ T m n) (only parsing)
+Notation "''dpM[' I , T ]_ ( m , n )" :=
+  (dpmatrix I T m n) (only parsing) : type_scope.
+Notation "''dpM[' I , T ]_ n" :=
+  'dpM[I, T]_(n, n) (only parsing) : type_scope.
+Notation "''dpM[' I , T ]_ ( n )" :=
+  'dpM[I, T]_n (only parsing) : type_scope.
+Notation "''dpM[' T ]_ ( m , n )" := 'dpM[_, T]_(m,n) (only parsing)
     : type_scope.
 Notation "''dpM[' T ]_ n" := 'dpM[T]_(n, n) (only parsing) : type_scope.
 Notation "''dpM[' T ]_ ( n )" := 'dpM[T]_n (only parsing) : type_scope.
