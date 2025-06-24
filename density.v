@@ -18,13 +18,11 @@ Variable I : finType.
 Variable dI : I.
 
 (* Type of density matrices over C *)
-Notation dpsquare n := (dpmatrix I C n n).
+Notation dpsquare n := 'dpM[I, C^o]_n.
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
 Notation focus := (focus dI).
 Notation "T '^^' n " := (dpower I n T).
-(* Generalized version of density matrices *)
-Definition dsquare (T : lmodType C) n : lmodType C := T ^^ n ^^ n.
 
 Definition conjCo : Co -> Co := conjc.
 
@@ -39,7 +37,7 @@ Definition conj_mor m n (f : mor m n) : mor m n :=
 (* WIP: application of a morphism to a density matrix *)
 (* U rho U^dagger *)
 Definition applyU (T : lmodType C) m n (f : mor m n) :
-  dsquare T m -> dsquare T n := dpmap (conj_mor f _) \o f _.
+  'dpM[T]_m -> 'dpM[T]_n := dpmap (conj_mor f _) \o f _.
 
 Lemma dpmap_conjCo m n (f : mor m n) v :
   dpmap conjCo (f Co v) = conj_mor f Co (dpmap conjCo v).
@@ -100,7 +98,7 @@ Qed.
 Section curryds.
 Variables (T : lmodType C) (n m : nat) (l : lens n m).
 
-Definition curryds : dsquare T n -> dsquare (dsquare T (n-m)) m :=
+Definition curryds : 'dpM[T]_n -> 'dpM['dpM[T]_(n-m)]_m :=
   dpmap (@dptranspose _ _ _ (n-m) m) \o dpmap (dpmap (curry dI l))
   \o curry dI l.
 
@@ -115,7 +113,7 @@ apply/ffunP=> v; apply/ffunP=> v'; apply/ffunP=> w; apply/ffunP=> w'.
 by rewrite !ffunE.
 Qed.
 
-Definition uncurryds : dsquare (dsquare T (n-m)) m -> dsquare T n :=
+Definition uncurryds : 'dpM['dpM[I,T]_(n-m)]_m -> 'dpM[T]_n :=
   uncurry l \o dpmap (dpmap (uncurry l)) \o dpmap (@dptranspose _ _ _ m (n-m)).
 
 Definition uncurrydsE M :
