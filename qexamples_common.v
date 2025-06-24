@@ -20,7 +20,7 @@ Notation "¦ x1 , .. , xn ⟩" :=
 
 Notation focus := (focus dI).
 Notation dpapp l M := (focus l (dpmor M)).
-Notation dpsquare n := (dpmatrix I C n n).
+Notation dpsquare n := (dpmatrix I C^o n n).
 Notation endo n := (mor I C n n).
 Notation "T '^^' n" := (dpower I n T).
 Notation "t '!_' i" := (tnth t i) (at level 9).
