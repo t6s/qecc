@@ -18,11 +18,11 @@ Reserved Notation "''dpM_' n"
 Reserved Notation "''dpM_' ( m , n )"
   (at level 8, format "''dpM_' ( m ,  n )").
 Reserved Notation "''dpM[' R ]_ n"
-  (at level 8, n at level 2). (* only parsing *)
+  (at level 8, n at level 2, format "''dpM[' R ]_ n").
 Reserved Notation "''dpM[' R ]_ ( n )"
   (at level 8). (* only parsing *)
 Reserved Notation "''dpM[' R ]_ ( m , n )"
-  (at level 8). (* only parsing *)
+  (at level 8, format "''dpM[' R ]_ ( m ,  n )").
 Reserved Notation "''dpM[' I , R ]_ n"
   (at level 8, n at level 2). (* only parsing *)
 Reserved Notation "''dpM[' I , R ]_ ( n )"
@@ -245,6 +245,7 @@ Definition dpmul m n p (M1 : 'dpM_(m,n)) (M2 : 'dpM_(p,m)) : 'dpM_(p,n) :=
 
 Notation "M1 '*d' M2" := (dpmul M1 M2).
 
+(* TODO: fix orientation *)
 Lemma dpmulA m n p q (M1 : 'dpM_(m,n)) (M2 : 'dpM_(p,m)) (M3 : 'dpM_(q,p)) :
   (M1 *d M2) *d M3 = M1 *d (M2 *d M3).
 Proof.
@@ -817,12 +818,13 @@ Notation "''dpM[' I , T ]_ n" :=
   'dpM[I, T]_(n, n) (only parsing) : type_scope.
 Notation "''dpM[' I , T ]_ ( n )" :=
   'dpM[I, T]_n (only parsing) : type_scope.
-Notation "''dpM[' T ]_ ( m , n )" := 'dpM[_, T]_(m,n) (only parsing)
+Notation "''dpM[' T ]_ ( m , n )" := 'dpM[_, T]_(m,n)
     : type_scope.
-Notation "''dpM[' T ]_ n" := 'dpM[T]_(n, n) (only parsing) : type_scope.
+Notation "''dpM[' T ]_ n" := 'dpM[T]_(n, n) : type_scope.
 Notation "''dpM[' T ]_ ( n )" := 'dpM[T]_n (only parsing) : type_scope.
-Notation "''dpM_' ( m , n )" := 'dpM[_ ^o]_(m, n) : type_scope.
-Notation "''dpM_' n" := 'dpM_(n, n) : type_scope.
+Notation "''dpM_' ( m , n )" :=
+  'dpM[_ ^o]_(m, n) (only parsing) : type_scope.
+Notation "''dpM_' n" := 'dpM_(n, n) (only parsing) : type_scope.
 Notation "''dpM_' ( n )" := 'dpM_n (only parsing) : type_scope.
 
 (* Conversion between dpower and vector space *)
