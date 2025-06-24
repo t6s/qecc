@@ -16,7 +16,6 @@ Let I : finType := 'I_2.
 Let dI : I := ord0.
 
 Notation idmor n := (idmor I R n).
-Notation dpsquare m := (dpmatrix I R m m).
 Notation endo n := (mor I R n n).
 
 Notation focus := (focus dI).
@@ -73,7 +72,7 @@ by rewrite !mem_lensE /= -Hrev mem_rev.
 Qed.
 *)
 
-Lemma transpose_cup (M : dpsquare 1) :
+Lemma transpose_cup (M : 'dpM_1) :
   focus [lens 0] (dpmor M) \v cup (n:=1) [lens 0; 1] =e
   focus [lens 1] (dpmor (dptranspose M)) \v cup [lens 0; 1].
 Proof.
@@ -118,7 +117,7 @@ split; apply/eqP/f_equal/eqP;
   by rewrite eq_ord_tuple /= /tnth /= /seq_lensC !enum_ordinalE.
 Qed.
 
-Lemma transpose_focus (M : dpsquare 1) :
+Lemma transpose_focus (M : 'dpM_1) :
   dpmor (dptranspose M) =e
   cap [lens 1; 2] \v focus [lens 1] (dpmor M) \v cup [lens 0; 1].
 Proof.

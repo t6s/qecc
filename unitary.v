@@ -16,7 +16,6 @@ Let Co : lmodType C := C^o.
 Variable I : finType.
 Variable dI : I.
 
-Notation dpsquare n := (dpmatrix I C n n).
 Notation id_dpmatrix := (id_dpmatrix I C).
 Notation dpmatrixmx := (dpmatrixmx dI).
 Notation mor := (mor I C).
@@ -45,9 +44,9 @@ Qed.
 
 Section unitary_dpmatrix.
 Variable n : nat.
-Variable M : dpsquare n.
+Variable M : 'dpM[I,C^o]_n.
 
-Definition dpadjoint m (N : dpmatrix I C m n) : dpmatrix I C n m :=
+Definition dpadjoint m (N : 'dpM[I,C^o]_(m,n)) : 'dpM_(n,m) :=
   [ffun vi => [ffun vj => (N vj vi)^*]].
 
 Definition dpunitary := dpadjoint M *d M == id_dpmatrix n.
@@ -88,7 +87,7 @@ rewrite -[LHS](dpmatrixmxK dI) dpadjointE dpmatrixmx_mul.
 by rewrite adjointmx_mul -!dpadjointE -dpmatrixmx_mul dpmatrixmxK.
 Qed.
 
-Lemma dpunitary_mul n (M N : dpsquare n) :
+Lemma dpunitary_mul n (M N : 'dpM_n) :
   dpunitary M -> dpunitary N -> dpunitary (dpmul M N).
 Proof. rewrite !dpunitaryE dpmatrixmx_mul; exact/unitarymx_mul. Qed.
 
@@ -115,9 +114,10 @@ apply/(iffP idP).
 - move=> Uf s t; move/eqP: Uf.
   move/(f_equal
           (fun ts => dpmul (dpadjoint (curry0 _ s)) (dpmul ts (curry0 _ t)))).
-  rewrite !dpmulA -dpmulA -dpadjoint_mul mul1dp //.
-  move/(f_equal (fun M : dpsquare 0 => M [tuple] [tuple])).
-  rewrite !ffunE. under [RHS]eq_bigr do rewrite !ffunE.
+  rewrite !dpmulA -[LHS]dpmulA -dpadjoint_mul mul1dp //.
+  move/(f_equal (fun M : 'dpM_0 => M [tuple] [tuple])).
+  rewrite !ffunE.
+  under [RHS]eq_bigr do rewrite !ffunE.
   move=> Uf; rewrite -{}[RHS]Uf.
   apply eq_bigr => vi _; rewrite !ffunE !dpmorE.
   by congr (_^* * _); apply eq_bigr => vj _; rewrite !ffunE.
