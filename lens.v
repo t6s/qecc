@@ -477,7 +477,7 @@ Definition select0 i :=
   if i is k.+1 then (nth n (map val lensC) k).+1 else 0.
 
 Lemma take_ord_enum j :
-  take j (enum 'I_n) = [seq i <- enum 'I_n | (i : 'I_n) < j].
+  take j (enum 'I_n) = [seq i : 'I_n <- enum 'I_n | i < j].
 Proof.
 have trans_ltn : transitive (@ord_ltn n) by move=> x y z H; apply: ltn_trans.
 apply: (@irr_sorted_eq _ ord_ltn) => //.
