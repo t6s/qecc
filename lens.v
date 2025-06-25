@@ -65,11 +65,12 @@ case/boolP: (lens_sorted l) => Hl; constructor.
   exists (mem l). apply/(irr_sorted_eq (leT:=ord_ltn)) => //.
   - exact/ltn_trans.
   - by move=> x; rewrite /ord_ltn /= ltnn.
-  - rewrite sorted_filter //. exact/ltn_trans. exact/sorted_enum.
-    by move=> i; rewrite mem_filter mem_enum andbT.
+  - exact/sorted_filter/sorted_ord_enum/ltn_trans.
+  - by move=> i; rewrite mem_filter mem_enum andbT.
 case => p Hp.
 move/negP: Hl; elim.
-rewrite /lens_sorted Hp sorted_filter //. exact/ltn_trans. exact/sorted_enum.
+rewrite /lens_sorted Hp.
+exact/sorted_filter/sorted_ord_enum/ltn_trans.
 Qed.
 
 Section lens_index.
@@ -193,7 +194,7 @@ Lemma uniq_ord_tuple : uniq (ord_tuple n). Proof. exact/enum_uniq. Qed.
 Definition lens_id := mkLens uniq_ord_tuple.
 
 Lemma lens_sorted_id : lens_sorted lens_id.
-Proof. exact: sorted_enum. Qed.
+Proof. exact: sorted_ord_enum. Qed.
 
 Lemma tnth_lens_id i : tnth lens_id i = i.
 Proof. by rewrite tnth_ord_tuple. Qed.
@@ -465,7 +466,7 @@ Lemma mem_lensC i : (i \in lensC) = (i \notin l).
 Proof. by rewrite mem_seq_lensC. Qed.
 
 Lemma lens_sorted_lensC : lens_sorted lensC.
-Proof. exact/sorted_filter/sorted_enum/ltn_trans. Qed.
+Proof. exact/sorted_filter/sorted_ord_enum/ltn_trans. Qed.
 
 (* For the definition of rank0 and select0, see:
    Gonzalo Navarro: Compact data structures, a practical approach.
@@ -475,18 +476,6 @@ Definition bits_lens := [tuple i \in l | i < n].
 Definition rank0 j := #|[set i | (i \in lensC) && (i < j)]|.
 Definition select0 i :=
   if i is k.+1 then (nth n (map val lensC) k).+1 else 0.
-
-Lemma take_ord_enum j :
-  take j (enum 'I_n) = [seq i : 'I_n <- enum 'I_n | i < j].
-Proof.
-have trans_ltn : transitive (@ord_ltn n) by move=> x y z H; apply: ltn_trans.
-apply: (@irr_sorted_eq _ ord_ltn) => //.
-- by move=> x; rewrite /ord_ltn /= ltnn.
-- exact/take_sorted/sorted_enum.
-- exact/sorted_filter/sorted_enum.
-move=> x.
-by rewrite mem_filter in_take ?mem_enum // index_enum_ord andbT.
-Qed.
 
 Lemma rank0_take j : rank0 j = count_mem false (take j bits_lens).
 Proof.
@@ -1143,7 +1132,7 @@ Lemma lensC_notin_l_comp :
   lens_comp lensC_comp lensC_notin_l = lensC l.
 Proof.
 apply/lens_inj/eq_lens_sorted/lens_sorted_lensC/lens_sorted_comp;
-  try exact/sorted_filter/sorted_enum/ltn_trans.
+  try exact/sorted_filter/sorted_ord_enum/ltn_trans.
 move=> /= i; rewrite mem_lensC.
 case/boolP: (i \in l) => /= Hi; apply/mapP.
 - case=> j; rewrite mem_lensC => Hj Hi'.

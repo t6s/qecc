@@ -93,7 +93,7 @@ End tnth_eq.
 Section sorted.
 Definition ord_ltn {r} : rel 'I_r := relpre val ltn.
 
-Lemma sorted_enum r : sorted ord_ltn (enum 'I_r).
+Lemma sorted_ord_enum r : sorted ord_ltn (enum 'I_r).
 Proof.
 rewrite /is_true -[RHS](iota_ltn_sorted 0 r) -val_enum_ord.
 by elim: (enum 'I_r) => //= a [|b l] //= <-.
@@ -115,5 +115,17 @@ Proof.
 move=> Hlq /=.
 elim: lr => // a [|b lr] IH //= /andP[ab] Hsort.
 rewrite sorted_tnth //=; exact: IH.
+Qed.
+
+Lemma take_ord_enum n j :
+  take j (enum 'I_n) = [seq i : 'I_n <- enum 'I_n | i < j].
+Proof.
+apply: (@irr_sorted_eq _ ord_ltn).
+- exact/ltn_trans.
+- by move=> x; rewrite /ord_ltn /= ltnn.
+- exact/take_sorted/sorted_ord_enum.
+- exact/sorted_filter/sorted_ord_enum/ltn_trans.
+move=> x.
+by rewrite mem_filter in_take ?mem_enum // index_enum_ord andbT.
 Qed.
 End sorted.
