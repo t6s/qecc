@@ -35,6 +35,10 @@ Definition hadamard_dpmatrix : dpsquare 1 :=
   (1 / Num.sqrt 2)%:C *:
     (-ket_bra ¦1⟩ ¦1⟩ + ket_bra ¦0⟩ ¦0⟩ + ket_bra ¦0⟩ ¦1⟩ + ket_bra ¦1⟩ ¦0⟩).
 
+Definition hadamard_dpmatrix_rows : dpsquare 1 :=
+  (1 / Num.sqrt 2)%:C *:
+    [ffun vi => if vi!_0 == 0 then ¦0⟩ + ¦1⟩ else ¦0⟩ - ¦1⟩].
+
 Definition hadamard : endo 1 := dpmor hadamard_dpmatrix.
 
 Definition toffoli : endo 3 :=
@@ -76,6 +80,13 @@ Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
 Lemma toffoli00E i : toffoli Co ¦0,0,i⟩ = ¦0,0,i⟩.
 Proof. by rewrite toffoliE !linE. Qed.
+
+Lemma hadamard_dpmatrixE : hadamard_dpmatrix = hadamard_dpmatrix_rows.
+Proof.
+apply: eq_from_indicesP => /=.
+rewrite andbT !{1}ffunE !eq_ord_tuple /= !linE (addrC (- _)) /=.
+by rewrite [X in X && _]eqxx [X in _ && X]eqxx.
+Qed.
 
 (* Unitarity *)
 

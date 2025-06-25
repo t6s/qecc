@@ -467,23 +467,55 @@ Proof. by rewrite mem_seq_lensC. Qed.
 Lemma lens_sorted_lensC : lens_sorted lensC.
 Proof. exact/sorted_filter/sorted_enum/ltn_trans. Qed.
 
-Definition merge (v : m.-tuple I) (w : (n-m).-tuple I) :=
-  [tuple nth (nth dI w (index i lensC)) v (index i l) | i < n].
+(* For the definition of rank0 and select0, see:
+   Gonzalo Navarro: Compact data structures, a practical approach.
+   Cambridge University Press, 2016 *)
 
-Definition rank0 j := #|[set i | (i \notin l) && (i < j)]|.
-Lemma rank0_lensC i : rank0 (tnth lensC i).+1 = i.+1.
+Definition bits_lens := [tuple i \in l | i < n].
+Definition rank0 j := #|[set i | (i \in lensC) && (i < j)]|.
+Definition select0 i :=
+  if i is k.+1 then (nth n (map val lensC) k).+1 else 0.
+
+Lemma take_ord_enum j :
+  take j (enum 'I_n) = [seq i <- enum 'I_n | (i : 'I_n) < j].
 Proof.
-rewrite /rank0.
+have trans_ltn : transitive (@ord_ltn n) by move=> x y z H; apply: ltn_trans.
+apply: (@irr_sorted_eq _ ord_ltn) => //.
+- by move=> x; rewrite /ord_ltn /= ltnn.
+- exact/take_sorted/sorted_enum.
+- exact/sorted_filter/sorted_enum.
+move=> x.
+by rewrite mem_filter in_take ?mem_enum // index_enum_ord andbT.
+Qed.
+
+Lemma rank0_take j : rank0 j = count_mem false (take j bits_lens).
+Proof.
+rewrite /rank0 /bits_lens.
+under eq_finset do rewrite mem_lensC.
+rewrite cards_filter /= size_filter -map_take.
+rewrite take_ord_enum count_map count_filter.
+apply: eq_count => x /=.
+by rewrite eqbF_neg.
+Qed.
+
+Lemma rank0_select0 i : i <= n - m -> rank0 (select0 i) = i.
+Proof.
+rewrite /rank0 /select0.
+case: i => [_ | i Hi].
+  rewrite cards_filter (eq_filter (a2:=pred0)) ?filter_pred0 // => x.
+  by rewrite ltn0 andbF.
 rewrite -(on_card_preimset (f:=tnth lensC)); last first.
   apply: (subon_bij (D2':=[pred y in [seq tnth lensC x | x in 'I_(n-m)]])).
-    move=> /= j. rewrite !inE -mem_lensC => /andP[] /tnthP[k ->] _.
+    move=> /= j. rewrite !inE => /andP[] /tnthP[k ->] _.
     by rewrite map_f // mem_enum.
-  exact: (bij_on_image (tnth_lens_inj (l:=lensC))).
+  apply/(bij_on_image (tnth_lens_inj (l:=lensC)))/(Ordinal Hi).
 transitivity #|[set x in take i.+1 (ord_tuple (n-m))]|.
   congr #|pred_of_set _|; apply/setP => j.
-  rewrite !inE -mem_lensC mem_tnth /= ltnS.
+  rewrite !inE mem_tnth /= ltnS.
   transitivity (j <= i).
-    case: (ltngtP i j) => ij.
+    rewrite {2}(_ : seq_lensC = lensC) //.
+    rewrite (_ : i = (Ordinal Hi)) // -tnth_nth tnth_map.
+    case: (ltngtP (Ordinal Hi) j) => ij.
     - apply/negbTE; rewrite -ltnNge.
       exact/(@sorted_tnth _ ord_ltn)/ij/lens_sorted_lensC/ltn_trans.
     - exact/ltnW/(@sorted_tnth _ ord_ltn)/ij/lens_sorted_lensC/ltn_trans.
@@ -495,17 +527,10 @@ have /card_uniqP -> : uniq (take i.+1 (ord_tuple (n-m))).
 by rewrite size_takel // size_tuple.
 Qed.
 
-Definition nth_free_index j :=
-  \big[minn/n-m]_(k:'I_n.+1 | rank0 k.+1 == j.+1) k.
-(*
-Lemma nth_free_index_ok j : tnth lensC j = nth_free_index j :> nat.
-Proof.
-have Hjn : j < n by rewrite (leq_trans (ltn_ord j)) // leq_subLR leq_addl.
-rewrite (tnth_nth (Ordinal Hjn)) /=.
-case: j Hjn => /= j _.
-elim: j => [|j IH] Hjn.
-rewrite /nth_free_index.
-*)
+(* merge operation *)
+
+Definition merge (v : m.-tuple I) (w : (n-m).-tuple I) :=
+  [tuple nth (nth dI w (index i lensC)) v (index i l) | i < n].
 
 Lemma tnth_merge i vi vj (Hil : i \in l) :
   tnth (merge vi vj) i = tnth vi (lens_index Hil).
