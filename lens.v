@@ -506,10 +506,9 @@ rewrite -(on_card_preimset (f:=tnth lensC)); last first.
   apply/(bij_on_image (tnth_lens_inj (l:=lensC)))/(Ordinal Hi).
 transitivity #|[set x in take i.+1 (ord_tuple (n-m))]|.
   congr #|pred_of_set _|; apply/setP => j.
-  rewrite !inE mem_tnth /= ltnS.
+  rewrite !inE mem_tnth ltnS.
   transitivity (j <= i).
-    rewrite {2}(_ : seq_lensC = lensC) //.
-    rewrite (_ : i = (Ordinal Hi)) // -tnth_nth tnth_map.
+    rewrite (_ : i = Ordinal Hi) // -tnth_nth tnth_map.
     case: (ltngtP (Ordinal Hi) j) => ij.
     - apply/negbTE; rewrite -ltnNge.
       exact/(@sorted_tnth _ ord_ltn)/ij/lens_sorted_lensC/ltn_trans.
