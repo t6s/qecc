@@ -472,14 +472,14 @@ Proof. exact/sorted_filter/sorted_ord_enum/ltn_trans. Qed.
    Gonzalo Navarro: Compact data structures, a practical approach.
    Cambridge University Press, 2016 *)
 
-Definition bits_lens := [tuple i \in l | i < n].
 Definition rank0 j := #|[set i | (i \in lensC) && (i < j)]|.
 Definition select0 i :=
   if i is k.+1 then (nth n (map val lensC) k).+1 else 0.
 
-Lemma rank0_take j : rank0 j = count_mem false (take j bits_lens).
+Definition lens_bits := [tuple i \in l | i < n].
+Lemma rank0E j : rank0 j = count_mem false (take j lens_bits).
 Proof.
-rewrite /rank0 /bits_lens.
+rewrite /rank0 /lens_bits.
 under eq_finset do rewrite mem_lensC.
 rewrite cards_filter /= size_filter -map_take.
 rewrite take_ord_enum count_map count_filter.
@@ -489,7 +489,7 @@ Qed.
 
 Lemma rank0_mono i j : i <= j -> rank0 i <= rank0 j.
 Proof.
-rewrite !rank0_take => /minn_idPl <-.
+rewrite !rank0E => /minn_idPl <-.
 by rewrite take_min leq_count_subseq // take_subseq.
 Qed.
 
@@ -547,11 +547,9 @@ case: (ltnP (n-m) i).
   rewrite (leq_trans _ Hin) // ltnS -(@rank0_max n.+1) //.
   apply: rank0_mono.
   by rewrite (leq_trans (leq_pred _)) // select0_max.
-case: i => //= i Hi.
-rewrite -(select0K Hi).
-rewrite !rank0_take /select0.
+case: i => //= i Hi _.
+rewrite -(select0K Hi) !rank0E /select0.
 rewrite (_ : seq_lensC = lensC) // {1}(_ : i = Ordinal Hi) // -tnth_nth.
-have Hin: i < n by rewrite (leq_trans _ (leq_subr m n)).
 rewrite tnth_map (take_nth true); last by rewrite size_tuple /=.
 rewrite -tnth_nth -cats1 count_cat tnth_mktuple.
 by rewrite -[_ \in _]negbK -mem_lensC mem_tnth addn1.
@@ -563,7 +561,7 @@ have [->|] := eqVneq i 0.
   by rewrite (ltn0 j).
 rewrite -lt0n => H0i Hi Hj.
 rewrite (leq_trans _ (rank0_pred_select0 _)) // ltnS.
-rewrite !rank0_take leq_count_subseq //.
+rewrite !rank0E leq_count_subseq //.
 have <- : minn j (select0 i).-1 = j.
   apply/minn_idPl.
   rewrite -ltnS prednK // /select0.
