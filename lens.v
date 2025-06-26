@@ -487,7 +487,13 @@ apply: eq_count => x /=.
 by rewrite eqbF_neg.
 Qed.
 
-Lemma rank0_select0 i : i <= n - m -> rank0 (select0 i) = i.
+Lemma rank0_mono i j : i <= j -> rank0 i <= rank0 j.
+Proof.
+rewrite !rank0_take => /minn_idPl <-.
+by rewrite take_min leq_count_subseq // take_subseq.
+Qed.
+
+Lemma select0K i : i <= n - m -> rank0 (select0 i) = i.
 Proof.
 rewrite /rank0 /select0.
 case: i => [_ | i Hi].
@@ -514,6 +520,72 @@ rewrite cardsE.
 have /card_uniqP -> : uniq (take i.+1 (ord_tuple (n-m))).
   exact/take_uniq/uniq_ord_tuple.
 by rewrite size_takel // size_tuple.
+Qed.
+
+Lemma rank0_max i : i >= n -> rank0 i = n - m.
+Proof.
+rewrite /rank0 => Hin.
+under eq_finset do rewrite (leq_trans (ltn_ord _)) // andbT.
+rewrite cardsE -[RHS](size_tuple lensC).
+exact/card_uniqP/lens_uniq.
+Qed.
+
+Lemma select0_max i : select0 i <= n.+1.
+Proof.
+case: i => // i.
+case: (ltnP i (n-m)) => Hi.
+  have Hin: i < n by rewrite (leq_trans _ (leq_subr m n)).
+  rewrite /select0 (nth_map (Ordinal Hin)) ?size_tuple //.
+  by rewrite /= ltnW // ltnS.
+by rewrite /select0 nth_default // size_map size_tuple.
+Qed.
+
+Lemma rank0_pred_select0 i : 0 < i -> rank0 (select0 i).-1 < i.
+Proof.
+case: (ltnP (n-m) i).
+  move=> Hin Hi.
+  rewrite (leq_trans _ Hin) // ltnS -(@rank0_max n.+1) //.
+  apply: rank0_mono.
+  by rewrite (leq_trans (leq_pred _)) // select0_max.
+case: i => //= i Hi.
+rewrite -(select0K Hi).
+rewrite !rank0_take /select0.
+rewrite (_ : seq_lensC = lensC) // {1}(_ : i = Ordinal Hi) // -tnth_nth.
+have Hin: i < n by rewrite (leq_trans _ (leq_subr m n)).
+rewrite tnth_map (take_nth true); last by rewrite size_tuple /=.
+rewrite -tnth_nth -cats1 count_cat tnth_mktuple.
+by rewrite -[_ \in _]negbK -mem_lensC mem_tnth addn1.
+Qed.
+
+Lemma select0_min i j : i <= n - m -> j < select0 i -> rank0 j < i.
+Proof.
+have [->|] := eqVneq i 0.
+  by rewrite (ltn0 j).
+rewrite -lt0n => H0i Hi Hj.
+rewrite (leq_trans _ (rank0_pred_select0 _)) // ltnS.
+rewrite !rank0_take leq_count_subseq //.
+have <- : minn j (select0 i).-1 = j.
+  apply/minn_idPl.
+  rewrite -ltnS prednK // /select0.
+  by destruct i.
+by rewrite take_min take_subseq.
+Qed.
+
+Lemma select0Kb i : i <= n - m -> rank0 (select0 i) == i.
+Proof. by move=> *; apply/eqP/select0K. Qed.
+
+Lemma select0E i (Hi : i <= n - m) :
+  select0 i = ex_minn (ex_intro (fun j => rank0 j == i) _ (select0Kb Hi)).
+Proof.
+case: ex_minnP => j /eqP Hj Hrank.
+have [] // := ltngtP (select0 i) j.
+- destruct j => //.
+  rewrite ltnS => /rank0_mono.
+  rewrite select0K // -Hj => Hr'.
+  move: (Hrank j).
+  by rewrite -Hj eqn_leq Hr' rank0_mono // ltnn => /(_ isT).
+- move/(select0_min Hi).
+  by rewrite Hj ltnn.
 Qed.
 
 (* merge operation *)
