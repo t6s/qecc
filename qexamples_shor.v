@@ -114,12 +114,12 @@ Lemma sign_flip_toffoli :
   (sign_flip_dec \v sign_flip_enc) =e focus [lens 1; 2; 0] toffoli.
 Proof.
 rewrite /sign_flip_dec /sign_flip_enc => T v /=.
-rewrite [focus [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
-rewrite [focus [lens 0] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
-rewrite [focus [lens 1] hadamard _ _](focusC dI) /=; last by rewrite disjoint_has.
+rewrite [focus [lens 0] hadamard _ _]focusC /=; last by rewrite disjoint_has.
+rewrite [focus [lens 0] hadamard _ _]focusC /=; last by rewrite disjoint_has.
+rewrite [focus [lens 1] hadamard _ _]focusC /=; last by rewrite disjoint_has.
 have HK (l : lens 3 1) : focus l hadamard \v focus l hadamard =e idmor I C 3.
   move=> U w.
-  rewrite -focus_comp (focus_eq dI l (f2:=idmor I C 1)) ?focus_idmor //.
+  rewrite -focus_comp (focus_eq l (f2:=idmor I C 1)) ?focus_idmor //.
   exact/hadamardK.
 rewrite [focus [lens 0] hadamard _ _]HK.
 rewrite [focus [lens 1] hadamard _ _]HK.
@@ -156,7 +156,7 @@ transitivity (focus [lens 0; 3; 6]
   rewrite [focus [lens 6; 7; 8] bit_flip_dec _ _]focusC ?disjoint_has //=.
   rewrite [focus [lens 3; 4; 5] bit_flip_dec _ _]focusC ?disjoint_has //=.
   rewrite -3![focus _ bit_flip_dec _ _]focus_comp.
-  rewrite 3!(focus_eq _ _ bit_flip_toffoli).
+  rewrite 3!(focus_eq _ bit_flip_toffoli).
   rewrite -3![focus (mkLens _) _ _ _]focusM.
   do 3 simpl_lens_comp.
   rewrite focus_dpbasis_id; last first.

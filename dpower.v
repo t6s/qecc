@@ -35,8 +35,7 @@ Definition linE :=
   (mulr0,mul0r,mulr1,mul1r,addr0,add0r,subr0,oppr0,scale0r,scale1r).
 
 Section tensor_space.
-Variables (I : finType) (dI : I) (R : comRingType).
-Local Notation merge := (merge dI).
+Variables (I : finType) (R : comRingType).
 
 Definition dpower n T := {ffun n.-tuple I -> T}.
 Local Notation "T '^^' n " := (dpower n T).
@@ -450,7 +449,7 @@ Proof.
 move=> T /= v.
 apply/ffunP => /= vi.
 rewrite /ptracefun !sum_ffunE /ptracefun.
-rewrite [LHS](reindex_merge _ dI (lensC_notin_l l1 l2)) exchange_big /=.
+rewrite [LHS](reindex_merge _ (lensC_notin_l l1 l2)) exchange_big /=.
 rewrite (reindex_inj (@extract_inj _ (lens_perm (lensC_in_l l1 l2)) _)).
 rewrite (reindex _
     (onW_bij _ (cast_tuple_bij _ (esym (cast_lensC_notin_l' l1 l2))))) /=.
@@ -463,7 +462,7 @@ f_equal.
 apply/ffunP => vh.
 rewrite !ffunE -!extract_comp scalerA -natrM mulnb.
 congr ((_ : bool)%:R *: _).
-rewrite -[extract (lensC _) vh](merge_extract dI (lensC_notin_l l1 l2)).
+rewrite -[extract (lensC _) vh](merge_extract (lensC_notin_l l1 l2)).
 rewrite merge_inj_eq -extract_comp lensC_notin_l_comp -extract_comp.
 congr andb.
 rewrite -(inj_eq (f:=cast_tuple (cast_lensC_notin_l' l1 l2))); last first.
@@ -603,7 +602,8 @@ apply/ffunP => /= vi.
 rewrite !{}Hf {tr} !ffunE !dpmorE sum_ffunE.
 apply eq_bigr => vj _; rewrite !ffunE extract_lens_id.
 congr (_ *: v _).
-apply eq_from_tnth => i; by rewrite tnth_mktuple index_lens_id -tnth_nth.
+apply eq_from_tnth => i.
+by rewrite (tnth_merge _ _ (mem_lens_id i)) lens_index_id.
 Qed.
 
 (* Equality *)
@@ -698,7 +698,7 @@ case/naturalityP: (morN tr) => f Hf T v.
 rewrite /= !focusE /= !Hf.
 rewrite /= !focusE /= !Hf {tr Hf}.
 apply/ffunP => /= vi.
-rewrite !ffunE !dpmorE (extract_lensC_comp dI) -!extract_comp.
+rewrite !ffunE !dpmorE extract_lensC_comp -!extract_comp.
 rewrite -[in RHS]lensC_in_l_comp -(lensC_notin_l_comp l l') !sum_ffunE.
 apply eq_bigr => /= vj _; rewrite !ffunE.
 congr (_ *: v _).
@@ -746,7 +746,7 @@ rewrite !ffunE !scalerA [in RHS]mulrC.
 congr (Mf vk _ * Mg vj _ *: v _).
 - apply val_inj => /=.
   set w := cast_tuple _ _.
-  by move/(f_equal val): (extractC_merge dI l1 vj w) => /= ->.
+  by move/(f_equal val): (extractC_merge l1 vj w) => /= ->.
 - rewrite extract_merge_disjoint //.
   apply/pred0P => /= i.
   rewrite simpl_predE /= andbC /=.
@@ -754,7 +754,8 @@ congr (Mf vk _ * Mg vj _ *: v _).
   by rewrite mem_lensE /= mem_lensC Hi.
 - rewrite !merge_extractC.
   apply eq_from_tnth => i /=.
-  rewrite !tnth_mktuple /=.
+  have dI : I := tnth [tuple of vj ++ vk] i.
+  rewrite !(mergeE dI) !tnth_mktuple /=.
   case/boolP: (i \in l1) => Hil1. 
     rewrite !nth_lens_index.
     rewrite nth_default // memNindex ?(mem_lensC,Hil1) //.

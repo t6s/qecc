@@ -15,13 +15,11 @@ Variable R : rcfType.
 Let C : comRingType := R[i].
 Let Co : lmodType C := C^o.
 Variable I : finType.
-Variable dI : I.
 
 (* Type of density matrices over C *)
 Notation dpsquare n := 'dpM[I, C^o]_n.
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
-Notation focus := (focus dI).
 Notation "T '^^' n " := (dpower I n T).
 
 Definition conjCo : Co -> Co := conjc.
@@ -65,7 +63,7 @@ Lemma focus_conj_mor n m (l : lens n m) (f : endo m) :
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
-rewrite focusE !ffunE !dpmorE sum_ffunE (reindex_merge _ dI l) /=.
+rewrite focusE !ffunE !dpmorE sum_ffunE (reindex_merge _ l) /=.
 apply eq_bigr => vi _.
 rewrite !ffunE /= /conjCo -/Co.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= curry_dpbasis.
@@ -85,7 +83,7 @@ Lemma focus_adjoint_mor n m (l : lens n m) (f : endo m) :
 Proof.
 move=> /= T x.
 apply/ffunP => /= v.
-rewrite focusE !ffunE !dpmorE sum_ffunE (reindex_merge _ dI l) /=.
+rewrite focusE !ffunE !dpmorE sum_ffunE (reindex_merge _ l) /=.
 apply eq_bigr => vi _.
 rewrite !ffunE -/Co.
 under eq_bigr do rewrite !ffunE focusE !ffunE /= extract_merge extractC_merge.
@@ -99,15 +97,15 @@ Section curryds.
 Variables (T : lmodType C) (n m : nat) (l : lens n m).
 
 Definition curryds : 'dpM[T]_n -> 'dpM['dpM[T]_(n-m)]_m :=
-  dpmap (@dptranspose _ _ _ (n-m) m) \o dpmap (dpmap (curry dI l))
-  \o curry dI l.
+  dpmap (@dptranspose _ _ _ (n-m) m) \o dpmap (dpmap (curry l))
+  \o curry (I:=I) l.
 
 Lemma currydsE M :
   curryds M =
   [ffun v : m.-tuple I =>
    [ffun v' : m.-tuple I =>
     [ffun w : (n-m).-tuple I =>
-     [ffun w' : (n-m).-tuple I => M (merge dI l v w) (merge dI l v' w')]]]].
+     [ffun w' : (n-m).-tuple I => M (merge l v w) (merge l v' w')]]]].
 Proof.
 apply/ffunP=> v; apply/ffunP=> v'; apply/ffunP=> w; apply/ffunP=> w'.
 by rewrite !ffunE.
@@ -181,7 +179,7 @@ rewrite -(dpmap_compose (dptranspose (n:=m))).
 rewrite (eq_dpmap (@dptransposeK _ _ _ (n-m) m)) dpmap_id.
 rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ _)).
 rewrite -dpmap_compose -(eq_dpmap (dpmap_compose _ _)).
-by rewrite -(focusE dI l fc _) uncurry_dpmap (focusE _ _ f).
+by rewrite -(focusE l fc _) uncurry_dpmap (focusE _ f).
 Qed.
 
 End density.

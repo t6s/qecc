@@ -18,12 +18,12 @@ Definition dI : I := 0.
 Notation "¦ x1 , .. , xn ⟩" :=
   (dpbasis _ [tuple of x1 :: .. [:: xn] ..]) (at level 0).
 
-Notation focus := (focus dI).
 Notation dpapp l M := (focus l (dpmor M)).
 Notation dpsquare n := (dpmatrix I C^o n n).
 Notation endo n := (mor I C n n).
 Notation "T '^^' n" := (dpower I n T).
 Notation "t '!_' i" := (tnth t i) (at level 9).
+Ltac simpl_merge := lens_tactics.simpl_merge dI.
 
 Definition qnot : endo 1 :=
   dpmor [ffun vi => ¦1 + vi!_0⟩].
@@ -59,7 +59,6 @@ Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Definition eq_from_indicesP := eq_from_indicesP mem_enum2.
 Definition uniq_enum_indices := uniq_enum_indices uniq_enum2 mem_enum2.
 Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
-Definition dpmerge_dpbasis := dpmerge_dpbasis (0 : I).
 
 (* Behavior of some gates on basis vectors *)
 

@@ -44,8 +44,7 @@ Section swap_asym_focus.
 Variables (n : nat) (i j : 'I_n.+2) (Hir : i != j) (Hri : j != i).
 
 Definition swap_asym_focus : endo n.+2 :=
-  asym_focus ord0 (lens_pair (n:=2+n) Hir) (lens_pair (n:=2+n) Hri)
-    (idmor I C 2).
+  asym_focus (lens_pair (n:=2+n) Hir) (lens_pair (n:=2+n) Hri) (idmor I C 2).
 
 Lemma focus_swap_asym_focus : focus (lens_pair Hir) swap =e swap_asym_focus.
 Proof.
@@ -59,7 +58,7 @@ move: (extract (lensC _) vi) => vi' /=.
 simpl_extract.
 simpl_extract.
 move: (vi`_i) (vi`_j) => /= a b.
-set F := curry _ _ _.
+set F := curry _ _.
 have -> :  \sum_vj swap_dpmatrix vj [tuple a; b] *: F vj = F [tuple b; a].
   rewrite -[RHS]sum_dpbasisK.
   apply eq_bigr => vj _.
@@ -107,10 +106,10 @@ apply/negP => /orP[] /orP[].
 Qed.
 
 Lemma rev_circuit_fendo :
-  rev_circuit n = fendo_mor 0 (compn_fendo 0 fendo_swap xpredT).
+  rev_circuit n = fendo_mor (compn_fendo fendo_swap xpredT).
 Proof. rewrite -compn_mor_disjoint //; exact/all_disjoint_swap. Qed.
 
-Lemma swap_asym_focusU P : unitary_mor (compn_fendo ord0 fendo_swap P).
+Lemma swap_asym_focusU P : unitary_mor (compn_fendo fendo_swap P).
 Proof.
 apply/compn_fendo_unitary.
 - by rewrite card_ord.
@@ -120,7 +119,7 @@ Qed.
 End rev_circuit_fendo.
 
 Lemma disjoint_compn_lens_swap n i (Hi : (i < n./2)%N) :
-  [disjoint foc_l (compn_fendo ord0 (@fendo_swap _) (fun j => j != Ordinal Hi))
+  [disjoint foc_l (compn_fendo (@fendo_swap _) (fun j => j != Ordinal Hi))
    & lens_pair (rev_ord_neq (Ordinal Hi))].
 Proof.
 apply/disjointP => j; rewrite compn_mor_lens; last exact/all_disjoint_swap.
@@ -134,8 +133,8 @@ by rewrite subnK // addnS addnn /= uphalf_double.
 Qed.
 
 Lemma rev_circuit_ok n (i : 'I_n.+2) v :
-  proj 0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
-  proj 0 (lens_single i) v.
+  proj (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
+  proj (lens_single i) v.
 Proof.
 rewrite rev_circuit_fendo.
 (* Special case: no swapping for the middle element (n is odd) *)
@@ -167,8 +166,8 @@ case/boolP: (i < n.+2./2)%N => Hi.
   have -> : lens_pair (rev_ord_neq (Ordinal Hi)) = lens_pair Hir by eq_lens.
   rewrite (focus_swap_asym_focus Hir).
   apply/ffunP => vi; rewrite !ffunE; congr sqrtc.
-  rewrite [LHS](reindex_merge _ ord0 lens_ior) //=.
-  rewrite [RHS](reindex_merge _ ord0 lens_roi) //=.
+  rewrite [LHS](reindex_merge _ lens_ior) //=.
+  rewrite [RHS](reindex_merge _ lens_roi) //=.
   apply eq_bigr => vj _; apply eq_bigr => vk _; rewrite !ffunE.
   have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
   rewrite !cast_tupleE merge_pair.
@@ -215,8 +214,8 @@ case/boolP: (i < n.+2./2)%N => Hi.
     by eq_lens; move/(f_equal val): (rev_ordK i) => /= ->.
   rewrite (focus_swap_asym_focus Hri).
   apply/ffunP => vi; rewrite !ffunE; congr sqrtc.
-  rewrite [LHS](reindex_merge _ ord0 lens_ior) //=.
-  rewrite [RHS](reindex_merge _ ord0 lens_roi) //=.
+  rewrite [LHS](reindex_merge _ lens_ior) //=.
+  rewrite [RHS](reindex_merge _ lens_roi) //=.
   apply eq_bigr => vj _; apply eq_bigr => vk _; rewrite !ffunE.
   have -> : addKn_any n 2 2 = erefl by apply eq_irrelevance.
   rewrite !cast_tupleE 2!merge_pair.

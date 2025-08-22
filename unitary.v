@@ -20,7 +20,6 @@ Notation id_dpmatrix := (id_dpmatrix I C).
 Notation dpmatrixmx := (dpmatrixmx dI).
 Notation mor := (mor I C).
 Notation endo n := (mor n n).
-Notation focus := (focus dI).
 Local Notation "T '^^' n " := (dpower I n T).
 
 Definition adjointmx n m (M : 'M[C]_(n,m)) := \matrix_(i,j) (M j i)^*.
@@ -139,10 +138,10 @@ Lemma unitary_focus n m (l : lens n m) (f : endo m) :
   unitary_mor f -> unitary_mor (focus l f).
 Proof.
 rewrite /unitary_mor /tinner => /= Uf s t.
-rewrite 2!(reindex_merge _ dI l) /=.
+rewrite 2!(reindex_merge _ l) /=.
 rewrite [LHS]exchange_big [RHS]exchange_big /=.
 apply eq_bigr => vj _.
-pose sel s : Co ^^ m := dpmap (dpsel vj) (curry dI l s).
+pose sel s : Co ^^ m := dpmap (dpsel vj) (curry l s).
 transitivity (\sum_i (sel s i)^* * sel t i); last first.
   apply eq_bigr => vi _; by rewrite !ffunE /dpsel !ffunE.
 rewrite -Uf; apply eq_bigr => vi _.
@@ -158,7 +157,7 @@ Variables (n m : nat) (l : lens n m).
 Let norm p := fun s : Co ^^ p => (sqrtc (tinner s s) : Co).
 
 Definition proj (t : Co ^^ n) : Co ^^ m :=
-  dpmap (@norm _) (curry dI l t).
+  dpmap (@norm _) (curry l t).
 
 Lemma proj_focusE p (l' : lens n p) (f : endo p) (t : Co ^^ n) :
   [disjoint l & l'] -> unitary_mor f ->

@@ -92,6 +92,7 @@ Ltac simpl_extract :=
   match goal with |- context [ extract ?a ?b ] => simpl_tuple (extract a b)
   end.
 
-Ltac simpl_merge :=
-  match goal with |- context [ merge ?a ?b ?c ?d] => simpl_tuple (merge a b c d)
+Ltac simpl_merge dI :=
+  match goal with |- context [ merge ?a ?b ?c] =>
+    rewrite (mergeE dI); simpl_tuple (merge_nth dI a b c)
   end.

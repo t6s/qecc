@@ -43,9 +43,9 @@ rewrite big_ord_recl.
 move=> T v /=.
 f_equal.
   do 3 f_equal; eq_lens; by rewrite subn1.
-rewrite (focusE _ _ (ghz n)) /= -IH.
+rewrite (focusE _ (ghz n)) /= -IH.
 set f := \big[_/_]_(i < n) _ \v _.
-rewrite -[uncurry _ _]/(focuslin dI _ f _ v).
+rewrite -[uncurry _ _]/(focuslin _ f _ v).
 rewrite -focusE /f focus_comp /= -focusM.
 simpl_lens_comp.
 (* rewrite (_ : lens_comp _ _ = [lens 0]);
@@ -84,7 +84,7 @@ congr (_ + _); rewrite dpmerge_dpbasis.
     by rewrite extract_cst; eq_lens.
   by rewrite Hex' cnotE add0r dpmerge_dpbasis -Hex' merge_extract.
 rewrite extract_cst.
-rewrite (_ : merge _ _ _ _ =
+rewrite (_ : merge _ _ _ =
              [tuple if i != n.+1 :> nat then 1 else 0 | i < n.+2]); last first.
   apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
   case: ifPn => Hi.

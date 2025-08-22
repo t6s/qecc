@@ -13,9 +13,8 @@ Local Open Scope ring_scope.
 Local Open Scope complex_scope.
 
 Section endo_monoid.
-Variables (I : finType) (dI : I).
+Variable I : finType.
 
-Notation focus := (focus dI).
 Local Notation "T '^^' n" := (dpower I n T).
 
 Section com_ring.
@@ -184,7 +183,7 @@ Lemma focus_lens_right0 fm (f : endo fm) (l : lens n fm) :
   focus (lens_right 0 fm) f = f.
 Proof.
 apply/morP => T v /=.
-rewrite -[LHS](focusI dI) -focusM //.
+rewrite -[LHS]focusI -focusM //.
 have Heid : [disjoint lens_empty fm & lens_id fm] by rewrite disjoint_has.
 have -> : lens_id (0 + fm) = lens_cat Heid by eq_lens.
 by rewrite -lens_comp_right focusI.

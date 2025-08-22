@@ -18,9 +18,6 @@ Let dI : I := ord0.
 Notation idmor n := (idmor I R n).
 Notation endo n := (mor I R n n).
 
-Notation focus := (focus dI).
-Notation curry := (curry dI).
-
 Local Definition sum_enum_indices := sum_enum_indices uniq_enum2 mem_enum2.
 Local Definition mem_enum_indices := mem_enum_indices mem_enum2.
 Local Definition forall_indicesP := forall_indicesP mem_enum2.
@@ -29,9 +26,9 @@ Section cap_cup.
 Variables (n : nat) (l : lens (2 + n) 2).
 
 Definition cap :=
-  asym_focus dI (p:=0) l (lens_empty n) (inner_prod I R 1).
+  asym_focus (p:=0) l (lens_empty n) (inner_prod I R 1).
 Definition cup :=
-  asym_focus dI (m:=0) (lens_empty n) l (inner_coprod I R 1).
+  asym_focus (m:=0) (lens_empty n) l (inner_coprod I R 1).
 End cap_cup.
 
 Lemma extract_rev A n m (l1 l2 : lens n m) (v : n.-tuple A) :
@@ -85,7 +82,7 @@ have -> : lensC [lens 0] = [lens 1] by eq_lens.
 rewrite !cast_tupleE /= -!extract_comp.
 have -> : lens_comp [lens 0; 1] [lens 0] = [lens 0] :> lens 3 1 by eq_lens.
 have -> : lens_comp [lens 0; 1] [lens 1] = [lens 1] :> lens 3 1 by eq_lens.
-rewrite !extract_merge !merge_empty /= !extract_merge_disjoint.
+rewrite !extract_merge !(merge_empty dI) /= !extract_merge_disjoint.
 rewrite !scalerA -!scalerDl.
 f_equal.
 have := mem_enum_indices (extract [lens 0] vi).
@@ -111,7 +108,7 @@ rewrite !dpmorE !sum_enum_indices /= !ffunE /= !addr0.
 apply/eqP; move: t; apply/forall_indicesP.
 rewrite /= andbT; apply/andP.
 (* brute force *)
-rewrite !eq_ord_tuple /= /tnth /= /tnth /= /seq_lensC.
+rewrite !(mergeE dI) !eq_ord_tuple /= /tnth /= /tnth /= /seq_lensC.
 rewrite /in_mem /mem /= !enum_ordinalE /= !linE.
 split; apply/eqP/f_equal/eqP;
   by rewrite eq_ord_tuple /= /tnth /= /seq_lensC !enum_ordinalE.
@@ -125,9 +122,9 @@ rewrite -{2}(dptransposeK M).
 move=> T v.
 rewrite -comp_morA comp_morE comp_morE.
 move: (transpose_cup (dptranspose M) v) => /= <-.
-set mycup := asym_focus_fun dI ([lens] : lens (0+1) 0)
+set mycup := asym_focus_fun ([lens] : lens (0+1) 0)
                   ([lens 0; 1] : lens (2+1) 2) (inner_coprod I R 1) v.
-move: (asym_focusC dI ([lens 1; 2] : lens (2+1) 2) ([lens] : lens (0+1) 0)
+move: (asym_focusC ([lens 1; 2] : lens (2+1) 2) ([lens] : lens (0+1) 0)
                    (inner_prod I R 1) (dpmor (dptranspose M)) mycup).
 rewrite !cast_lensE.
 have -> : lensC [lens 1; 2] = [lens 0] by eq_lens.
@@ -135,6 +132,6 @@ move=> /= <-.
 subst mycup.
 move: (straighten v) => /= ->.
 have <- : lens_id 1 = lensC [lens] by eq_lens.
-by rewrite (focusI dI (dpmor (dptranspose M)) v).
+by rewrite (focusI (dpmor (dptranspose M)) v).
 Qed.
 End transpose.

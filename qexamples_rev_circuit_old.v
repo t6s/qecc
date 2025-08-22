@@ -77,10 +77,10 @@ Lemma proj_focusE_swap n (i : 'I_n.+2) (v : Co ^^ n.+2) h
       (Hn : n./2.+1 = (n.+2)./2) :
   let f j := focus (lens_pair (rev_ord_neq (cast_ord Hn (inord j)))) swap in
   (h < n./2.+1)%N -> (n./2.+1 - h.+1)%N = i \/ (n./2.+1 - h.+1)%N = rev_ord i ->
-  proj ord0 (lens_single i)
+  proj (lens_single i)
        ((\big[comp_mor(s:=n.+2)/idmor I C _]_(n./2.+1 - h <= j < n./2.+1) f j)
           Co v) =
-  proj ord0 (lens_single i) v.
+  proj (lens_single i) v.
 Proof.
 move=> f Hh ih.
 have : (n./2.+1 - h > i \/ n./2.+1 - h > rev_ord i)%N.
@@ -118,8 +118,8 @@ rewrite -IH.
 Qed.
 
 Lemma proj_swapE n (i j : 'I_n.+2) (v : Co ^^ n.+2) (Hir : i != j) :
-  proj ord0 (lens_single j) (focus (lens_pair Hir) swap Co v) =
-  proj ord0 (lens_single i) v.
+  proj (lens_single j) (focus (lens_pair Hir) swap Co v) =
+  proj (lens_single i) v.
 Proof.
 have Hior : i \in lensC (lens_single j).
   by rewrite mem_lensC !inE.
@@ -128,8 +128,8 @@ have Hroi : j \in lensC (lens_single i).
   by rewrite mem_lensC !inE.
 apply/ffunP => /= vi.
 rewrite /= focusE !ffunE /tinner; congr sqrtc.
-rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
-rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
+rewrite [LHS](reindex_merge _ (lens_single (lens_index Hior))) //.
+rewrite [RHS](reindex_merge _ (lens_single (lens_index Hroi))) //.
 apply eq_bigr => /= vj _.
 apply eq_bigr => /= vk _.
 rewrite !ffunE !dpmorE.
@@ -152,8 +152,8 @@ Qed.
 *)
 
 Lemma rev_circuit_ok' n (i : 'I_(n.+2)%N) v :
-  proj ord0 (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
-  proj ord0 (lens_single i) v.
+  proj (lens_single (rev_ord i)) (rev_circuit n.+2 Co v) =
+  proj (lens_single i) v.
 Proof.
 case/boolP: (i == rev_ord i) => Hir.
   rewrite -(eqP Hir).
@@ -218,7 +218,7 @@ have Hroi : rev_ord i \in lensC (lens_single i).
   by rewrite mem_lensC mem_lensE inE eq_sym Hir.
 have Hri : rev_ord i != rev_ord (rev_ord i) by rewrite rev_ordK eq_sym.
 case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
-  transitivity (proj ord0 (lens_single i) v'); last first.
+  transitivity (proj (lens_single i) v'); last first.
      by apply proj_focusE_swap => //; left; apply/eqP.
   clearbody v'.
   rewrite (eqP ih). (* -[in lens_single i](rev_ordK i).*)
@@ -227,7 +227,7 @@ case/boolP: (n./2.+1 - h.+1 == i)%N => ih.
     by eq_lens; rewrite inordK // -(eqP ih) ltn_subLR // addSn ltnS leq_addl.
   by apply proj_swapE.
 case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
-  transitivity (proj ord0 (lens_single i) v'); last first.
+  transitivity (proj (lens_single i) v'); last first.
     by apply proj_focusE_swap => //; right; apply/eqP.
   clearbody v'.
   rewrite (eqP rih) -[in RHS](rev_ordK i).
@@ -238,8 +238,8 @@ case/boolP: (n./2.+1 - h.+1 == rev_ord i)%N => rih.
     move/eqP: rih => /= <-. by rewrite ltnS subSS leq_subr.
   apply/ffunP => vi.
   rewrite /= focusE !ffunE /tinner; congr sqrtc.
-  rewrite [LHS](reindex_merge _ ord0 (lens_single (lens_index Hior))) //.
-  rewrite [RHS](reindex_merge _ ord0 (lens_single (lens_index Hroi))) //.
+  rewrite [LHS](reindex_merge _ (lens_single (lens_index Hior))) //.
+  rewrite [RHS](reindex_merge _ (lens_single (lens_index Hroi))) //.
   apply eq_bigr => vj _.
   apply eq_bigr => vk _.
   rewrite !ffunE !dpmorE.

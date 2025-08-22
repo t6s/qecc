@@ -18,8 +18,6 @@ Definition dI : I := 0.
 Notation "¦ x1 , .. , xn ⟩" :=
   (dpbasis _ [tuple of x1 :: .. [:: xn] ..]) (at level 0).
 
-Notation focus := (focus dI).
-Notation dpmerge_dpbasis := (dpmerge_dpbasis dI).
 Notation dpsquare n := (dpmatrix I C n n).
 Notation endo n := (mor I C n n).
 Notation "T '^^' n" := (dpower I n T).
@@ -98,11 +96,11 @@ congr (_ *: _).
 rewrite /= cnotE focus_dpbasis.
 simpl_extract.
 rewrite qnot12E dpmerge_dpbasis.
-simpl_merge.
+simpl_merge dI.
 rewrite focus_dpbasis.
 simpl_extract.
 rewrite cnotE addrAC subrr add0r dpmerge_dpbasis.
-simpl_merge.
+simpl_merge dI.
 rewrite 2!cnotE.
 have -> : j + (j + (i + j)) = 3 * j + i by ring.
 rewrite (@char_Zp 3) // !linE.
