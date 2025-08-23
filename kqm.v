@@ -82,7 +82,7 @@ have -> : lensC [lens 0] = [lens 1] by eq_lens.
 rewrite !cast_tupleE /= -!extract_comp.
 have -> : lens_comp [lens 0; 1] [lens 0] = [lens 0] :> lens 3 1 by eq_lens.
 have -> : lens_comp [lens 0; 1] [lens 1] = [lens 1] :> lens 3 1 by eq_lens.
-rewrite !extract_merge !(merge_empty dI) /= !extract_merge_disjoint.
+rewrite !extract_merge !merge_empty /= !extract_merge_disjoint.
 rewrite !scalerA -!scalerDl.
 f_equal.
 have := mem_enum_indices (extract [lens 0] vi).

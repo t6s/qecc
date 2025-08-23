@@ -775,13 +775,14 @@ Proof. apply/nilP. by rewrite /nilp size_tuple subnn. Qed.
 Lemma lensC_empty : lensC lens_empty = lens_id n :> seq _.
 Proof. by rewrite /lensC /seq_lensC /= filter_predT. Qed.
 
-Lemma merge_empty (T : eqType) (dI : T) v w :
+Lemma merge_empty (T : eqType) v w :
   merge (I:=T) lens_empty v w = cast_tuple (subn0 n) w.
 Proof.
 apply eq_from_tnth => i.
 have Hi : i \in lensC lens_empty by rewrite mem_lensC.
-rewrite (tnth_mergeC _ _ Hi) !(tnth_nth dI) /= [seq_lensC _]lensC_empty.
-by rewrite index_lens_id.
+pose dI := tnth w (lens_index Hi).
+rewrite (tnth_mergeC _ _ Hi) 2!(tnth_nth dI) /=.
+by rewrite [seq_lensC _]lensC_empty index_lens_id.
 Qed.
 
 Lemma merge_nth_empty (T : eqType) (dI : T) v w :
