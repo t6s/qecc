@@ -596,12 +596,15 @@ Qed.
 Definition merge_nth (v : m.-tuple I) (w : (n-m).-tuple I) :=
   [tuple nth (nth dI w (index i lensC)) v (index i l) | i < n].
 
-Lemma mem_lensFC i : i \notin l -> i \in lensC.
+Lemma mem_lensNC i : i \notin l -> i \in lensC.
 Proof. by rewrite mem_lensC. Qed.
+
+Lemma mem_lensFC i : i \in l = false -> i \in lensC.
+Proof. rewrite mem_lensC; exact/contraFN. Qed.
 
 Definition merge (v : m.-tuple I) (w : (n-m).-tuple I) : n.-tuple I.
 apply mktuple => i.
-case (boolP (i \in l)) => H.
+case (sumbool_of_bool (i \in l)) => H.
 - exact (tnth v (lens_index H)).
 - exact (tnth w (lens_index (mem_lensFC H))).
 Defined.
@@ -610,10 +613,10 @@ Definition mergeE v w : merge v w = merge_nth v w.
 Proof.
 apply eq_from_tnth => i.
 rewrite !tnth_mktuple.
-case (boolP (i \in l)) => /= H.
+case: sumbool_of_bool => H.
   by rewrite nth_lens_index.
 rewrite (tnth_nth dI) /= [RHS]nth_default // leqNgt.
-by rewrite (size_tuple v) -{3}(size_lens l) index_mem.
+by rewrite (size_tuple v) -{3}(size_lens l) index_mem negbT.
 Qed.
 
 Lemma tnth_merge_nth i vi vj (Hil : i \in l) :
@@ -623,9 +626,9 @@ Proof. by rewrite tnth_mktuple (make_lens_index Hil) -tnth_nth. Qed.
 Lemma tnth_merge i vi vj (Hil : i \in l) :
   tnth (merge vi vj) i = tnth vi (lens_index Hil).
 Proof.
-rewrite tnth_mktuple; case (boolP (i \in l)) => H.
+rewrite tnth_mktuple; case: sumbool_of_bool => H.
   by congr tnth; apply/val_inj.
-by move: (H); rewrite Hil in H.
+by exfalso; rewrite Hil in H.
 Qed.
 
 Lemma tnth_merge_nthC i vi vj (Hil : i \in lensC) :
@@ -639,7 +642,7 @@ Qed.
 Lemma tnth_mergeC i vi vj (Hil : i \in lensC) :
   tnth (merge vi vj) i = tnth vj (lens_index Hil).
 Proof.
-rewrite tnth_mktuple; case (boolP (i \in l)) => H.
+rewrite tnth_mktuple; case: sumbool_of_bool => H.
   by move: (Hil); rewrite mem_lensC H in Hil.
 by congr tnth; apply/val_inj.
 Qed.
@@ -658,17 +661,6 @@ Proof.
 case/boolP: (i \in l) => Hi.
 - exact/TnthMerge/tnth_merge.
 - rewrite -mem_lensC in Hi; exact/TnthMergeC/tnth_mergeC.
-Qed.
-
-Lemma tnth_merge_cases i vi vj :
-  tnth (merge vi vj) i =
-  match boolP (i \in l) with
-  | AltTrue H => tnth vi (lens_index H)
-  | AltFalse H => tnth vj (lens_index (mem_lensFC H))
-  end.
-Proof.
-case (boolP (i \in l)) => H; first by rewrite tnth_merge.
-by set H' := mem_lensFC _; rewrite tnth_mergeC.
 Qed.
 
 Lemma extract_merge v1 v2 : extract l (merge v1 v2) = v1.
