@@ -1411,7 +1411,7 @@ Qed.
 End lens_assoc.
 
 Section lens_rev.
-Variables (I : Type) (dI : I) (n : nat).
+Variables (I : Type) (n : nat).
 
 Lemma uniq_lens_rev : uniq [tuple rev_ord i | i < n].
 Proof.
