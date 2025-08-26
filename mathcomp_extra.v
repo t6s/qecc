@@ -37,10 +37,7 @@ Definition cast_tuple H v : n.-tuple T := Tuple (cast_tuple_proof H v).
 
 Lemma eq_ord_tuple (t1 t2 : n.-tuple 'I_m) :
   (t1 == t2) = (map val t1 == map val t2).
-Proof.
-case: eqP => [-> | H]; apply/esym/eqP => // /inj_map H'.
-by elim H; apply/val_inj/H'/val_inj.
-Qed.
+Proof. exact/esym/inj_eq/(inj_map val_inj). Qed.
 
 Lemma nth_tnth i x0 (H : i < n) : nth x0 vr i = tnth vr (Ordinal H).
 Proof. by rewrite (tnth_nth x0). Qed.
