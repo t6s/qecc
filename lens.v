@@ -611,7 +611,7 @@ case (sumbool_of_bool (i \in l)) => H.
 - exact (tnth w (lens_index (mem_lensFC H))).
 Defined.
 
-Definition mergeE v w : merge v w = merge_nth v w.
+Lemma mergeE v w : merge v w = merge_nth v w.
 Proof.
 apply eq_from_tnth => i.
 rewrite !tnth_mktuple.
