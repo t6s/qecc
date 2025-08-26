@@ -17,6 +17,8 @@ Record lens := mkLens {lens_t :> m.-tuple 'I_n ; lens_uniq : uniq lens_t}.
 HB.instance Definition _ := [isSub for lens_t].
 Canonical lens_predType := PredType (pred_of_seq : lens -> pred 'I_n).
 
+HB.instance Definition lens_isFinite := [Finite of lens by <:].
+
 Definition endo1 := m.-tuple T -> m.-tuple T.
 
 Variables (l : lens) (f : endo1).
