@@ -224,10 +224,10 @@ End lens_id.
 Section lens_comp.
 Variables (n m p : nat) (l1 : lens n m) (l2 : lens m p).
 
-Definition lens_comp : lens n p.
-exists (extract l2 l1).
-abstract (by rewrite map_inj_uniq ?lens_uniq // => i j /tnth_lens_inj ->).
-Defined.
+Lemma lens_comp_uniq : uniq (extract l2 l1).
+Proof. by rewrite map_inj_uniq ?lens_uniq // => i j /tnth_lens_inj ->. Qed.
+
+Definition lens_comp : lens n p := mkLens lens_comp_uniq.
 
 Lemma tnth_comp i : tnth lens_comp i = tnth l1 (tnth l2 i).
 Proof. by rewrite tnth_map. Qed.
@@ -468,13 +468,10 @@ Qed.
 Lemma mem_seq_lensC i : (i \in seq_lensC) = (i \notin l).
 Proof. by rewrite mem_filter mem_enum andbT. Qed.
 
-Lemma uniq_lensC : uniq seq_lensC.
+Lemma uniq_lensC : uniq (Tuple size_lensC).
 Proof. by rewrite filter_uniq // enum_uniq. Qed.
 
-Definition lensC : lens n (n-m).
-exists (Tuple size_lensC).
-exact uniq_lensC.
-Defined.
+Definition lensC : lens n (n-m) := mkLens uniq_lensC.
 
 Lemma mem_lensC i : (i \in lensC) = (i \notin l).
 Proof. by rewrite mem_seq_lensC. Qed.
