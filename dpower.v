@@ -755,31 +755,14 @@ congr (Mf vk _ * Mg vj _ *: v _).
   by rewrite mem_lensE /= mem_lensC Hi.
 - rewrite !merge_extractC.
   apply eq_from_tnth => i /=.
-  (* case: (tnth_mergeP l1) => Hil1 ->.
+  case: (tnth_mergeP l1) => Hil1 ->.
     rewrite tnth_injectC; first by rewrite tnth_merge.
-    by rewrite mem_filter Hil1. *)
+    by rewrite mem_filter Hil1.
+  rewrite -[in RHS]merge_extractC tnth_merge.
   have dI : I := tnth [tuple of vj ++ vk] i.
-  rewrite !(mergeE dI) !tnth_mktuple /=.
-  case/boolP: (i \in l1) => Hil1. 
-    rewrite !nth_lens_index.
-    rewrite nth_default // memNindex ?(mem_lensC,Hil1) //.
-    by rewrite (eqP (size_lensC l1)) size_tuple addKn.
-  rewrite !nth_lens_out //.
-  move/negbF: Hil1.
-  rewrite -mem_lensC => /negbFE.
-  have -> : seq_lensC l1 = cast_lens (addKn _ _) (lensC l1) by [].
-  move=> Hil1.
-  rewrite !nth_lens_index (tnth_nth dI).
-  congr nth.
-  have -> : seq_lensC l2 = cast_lens (addKn _ _) (lensC l2) by [].
-  transitivity (map_tuple (tnth (inject (cast_lens (addKn p n) (lensC l2))
-                           vi vk)) (cast_lens (addKn p n) (lensC l2))) => //.
-  apply f_equal, eq_from_tnth => j.
-  rewrite tnth_map /= tnth_mktuple nth_lens_index ?mem_tnth // => H.
-  rewrite -(nth_lens_index H dI) nthK /=.
-  + by rewrite -?tnth_nth.
-  + by rewrite uniq_lensC.
-  + by rewrite (eqP (size_lensC _)) addKn inE.
+  rewrite !(tnth_nth dI); congr nth.
+  rewrite (_ : extract _ _ = cast_tuple (esym (addKn p n)) vk) //.
+  by rewrite -[cast_tuple _ vk](extract_inject (lensC l2) vi).
 Qed.
 
 Lemma focus_tensor' n m p (l : lens n m) (l' : lens n p) (H : [disjoint l & l'])
