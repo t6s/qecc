@@ -23,7 +23,7 @@ Definition endo1 := m.-tuple T -> m.-tuple T.
 
 Variables (l : lens) (f : endo1).
 
-Definition extract (t : n.-tuple T) := [tuple of map (tnth t) l].
+Definition extract (t : n.-tuple T) := map_tuple (tnth t) l.
 
 Definition lens_sorted (l' : lens) := sorted ord_ltn l'.
 
