@@ -133,6 +133,12 @@ apply/eq_from_tnth => i.
 case/boolP: (i \in l) => H; last by rewrite tnth_injectC.
 by rewrite tnth_inject tnth_extract tnth_lens_index.
 Qed.
+
+Lemma extract_inject t v : extract (inject t v) = v.
+Proof.
+apply/eq_from_tnth => i.
+by rewrite tnth_map (tnth_inject _ _ (mem_tnth i l)) lens_indexK.
+Qed.
 End lens.
 
 Lemma focus1_id T n m (l : lens n m) (v : n.-tuple T) : focus1 l id v = v.
@@ -280,7 +286,7 @@ Section disjoint_lenses.
 Variables (q r : nat) (l : lens n q) (l' : lens n r) (t : n.-tuple T).
 Hypothesis Hdisj : [disjoint l & l'].
 
-Lemma extract_inject t' : extract l (inject l' t t') = extract l t.
+Lemma extract_inject_out t' : extract l (inject l' t t') = extract l t.
 Proof.
 apply eq_from_tnth => i; rewrite !tnth_extract tnth_mktuple.
 by rewrite nth_lens_out // (disjointFr Hdisj) // mem_tnth.
@@ -302,7 +308,7 @@ Lemma focus1_commu_in (f : endo1 T q) (g : endo1 T r) i : i \in l ->
   tnth (focus1 l f (focus1 l' g t)) i = tnth (focus1 l' g (focus1 l f t)) i.
 Proof.
 move=> Hl; have Hl' : i \notin l' by rewrite (disjointFr Hdisj).
-by rewrite (focus1_out _ _ Hl') /focus1 extract_inject // !tnth_inject.
+by rewrite (focus1_out _ _ Hl') /focus1 extract_inject_out // !tnth_inject.
 Qed.
 End disjoint_lenses.
 

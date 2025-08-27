@@ -686,8 +686,9 @@ rewrite focusE !(ffunE,dpmorE) !sum_ffunE.
 under eq_bigr do rewrite !focusE !(ffunE,dpmorE) !sum_ffunE scaler_sumr.
 rewrite reindex_left_right.
 apply eq_bigr => /= vj _; rewrite !ffunE !merge_extractC.
-rewrite extract_inject; last by rewrite disjoint_sym lens_left_right_disjoint.
-by rewrite scalerA inject_all // lens_left_right_disjoint.
+rewrite extract_inject_out.
+  by rewrite scalerA inject_all // lens_left_right_disjoint.
+by rewrite disjoint_sym lens_left_right_disjoint.
 Qed.
 
 (* Associativity of actions of lenses *)
@@ -754,6 +755,9 @@ congr (Mf vk _ * Mg vj _ *: v _).
   by rewrite mem_lensE /= mem_lensC Hi.
 - rewrite !merge_extractC.
   apply eq_from_tnth => i /=.
+  (* case: (tnth_mergeP l1) => Hil1 ->.
+    rewrite tnth_injectC; first by rewrite tnth_merge.
+    by rewrite mem_filter Hil1. *)
   have dI : I := tnth [tuple of vj ++ vk] i.
   rewrite !(mergeE dI) !tnth_mktuple /=.
   case/boolP: (i \in l1) => Hil1. 
