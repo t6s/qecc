@@ -1,4 +1,4 @@
-From mathcomp Require Import all_ssreflect all_algebra complex.
+From mathcomp Require Import all_ssreflect all_algebra complex ring.
 Require Export lens lens_tactics dpower unitary endo_monoid.
 
 Set Implicit Arguments.
@@ -72,7 +72,7 @@ Lemma swapE (i j : I) : swap Co ¦i, j⟩ = ¦j, i⟩.
 Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
 Lemma addii (i : I) : i + i = 0.
-Proof. by rewrite -mulr2n -mulr_natl (@char_Zp 2) // mul0r. Qed.
+Proof. by rewrite -(mulr0 i) -(@char_Zp 2)//; ring. Qed.
 
 Lemma toffoliE i j k : toffoli Co ¦i,j,k⟩ = ¦i,j,i*j+k⟩.
 Proof. by rewrite dpmor_dpbasis ffunE. Qed.

@@ -5,25 +5,22 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(* cnot \v cnot \cnot = swap *)
+(* cnot \v cnot \v cnot = swap *)
 (* See example from section 7.4 of  Unruh's Quantum and classical registers *)
 
-Lemma cnot3_swap :
-  focus [lens 0; 1] cnot \v focus [lens 1; 0] cnot \v focus [lens 0; 1] cnot
-  =e (focus [lens 0; 1] swap : endo 2).
+Lemma swap_cnot : swap =e cnot \v focus [lens 1; 0] cnot \v cnot.
 Proof.
 apply/lift_mor_eq => v.
 rewrite (decompose_scaler v) !linear_sum.
-apply eq_bigr => i _.
-rewrite 2!linearZ_LR; congr (_ *: _).
-case: i => -[|i [|j []]] Hj //=.
-rewrite [RHS]focus_dpbasis [in LHS]focus_dpbasis; simpl_extract.
-rewrite {1}(cnotE i j) swapE !dpmerge_dpbasis.
-do 2 simpl_merge.
-rewrite focus_dpbasis cnotE addrAC addii add0r dpmerge_dpbasis.
+apply eq_bigr => -[[|i [|j []]] Ht] _ //.
+rewrite !linearZ_LR.
+congr (_ *: _).
+rewrite /= swapE cnotE focus_dpbasis.
+simpl_extract.
+rewrite cnotE dpmerge_dpbasis.
 simpl_merge.
-rewrite focus_dpbasis cnotE addrCA addii addr0 dpmerge_dpbasis.
-by simpl_merge.
+rewrite cnotE.
+by rewrite addrAC addii add0r addrCA addii addr0.
 Qed.
 
 (* Checking equality of functions (sum of tensors) *)

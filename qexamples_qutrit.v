@@ -84,25 +84,23 @@ apply/eq_from_indicesP => {vi} /=.
 do! (apply/andP; split => //); rewrite ffunE; apply/eqP/ffunP=>/=vi; rewrite ffunE.
 Admitted.
 
-Lemma swap_def :
-  cnot \v cnot \v focus [lens 1; 0] cnot \v focus [lens 0] qnot12 \v cnot =e swap.
+Lemma swap_cnot_qnot :
+  swap =e cnot \v cnot \v focus [lens 1; 0] cnot \v focus [lens 0] qnot12 \v cnot.
 Proof.
 apply/lift_mor_eq => v.
-rewrite (decompose_dpower v) !linear_sum.
+rewrite (decompose_scaler v) !linear_sum.
 apply eq_bigr => -[[|i [|j []]] Ht] _ //.
-simpl_tuple (Tuple Ht).
-rewrite dpmap_scale !linearZ_LR.
+rewrite !linearZ_LR.
 congr (_ *: _).
-rewrite /= cnotE focus_dpbasis.
+rewrite /= swapE cnotE focus_dpbasis.
 simpl_extract.
 rewrite qnot12E dpmerge_dpbasis.
 simpl_merge dI.
 rewrite focus_dpbasis.
 simpl_extract.
-rewrite cnotE addrAC subrr add0r dpmerge_dpbasis.
+rewrite cnotE dpmerge_dpbasis.
 simpl_merge dI.
-rewrite 2!cnotE.
+rewrite 2!cnotE addrAC subrr add0r.
 have -> : j + (j + (i + j)) = 3 * j + i by ring.
-rewrite (@char_Zp 3) // !linE.
-by rewrite swapE.
+by rewrite (@char_Zp 3) // !linE.
 Qed.
