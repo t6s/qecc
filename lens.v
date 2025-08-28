@@ -89,6 +89,10 @@ End lens_index.
 Lemma lens_indexK i (H : tnth l i \in l) : lens_index H = i.
 Proof. by apply/val_inj => /=; rewrite tnth_lensK. Qed.
 
+Lemma eq_lens_index i (H : i \in l) (H' : i \in l) :
+  lens_index H = lens_index H'.
+Proof. exact: val_inj. Qed.
+
 (* Focusing on subvector *)
 Definition inject (t : n.-tuple T) (t' : m.-tuple T) :=
   [tuple nth (tnth t i) t' (index i l) | i < n].
@@ -259,6 +263,20 @@ Lemma lens_comp_sub :
   {subset lens_comp <= l1}.
 Proof.
 by move=> i; rewrite mem_lensE => /mapP [j] _ ->; rewrite mem_tnth.
+Qed.
+
+Lemma lens_index_comp_sub i (H : i \in lens_comp) :
+  lens_index (lens_comp_sub H) \in l2.
+Proof.
+rewrite -index_mem /= -index_lens_comp.
+by move: H; rewrite -index_mem !size_lens.
+Qed.
+
+Lemma lens_index_lens_comp i (H : i \in lens_comp) :
+  lens_index H = lens_index (lens_index_comp_sub H).
+Proof.
+apply: (tnth_lens_inj (l:=lens_comp)).
+by rewrite tnth_lens_index tnth_comp !tnth_lens_index.
 Qed.
 
 Lemma mem_lens_comp_out i : i \notin l1 -> i \notin lens_comp.
@@ -476,8 +494,42 @@ Definition lensC : lens n (n-m) := mkLens uniq_lensC.
 Lemma mem_lensC i : (i \in lensC) = (i \notin l).
 Proof. by rewrite mem_seq_lensC. Qed.
 
+Lemma mem_lensNC i : i \notin l -> i \in lensC.
+Proof. by rewrite mem_lensC. Qed.
+
+Lemma mem_lensFC i : i \in l = false -> i \in lensC.
+Proof. rewrite mem_lensC; exact/contraFN. Qed.
+
 Lemma lens_sorted_lensC : lens_sorted lensC.
 Proof. exact/sorted_filter/sorted_ord_enum/ltn_trans. Qed.
+
+Section lens_inv_sum.
+Definition lensP i : {i \in l}+{i \in lensC} :=
+  match sumbool_of_bool (i \in l) with
+  | left H => left H
+  | right H => right (mem_lensFC H)
+  end.
+
+Definition lens_inv_sum (i : 'I_n) : 'I_m + 'I_(n-m) :=
+  match lensP i with
+  | left H => inl (lens_index H)
+  | right H => inr (lens_index H)
+  end.
+
+Lemma lens_inv_mem i (H : i \in l) : lens_inv_sum i = inl (lens_index H).
+Proof.
+rewrite /lens_inv_sum; case: lensP => H'.
+- by congr inl; apply/val_inj.
+- by exfalso; rewrite mem_lensC H in H'.
+Qed.
+
+Lemma lens_inv_memC i (H : i \in lensC) : lens_inv_sum i = inr (lens_index H).
+Proof.
+rewrite /lens_inv_sum; case: lensP => H'.
+- by exfalso; rewrite mem_lensC H' in H.
+- by congr inr; apply/val_inj.
+Qed.
+End lens_inv_sum.
 
 (* For the definition of rank0 and select0, see:
    Gonzalo Navarro: Compact data structures, a practical approach.
@@ -600,12 +652,6 @@ Qed.
 
 Definition merge_nth (v : m.-tuple I) (w : (n-m).-tuple I) :=
   [tuple nth (nth dI w (index i lensC)) v (index i l) | i < n].
-
-Lemma mem_lensNC i : i \notin l -> i \in lensC.
-Proof. by rewrite mem_lensC. Qed.
-
-Lemma mem_lensFC i : i \in l = false -> i \in lensC.
-Proof. rewrite mem_lensC; exact/contraFN. Qed.
 
 Definition merge (v : m.-tuple I) (w : (n-m).-tuple I) : n.-tuple I.
 apply mktuple => i.
@@ -1286,7 +1332,7 @@ apply/eq_from_tnth => i.
 case: (tnth_mergeP l) => Hil ->.
   case: (tnth_mergeP l') => Hill' ->.
     rewrite tnth_merge => [|Hilcl']. by rewrite mem_lens_comp.
-    congr tnth; apply/val_inj => /=; by rewrite -index_lens_comp.
+    rewrite lens_index_lens_comp; congr tnth; exact: val_inj.
   have Hilo : i \in lensC_comp by rewrite mem_lensC mem_lens_comp -mem_lensC.
   rewrite tnth_mergeC.
   have Hic : i \in lens_comp l (lensC l') by rewrite mem_lens_comp.
