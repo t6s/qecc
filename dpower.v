@@ -139,11 +139,11 @@ by rewrite linearZ_LR !ffunE.
 Qed.
 
 Definition dpmor m n (M : 'dpM_(m,n)) : mor m n :=
-  Mor (dpmorN M).
+  locked (Mor (dpmorN M)).
 
 Lemma dpmorE m n (M : 'dpM_(m,n)) T v vi :
   dpmor M T v vi = \sum_(vj : m.-tuple I) (M vj vi : R) *: v vj.
-Proof. by rewrite /dpmor /dpmorlin /= -lock !ffunE. Qed.
+Proof. by rewrite /dpmor -lock /dpmorlin /= -lock !ffunE. Qed.
 
 Definition dpbasis m (vi : m.-tuple I) : R^o^^m :=
   [ffun vj => (vi == vj)%:R].
@@ -214,7 +214,7 @@ Lemma naturalityP m n (f : morlin m n) :
 Proof.
 split.
 - move=> Nf. by exists (mordp f) => v T; rewrite (mordpK (Mor Nf)).
-- case=> M Nf T1 T2 h v. by rewrite !Nf dpmorN.
+- case=> M Nf T1 T2 h v. by rewrite !Nf /dpmor -lock dpmorN.
 Qed.
 
 Let Ro : lmodType R := R^o.
