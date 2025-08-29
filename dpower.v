@@ -236,6 +236,15 @@ rewrite -[LHS]sum_dpbasisKo.
 by apply eq_bigr => vj _; rewrite [RHS]ffunE dpbasisC.
 Qed.
 
+Lemma eq_mor_basis m n (f g : mor m n) :
+  (forall v, f Ro (dpbasis v) = g Ro (dpbasis v)) -> f =e g.
+Proof.
+move=> H; apply: lift_mor_eq => v.
+rewrite (decompose_scaler v) !linear_sum.
+apply: eq_bigr => vi _.
+by rewrite !linearE /= H.
+Qed.
+
 Definition ket_bra m n (ket : R^o^^m) (bra : R^o^^n) : 'dpM_(n,m) :=
   [ffun vj => bra vj *: ket].
 

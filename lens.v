@@ -294,7 +294,7 @@ case/boolP: (i \in l1) => Hl1.
 by rewrite !tnth_injectC // mem_lens_comp_out.
 Qed.
 
-Lemma focus1A (f : p.-tuple T -> p.-tuple T) :
+Lemma focus1M (f : p.-tuple T -> p.-tuple T) :
   focus1 l1 (focus1 l2 f) =1 focus1 lens_comp f.
 Proof. move=> t; by rewrite /focus1 inject_comp extract_comp. Qed.
 

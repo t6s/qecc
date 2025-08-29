@@ -10,11 +10,7 @@ Unset Printing Implicit Defensive.
 
 Lemma swap_cnot : swap =e cnot \v focus [lens 1; 0] cnot \v cnot.
 Proof.
-apply/lift_mor_eq => v.
-rewrite (decompose_scaler v) !linear_sum.
-apply eq_bigr => -[[|i [|j []]] Ht] _ //.
-rewrite !linearZ_LR.
-congr (_ *: _).
+apply/eq_mor_basis => -[[|i [|j []]] Ht] //.
 rewrite /= swapE cnotE focus_dpbasis.
 simpl_extract.
 rewrite cnotE dpmerge_dpbasis.

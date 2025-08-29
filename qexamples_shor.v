@@ -56,21 +56,17 @@ Qed.
 Lemma bit_flip_toffoli :
   (bit_flip_dec \v bit_flip_enc) =e focus [lens 1; 2; 0] toffoli.
 Proof.
-apply/lift_mor_eq => v.
-rewrite (decompose_dpower v) !linear_sum.
-apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
+apply/eq_mor_basis => -[[|i [|j [|k []]]] Hi] //.
 simpl_tuple (Tuple Hi).
-rewrite dpmap_scale !linearZ_LR /bit_flip_dec 2!comp_morE 2!bit_flip_enc_ok.
+rewrite /bit_flip_dec 2!comp_morE 2!bit_flip_enc_ok.
 by rewrite !addrA !addii !add0r.
 Qed.
 
 Lemma toffoli_involutive : toffoli \v toffoli =e idmor I C 3.
 Proof.
-apply/lift_mor_eq => v.
-rewrite (decompose_dpower v) !linear_sum.
-apply eq_bigr => -[[|i [|j [|k []]]] Hi] _ //.
+apply/eq_mor_basis => -[[|i [|j [|k []]]] Hi] //.
 simpl_tuple (Tuple Hi).
-by rewrite dpmap_scale !linearZ_LR comp_morE !toffoliE addrA addii add0r.
+by rewrite comp_morE !toffoliE addrA addii add0r.
 Qed.
 
 (* Not used
@@ -139,13 +135,12 @@ transitivity (focus [lens 0; 3; 6]
                     Co
                     (dpbasis C (shor_input i))).
   rewrite [RHS]focus_comp /= focus_dpbasis.
-  simpl_extract.
   set sfe := sign_flip_enc _ _.
   rewrite (decompose_scaler sfe).
   rewrite linear_sum.
   rewrite !linear_sum.
   (*rewrite -big_filter.*)
-  apply eq_bigr => j _.
+  apply: eq_bigr => j _.
   rewrite linearZ_LR.
   rewrite 8!linearZ_LR.
   congr (_ *: focus _ _ _ _). (* i.e. congr GRing.scale *)
