@@ -10,7 +10,7 @@ Open Scope ring_scope.
 Open Scope complex_scope.
 
 Axiom R : rcfType.
-Definition C : comRingType := R[i].
+Definition C : comNzRingType := R[i].
 Definition Co : lmodType C := C^o.
 Definition I : finType := 'I_3.
 Definition dI : I := 0.
@@ -98,5 +98,5 @@ rewrite cnotE dpmerge_dpbasis.
 simpl_merge dI.
 rewrite 2!cnotE addrAC subrr add0r.
 have -> : j + (j + (i + j)) = 3 * j + i by ring.
-by rewrite (@char_Zp 3) // !linE.
+by rewrite (@pchar_Zp 3) // !linE.
 Qed.

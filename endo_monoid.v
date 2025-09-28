@@ -1,8 +1,8 @@
-Require Reals.
+From Stdlib Require Reals.
 From mathcomp Require Import all_ssreflect all_algebra complex.
 From HB Require Import structures.
 Require Import lens lens_tactics dpower unitary.
-Require Import JMeq ProofIrrelevance FunctionalExtensionality. (* Wooh *)
+From Stdlib Require Import JMeq ProofIrrelevance FunctionalExtensionality. (* Wooh *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -18,7 +18,7 @@ Variable I : finType.
 Local Notation "T '^^' n" := (dpower I n T).
 
 Section com_ring.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Local Notation mor m n := (mor I R m n).
 Local Notation endo n := (mor n n).
@@ -456,7 +456,7 @@ End com_ring.
 
 Section unitary.
 Variable R : rcfType.
-Let C : comRingType := R[i].
+Let C : comNzRingType := R[i].
 Let Co : lmodType C := C^o.
 
 Local Notation mor := (mor I C).

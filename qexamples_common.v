@@ -10,7 +10,7 @@ Open Scope ring_scope.
 Open Scope complex_scope.
 
 Axiom R : rcfType.
-Definition C : comRingType := R[i].
+Definition C : comNzRingType := R[i].
 Definition Co : lmodType C := C^o.
 Definition I : finType := 'I_2.
 Definition dI : I := 0.
@@ -72,7 +72,7 @@ Lemma swapE (i j : I) : swap Co ¦i, j⟩ = ¦j, i⟩.
 Proof. by rewrite dpmor_dpbasis ffunE. Qed.
 
 Lemma addii (i : I) : i + i = 0.
-Proof. by rewrite -(mulr0 i) -(@char_Zp 2)//; ring. Qed.
+Proof. by rewrite -(mulr0 i) -(@pchar_Zp 2)//; ring. Qed.
 
 Lemma toffoliE i j k : toffoli Co ¦i,j,k⟩ = ¦i,j,i*j+k⟩.
 Proof. by rewrite dpmor_dpbasis ffunE. Qed.

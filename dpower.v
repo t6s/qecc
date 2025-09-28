@@ -14,28 +14,28 @@ Reserved Notation "f =e g" (at level 70).
 Reserved Notation "M1 '*d' M2" (at level 50).
 Reserved Notation "T '^^' n " (at level 50).
 Reserved Notation "''dpM_' n"
-  (at level 8, n at level 2, format "''dpM_' n").
+  (at level 0, n at level 2, format "''dpM_' n").
 Reserved Notation "''dpM_' ( m , n )"
-  (at level 8, format "''dpM_' ( m ,  n )").
+  (at level 0, format "''dpM_' ( m ,  n )").
 Reserved Notation "''dpM[' R ]_ n"
-  (at level 8, n at level 2, format "''dpM[' R ]_ n").
+  (at level 0, n at level 2, format "''dpM[' R ]_ n").
 Reserved Notation "''dpM[' R ]_ ( n )"
-  (at level 8). (* only parsing *)
+  (at level 0). (* only parsing *)
 Reserved Notation "''dpM[' R ]_ ( m , n )"
-  (at level 8, format "''dpM[' R ]_ ( m ,  n )").
+  (at level 0, format "''dpM[' R ]_ ( m ,  n )").
 Reserved Notation "''dpM[' I , R ]_ n"
-  (at level 8, n at level 2). (* only parsing *)
+  (at level 0, n at level 2). (* only parsing *)
 Reserved Notation "''dpM[' I , R ]_ ( n )"
-  (at level 8). (* only parsing *)
+  (at level 0). (* only parsing *)
 Reserved Notation "''dpM[' I , R ]_ ( m , n )"
-  (at level 8). (* only parsing *)
+  (at level 0). (* only parsing *)
 
 (* Reduce a linear form *)
 Definition linE :=
   (mulr0,mul0r,mulr1,mul1r,addr0,add0r,subr0,oppr0,scale0r,scale1r).
 
 Section tensor_space.
-Variables (I : finType) (R : comRingType).
+Variables (I : finType) (R : comNzRingType).
 
 Definition dpower n T := {ffun n.-tuple I -> T}.
 Local Notation "T '^^' n " := (dpower n T).
@@ -154,7 +154,7 @@ Definition mordp m n (f : morlin m n) : 'dpM_(m,n) :=
 Lemma mordp_eq m n (f g : mor m n) : f =e g -> mordp f = mordp g.
 Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
-Lemma sum_muleqr (A : finType) (S : comRingType) (F : A -> S) (v : A) :
+Lemma sum_muleqr (A : finType) (S : comNzRingType) (F : A -> S) (v : A) :
   \sum_a F a * (v == a)%:R = F v.
 Proof.
 rewrite (bigD1 v) //= big1 ?(addr0,eqxx,mulr1) // => a av.
@@ -882,7 +882,7 @@ Proof.
 rewrite /vsz.
 elim: m i => [|m IH /= i Hi]; first by case; rewrite expn0 // ltnS.
 rewrite enum_valK IH /=; first by rewrite addnC mulnC -divn_eq.
-rewrite -(ltn_pmul2r card_inh) (leq_ltn_trans (leq_trunc_div _ _)) //.
+rewrite -(ltn_pmul2r card_inh) (leq_ltn_trans (leq_divM _ _)) //.
 by rewrite mulnC -expnS.
 Qed.
 
@@ -921,7 +921,7 @@ End index_of_vec_bij.
 
 (* dpower n R^o forms a vector space of size #|I|^m *)
 Section vector.
-Variable (I : finType) (R : comRingType) (dI : I).
+Variable (I : finType) (R : comNzRingType) (dI : I).
 Let vsz m := (#|I| ^ m)%N.
 Local Notation "T '^^' n" := (dpower I n T).
 

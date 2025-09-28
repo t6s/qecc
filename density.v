@@ -12,7 +12,7 @@ Local Open Scope complex_scope.
 
 Section density.
 Variable R : rcfType.
-Let C : comRingType := R[i].
+Let C : comNzRingType := R[i].
 Let Co : lmodType C := C^o.
 Variable I : finType.
 

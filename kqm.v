@@ -11,7 +11,7 @@ Import GRing.Theory.
 
 Section transpose.
 
-Variables (R : comRingType).
+Variables (R : comNzRingType).
 Let I : finType := 'I_2.
 Let dI : I := ord0.
 
