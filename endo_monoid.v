@@ -18,7 +18,7 @@ Variable I : finType.
 Local Notation "T '^^' n" := (dpower I n T).
 
 Section com_ring.
-Variable R : comNzRingType.
+Variable R : comPzRingType.
 
 Local Notation mor m n := (mor I R m n).
 Local Notation endo n := (mor n n).
@@ -456,7 +456,7 @@ End com_ring.
 
 Section unitary.
 Variable R : rcfType.
-Let C : comNzRingType := R[i].
+Let C : comPzRingType := R[i].
 Let Co : lmodType C := C^o.
 
 Local Notation mor := (mor I C).

@@ -35,7 +35,7 @@ Definition linE :=
   (mulr0,mul0r,mulr1,mul1r,addr0,add0r,subr0,oppr0,scale0r,scale1r).
 
 Section tensor_space.
-Variables (I : finType) (R : comNzRingType).
+Variables (I : finType) (R : comPzRingType).
 
 Definition dpower n T := {ffun n.-tuple I -> T}.
 Local Notation "T '^^' n " := (dpower n T).
@@ -154,7 +154,7 @@ Definition mordp m n (f : morlin m n) : 'dpM_(m,n) :=
 Lemma mordp_eq m n (f g : mor m n) : f =e g -> mordp f = mordp g.
 Proof. by move=> fg; apply/ffunP=>vi; apply/ffunP=>vj; rewrite !ffunE fg. Qed.
 
-Lemma sum_muleqr (A : finType) (S : comNzRingType) (F : A -> S) (v : A) :
+Lemma sum_muleqr (A : finType) (S : comPzRingType) (F : A -> S) (v : A) :
   \sum_a F a * (v == a)%:R = F v.
 Proof.
 rewrite (bigD1 v) //= big1 ?(addr0,eqxx,mulr1) // => a av.
@@ -189,7 +189,7 @@ Section scalerv.
 Variables (T : lmodType R) (v : T).
 Definition scalerv (x : R ^o) := x *: v.
 Lemma scalerv_is_linear : linear scalerv.
-Proof. by move=> x y z; rewrite /scalerv !linearE/= scalerA mulrC scalerDl. Qed.
+Proof. by move=> x y z; rewrite /scalerv scalerDl scalerA. Qed.
 HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ scalerv_is_linear.
 End scalerv.
 
@@ -397,7 +397,10 @@ Variable vi : k.-tuple I.
 Definition dpsingle (v : T) : T^^k :=
   [ffun vj => (vi == vj)%:R *: v].
 Lemma dpsingle_linear : linear dpsingle.
-Proof. move=> a x y; apply/ffunP => i; by rewrite !ffunE /= linearP. Qed.
+Proof.
+move=> a x y; apply/ffunP => i.
+by rewrite !ffunE; rewrite scalerDr !scalerA (mulrC a).
+Qed.
 HB.instance Definition _ := GRing.isLinear.Build _ _ _ _ _ dpsingle_linear.
 
 Definition dpsel (v : T^^k) := v vi.
@@ -421,8 +424,8 @@ Definition ptracefun (T : lmodType R) (v : T^^m) : T^^m :=
 
 Lemma ptrace_is_linear T : linear (@ptracefun T).
 Proof.
-move=> a x y; rewrite /ptracefun !linear_sum -big_split /=.
-apply eq_bigr => vi _; by rewrite !linearP.
+move=> a x y; rewrite /ptracefun scaler_sumr -big_split.
+by apply eq_bigr => vi _; rewrite !linearP.
 Qed.
 HB.instance Definition _ T :=
   GRing.isLinear.Build _ _ _ _ _ (@ptrace_is_linear T).
@@ -921,7 +924,7 @@ End index_of_vec_bij.
 
 (* dpower n R^o forms a vector space of size #|I|^m *)
 Section vector.
-Variable (I : finType) (R : comNzRingType) (dI : I).
+Variable (I : finType) (R : comPzRingType) (dI : I).
 Let vsz m := (#|I| ^ m)%N.
 Local Notation "T '^^' n" := (dpower I n T).
 
@@ -993,16 +996,24 @@ Definition dpower_vec m (X : R^o^^m) : 'rV[R]_(vsz m) :=
 (*
   Definition mxmor_of_coqmx m n (M : 'M_(vsz m,vsz n)) := mxmor (mxdpmatrix M).
 *)
+End vector.
+
+(* TODO: generalization to comPzRingType is blocked by lalgType.
+         See vector.v and ssralg.v *)
+Section nz_vector.
+Variable (I : finType) (R : comNzRingType) (dI : I).
+Let vsz m := (#|I| ^ m)%N.
+Local Notation "T '^^' n" := (dpower I n T).
 
 Lemma dpower_vector m : Vector.axiom (vsz m) (R^o^^m).
 Proof.
-exists (@dpower_vec m).
+exists (@dpower_vec I R dI m).
 - move=> x /= y z. apply/rowP => i. by rewrite !(ffunE,mxE).
-- exists (@vec_dpower m).
+- exists (@vec_dpower I R m).
   + move=> v. apply/ffunP => vi. by rewrite !(ffunE,mxE) index_of_vecK.
   + move=> X. apply/rowP => i. by rewrite !(ffunE,mxE) vec_of_indexK.
 Qed.
-End vector.
+End nz_vector.
 
 (* Helper lemmas for computation *)
 Section enum_indices.

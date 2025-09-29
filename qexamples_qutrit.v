@@ -10,7 +10,7 @@ Open Scope ring_scope.
 Open Scope complex_scope.
 
 Axiom R : rcfType.
-Definition C : comNzRingType := R[i].
+Definition C : comPzRingType := R[i].
 Definition Co : lmodType C := C^o.
 Definition I : finType := 'I_3.
 Definition dI : I := 0.

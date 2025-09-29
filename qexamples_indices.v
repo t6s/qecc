@@ -19,7 +19,7 @@ Local Open Scope complex_scope.
 
 (* Let R := [rcfType of Reals.Rdefinitions.R]. *)
 Variable R : rcfType.
-Let C := [comNzRingType of R[i]].
+Let C := [comPzRingType of R[i]].
 Let Co := [lmodType C of C^o].
 Let I := [finType of 'I_2].
 
