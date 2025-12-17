@@ -1,3 +1,4 @@
+Require Import Recdef Wf_nat.
 From mathcomp Require Import all_ssreflect all_algebra complex.
 Require Import qexamples_common.
 
@@ -106,3 +107,48 @@ case/boolP: (i \in lp) => Hi.
   move: Hi; rewrite mem_lensC !inE; apply contra.
   by move/eqP => Hi; apply/orP/or_intror/eqP/val_inj.
 Qed.
+
+(* Yet another solution using O(log n) gates *)
+Definition cast_endo m1 m2 (H : m1 = m2) : endo m1 -> endo m2 :=
+  cast_mor H H.
+
+Lemma add_uphalf_half m : (uphalf m + half m = m)%N.
+Proof. by rewrite uphalf_half -addnA addnn odd_double_half. Qed.
+
+Lemma inord_succn_neq0 m i : (i <= m)%N -> ord0 != inord i.+1 :> 'I_m.+2.
+Proof. by rewrite -2!ltnS => /inordK H; apply/eqP=>/(f_equal val)/=/[!H]. Qed.
+
+Lemma leq_half m : (m./2 <= m)%N.
+Proof. by rewrite leq_half_double -addnn -addnS leq_addr. Qed.
+
+Function cnot_tree n {wf lt n} : endo n.+1 :=
+  match n as n return endo n.+1 with
+  | 0 => idmor I C 1
+  | 1 => cnot
+  | m.+2 => 
+      cast_endo (add_uphalf_half m.+3)
+        (focus (lens_left _ _) (cnot_tree ((half m).+1)) \v
+           focus (lens_right _ _) (cnot_tree (half m.+1)))
+      \v focus (lens_pair (inord_succn_neq0 (leqW (leq_half m)))) cnot
+  end.
+- move=> * /=; apply/ltP; by rewrite uphalfE ltnS leq_half.
+- move=> * /=; apply/ltP; by rewrite !ltnS leq_half.
+- exact: lt_wf.
+Defined.
+
+Definition ghz_tree n : endo n.+1 :=
+  cnot_tree n \v focus (lens_single ord0) hadamard.
+
+Lemma ghz_tree_ok n :
+  ghz_tree n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
+Proof.
+elim/ltn_ind: n.
+case=> [_|[_|n IH]] /=.
+- rewrite (_ : lens_single _ = lens_id _); last by eq_lens.
+  by rewrite focusI ghz_state0.
+- rewrite cnot_tree_equation -ghz_ok /=.
+  rewrite (_ : lens_pair _ = lens_id _); last by eq_lens.
+  rewrite focusI.
+  by congr (cnot _ (focus _ _ _ _)); eq_lens.
+- rewrite cnot_tree_equation.
+Abort.
