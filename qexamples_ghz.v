@@ -129,7 +129,8 @@ Function cnot_tree n {wf lt n} : endo n.+1 :=
       cast_endo (add_uphalf_half m.+3)
         (focus (lens_left _ _) (cnot_tree ((half m).+1)) \v
            focus (lens_right _ _) (cnot_tree (half m.+1)))
-      \v focus (lens_pair (inord_succn_neq0 (leqW (leq_half m)))) cnot
+      \v focus (@lens_pair m.+3 ord0 (inord (m./2.+2))
+                  (inord_succn_neq0 (leq_half m : m./2 < m.+1)%N)) cnot
   end.
 - move=> * /=; apply/ltP; by rewrite uphalfE ltnS leq_half.
 - move=> * /=; apply/ltP; by rewrite !ltnS leq_half.
@@ -139,16 +140,109 @@ Defined.
 Definition ghz_tree n : endo n.+1 :=
   cnot_tree n \v focus (lens_single ord0) hadamard.
 
-Lemma ghz_tree_ok n :
-  ghz_tree n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
+Lemma cnot_tree_ok n (b : I) :
+  cnot_tree n Co (dpbasis C [tuple if i == 0 then b else 0 | i < n.+1]) =
+    dpbasis C [tuple b | _ < n.+1].
 Proof.
 elim/ltn_ind: n.
 case=> [_|[_|n IH]] /=.
-- rewrite (_ : lens_single _ = lens_id _); last by eq_lens.
-  by rewrite focusI ghz_state0.
-- rewrite cnot_tree_equation -ghz_ok /=.
-  rewrite (_ : lens_pair _ = lens_id _); last by eq_lens.
-  rewrite focusI.
-  by congr (cnot _ (focus _ _ _ _)); eq_lens.
-- rewrite cnot_tree_equation.
-Abort.
+- by congr dpbasis; apply eq_mktuple => -[] [].
+- rewrite cnot_tree_equation dpmor_dpbasis !ffunE !tnth_mktuple /= addr0.
+  by congr dpbasis; eq_lens.
+- rewrite cnot_tree_equation /= focus_dpbasis.
+  rewrite (_ : cnot Co _ = dpbasis C [tuple b | _ < 2]); last first.
+    rewrite dpmor_dpbasis !ffunE !(tnth_mktuple,tnth_map) !(tnth_nth ord0) /=.
+    rewrite ifN ?addr0.
+      by congr dpbasis; eq_lens.
+    apply/eqP => /(f_equal val) /=.
+    by rewrite inordK // !ltnS leq_half.
+  pose mp3 := uphalf n.+3 + half n.+3.
+  rewrite (_ : dpcast (esym _) _ =
+    dpbasis C [tuple if i \in [:: lshift (half n.+3) 0; rshift (uphalf n.+3) 0]
+                     then b else 0 | i < mp3]); last first.
+    rewrite dpmerge_dpbasis.
+    apply/ffunP => /= v.
+    rewrite !ffunE.
+    rewrite -(inj_eq (f:=cast_tuple (esym(esym(add_uphalf_half n.+3)))));
+      last exact/bij_inj/cast_tuple_bij.
+    congr ((nat_of_bool (_ == _))%:R).
+    apply/eq_from_tnth => j.
+    rewrite tnth_map tnth_ord_tuple (tnth_nth 0) /= (nth_map ord0); last first.
+      by rewrite size_enum_ord [X in (_ < X)%N](add_uphalf_half n.+3).
+    rewrite ![in RHS]inE.
+    have jmp3 : (j < mp3)%N by rewrite [mp3]add_uphalf_half.
+    case: sumbool_of_bool => Hj.
+      rewrite tnth_mktuple ifT //.
+      apply/orP.
+      move: Hj; rewrite !inE => /orP[] /eqP ->; [left | right];
+        apply/eqP/val_inj; rewrite /= nth_enum_ord //.
+        by rewrite addn0 inordK // !ltnS leq_half.
+      by rewrite [mp3]add_uphalf_half inordK // !ltnS leq_half.
+    move/negbT: (Hj); rewrite !inE negb_or => /andP[j0 j1].
+    rewrite tnth_extract tnth_mktuple ifF.
+      rewrite ifF //.
+      apply/negbTE/negP => /orP[] /eqP /(f_equal val) /=;
+        rewrite /= nth_enum_ord // ?addn0 => {}Hj.
+        by move/eqP: j0; elim; apply/val_inj.
+      move/eqP: j1; elim; apply/val_inj => /=.
+      by rewrite inordK // !ltnS leq_half.
+    move: (mem_tnth (lens_index (mem_lensFC Hj))
+          (lensC (lens_pair (inord_succn_neq0 (leq_half n: n./2 < n.+1)%N)))).
+    case/boolP: (_ == 0) => // /eqP ->.
+    by rewrite mem_lensC !inE negb_or andbC inord_succn_neq0 // ltnS leq_half.
+  rewrite focus_dpbasis.
+  rewrite (_ : extract _ _ = [tuple if i == 0 then b else 0|i < (uphalf n).+1]);
+    last first.
+    apply: eq_from_tnth => j.
+    rewrite tnth_extract !tnth_mktuple !inE eq_rlshift /=.
+    by rewrite (inj_eq (@rshift_inj _ _)).
+  rewrite IH; last by rewrite uphalfE ltnS leq_half.
+  rewrite dpmerge_dpbasis merge_extractC focus_dpbasis.
+  rewrite (_ : extract _ _ = [tuple if i == 0 then b else 0|i < n./2.+2]);
+    last first.
+    apply: eq_from_tnth => j.
+    rewrite tnth_extract !tnth_mktuple !inE eq_lrshift orbF.
+    rewrite (inj_eq (@lshift_inj _ _)) nth_lens_out //.
+    apply/negP => /=.
+    rewrite mem_lensE /= => /mapP[k] _ /eqP.
+    by rewrite eq_lrshift.
+  rewrite IH; last by rewrite !ltnS leq_half.
+  rewrite dpmerge_dpbasis.
+  rewrite (_ : extract _ _ = [tuple b | _ < _]); last first.
+    apply: eq_from_tnth => j.
+    rewrite -merge_extractC.
+    rewrite tnth_extract.
+    have Hj : (lensC (lens_left n./2.+2 (uphalf n).+1)) !_ j
+                \in lens_right n./2.+2 (uphalf n).+1.
+      rewrite mem_lensE
+        (_ : \val _ = tval (lens_right n./2.+2 (uphalf n).+1)) //.
+      by rewrite -lensC_left mem_tnth.
+    by rewrite tnth_merge !tnth_mktuple.
+  apply/ffunP => v; rewrite !ffunE.
+  rewrite -(inj_eq (f:=cast_tuple (esym(add_uphalf_half n.+3))));
+      last exact/bij_inj/cast_tuple_bij.
+  congr ((nat_of_bool (_ == _))%:R).
+  apply/eq_from_tnth => j.
+  rewrite tnth_map tnth_ord_tuple (tnth_nth 0) /= (nth_map ord0); last first.
+    by rewrite size_enum_ord -(add_uphalf_half n.+3).
+  by case: sumbool_of_bool => Hj; rewrite tnth_mktuple.
+Qed.
+
+Lemma ghz_tree_ok n :
+  ghz_tree n Co (dpbasis C [tuple 0 | i < n.+1]) = ghz_state n.
+Proof.
+rewrite /ghz_tree /= focus_dpbasis.
+rewrite extract_cst -ghz_state0 /ghz_state !linearE /= !dpmerge_dpbasis.
+rewrite (_ : merge _ _ _ = [tuple if i == 0 then 0 else 0 | i < _]); last first.
+  apply: eq_from_tnth => i; rewrite !tnth_mktuple.
+  by case: sumbool_of_bool => Hi; rewrite !(tnth_extract,tnth_mktuple) if_same.
+rewrite (_ : merge _ _ _ = [tuple if i == 0 then 1 else 0 | i < _]); last first.
+  apply: eq_from_tnth => i.
+  case/boolP: (i \in lens_single ord0) => Hi.
+    rewrite tnth_merge !tnth_mktuple.
+    by move: Hi; rewrite !inE => /eqP ->; rewrite eqxx.
+  rewrite -mem_lensC in Hi.
+  rewrite tnth_mergeC !tnth_extract !tnth_mktuple.
+  by move: Hi; rewrite mem_lensC !inE => /negbTE ->.
+by rewrite !cnot_tree_ok !linearE.
+Qed.
