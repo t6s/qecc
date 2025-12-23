@@ -131,6 +131,17 @@ Lemma tnth_injectC t t' i :
   i \notin l -> tnth (inject t t') i = tnth t i.
 Proof. by move=> H; rewrite tnth_mktuple nth_lens_out. Qed.
 
+Lemma tnth_injectE t t' i :
+  tnth (inject t t') i =
+  if sumbool_of_bool (i \in l) is left e then tnth t' (lens_index e)
+                                         else tnth t i.
+Proof.
+rewrite tnth_mktuple.
+case: sumbool_of_bool => e.
+  by rewrite nth_lens_index.
+by rewrite nth_default // leqNgt size_tuple -[X in _ < X]size_lens index_mem e.
+Qed.
+
 Lemma inject_extract t : inject t (extract t) = t.
 Proof.
 apply/eq_from_tnth => i.
@@ -713,6 +724,10 @@ case/boolP: (i \in l) => Hi.
 - exact/TnthMerge/tnth_merge.
 - rewrite -mem_lensC in Hi; exact/TnthMergeC/tnth_mergeC.
 Qed.
+
+Lemma merge_cst (a : I) :
+  merge [tuple a | _ < _] [tuple a | _ < _] = [tuple a | _ < _].
+Proof. by apply/eq_from_tnth=>i; case: tnth_mergeP=>H->; rewrite !tnth_map. Qed.
 
 Lemma extract_merge v1 v2 : extract l (merge v1 v2) = v1.
 Proof.

@@ -10,6 +10,12 @@ Unset Printing Implicit Defensive.
 Lemma addnLR m n p : m + n = p -> n = p - m.
 Proof. move/(f_equal (subn^~ m)); by rewrite addKn. Qed.
 
+Lemma add_uphalf_half m : (uphalf m + half m = m)%N.
+Proof. by rewrite uphalf_half -addnA addnn odd_double_half. Qed.
+
+Lemma leq_half m : (m./2 <= m)%N.
+Proof. by rewrite leq_half_double -addnn -addnS leq_addr. Qed.
+
 Lemma ltn_ordK q (i : 'I_q) : Ordinal (ltn_ord i) = i.
 Proof. by apply val_inj. Qed.
 

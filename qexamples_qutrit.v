@@ -36,6 +36,12 @@ Definition hadamard : endo 1 := dpmor hadamard_dpmatrix.
 Definition qnot12 : endo 1 :=
     dpmor [ffun vi => let i := tnth vi 0 in ¦-i⟩].
 
+Goal qnot12 =e idmor _ _ _.
+apply/eq_mor_basis => -[] [] // a [] //= i.
+apply/ffunP => /= v.
+rewrite dpmorE sum_dpbasisKo !ffunE /= (tnth_nth a) /=.
+Abort.
+
 Definition cnot : endo 2 :=
     dpmor [ffun vi => let i := tnth vi 0 in
                       let j := tnth vi 1 in

@@ -112,12 +112,6 @@ Qed.
 Definition cast_endo m1 m2 (H : m1 = m2) : endo m1 -> endo m2 :=
   cast_mor H H.
 
-Lemma add_uphalf_half m : (uphalf m + half m = m)%N.
-Proof. by rewrite uphalf_half -addnA addnn odd_double_half. Qed.
-
-Lemma leq_half m : (m./2 <= m)%N.
-Proof. by rewrite leq_half_double -addnn -addnS leq_addr. Qed.
-
 Definition lens_0_mid m : lens m.+3 2 :=
   @lens_pair _ ord0 (Ordinal (leq_half m : m./2.+2 < m.+3)%N) isT.
 
@@ -144,12 +138,6 @@ Lemma mem_lens_0_mid n (i : 'I_(uphalf n.+3 + half n.+3)) :
   (val i \in map val (lens_0_mid n)).
 Proof. by rewrite !inE -2!(inj_eq val_inj) /= addn0. Qed.
 
-Lemma merge_cst A m n (l : lens m n) (a : A) :
-  merge l [tuple a | _ < _] [tuple a | _ < _] = [tuple a | _ < _].
-Proof.
-by apply: eq_from_tnth => i; case: tnth_mergeP => H ->; rewrite !tnth_mktuple.
-Qed.
-
 Lemma cnot_tree_ok n (b : I) :
   cnot_tree n Co (dpbasis C [tuple if i == 0 then b else 0 | i < n.+1]) =
     dpbasis C [tuple b | _ < n.+1].
@@ -163,7 +151,7 @@ case=> [_|[_|n IH]] /=.
   rewrite (_ : cnot Co _ = dpbasis C [tuple b | _ < 2]); last first.
     rewrite dpmor_dpbasis !(ffunE,tnth_mktuple,tnth_map,tnth_nth ord0)/= addr0.
     by congr dpbasis; eq_lens.
-  rewrite dpmerge_dpbasis.
+  rewrite dpmerge_dpbasis merge_extractC.
   pose mp3 := uphalf n.+3 + half n.+3.
   rewrite (_ : dpcast (esym _) _ =
     dpbasis C [tuple if i \in [:: lshift (half n.+3) 0; rshift (uphalf n.+3) 0]
@@ -174,12 +162,12 @@ case=> [_|[_|n IH]] /=.
       last exact/bij_inj/cast_tuple_bij.
     congr (nat_of_bool (_ == _))%:R.
     apply/eq_from_tnth => j.
-    rewrite tnth_map tnth_ord_tuple (tnth_nth 0) /= (nth_map ord0); last first.
+    rewrite tnth_injectE [in RHS](tnth_nth 0) /= (nth_map ord0); last first.
       by rewrite size_enum_ord [X in (_ < X)%N](add_uphalf_half n.+3).
     have jmp3 : (j < mp3)%N by rewrite [mp3]add_uphalf_half.
     case: sumbool_of_bool => Hj.
       by rewrite tnth_mktuple ifT // mem_lens_0_mid /= nth_enum_ord.
-    rewrite tnth_extract tnth_lens_index tnth_mktuple ifF.
+    rewrite tnth_mktuple ifF.
       by rewrite ifF // mem_lens_0_mid /= nth_enum_ord.
     by apply: contraFF Hj; rewrite inE => ->.
   rewrite focus_dpbasis.
