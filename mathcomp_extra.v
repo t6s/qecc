@@ -41,6 +41,10 @@ Proof. by rewrite size_tuple H. Qed.
 
 Definition cast_tuple H v : n.-tuple T := Tuple (cast_tuple_proof H v).
 
+Lemma tnth_cast_tuple H v i :
+  tnth (cast_tuple H v) i = tnth v (cast_ord (esym H) i).
+Proof. by set x := tnth v _; rewrite /x 2!(tnth_nth x). Qed.
+
 Lemma eq_ord_tuple (t1 t2 : n.-tuple 'I_m) :
   (t1 == t2) = (map val t1 == map val t2).
 Proof. exact/esym/inj_eq/(inj_map val_inj). Qed.

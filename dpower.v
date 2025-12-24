@@ -148,6 +148,14 @@ Proof. by rewrite /dpmor -lock /dpmorlin /= -lock !ffunE. Qed.
 Definition dpbasis m (vi : m.-tuple I) : R^o^^m :=
   [ffun vj => (vi == vj)%:R].
 
+Lemma dpcast_dpbasis n1 n2 (H : n1 = n2) v :
+  dpcast H (dpbasis v) = dpbasis (cast_tuple H v).
+Proof.
+apply/ffunP => i; rewrite !ffunE.
+rewrite -(inj_eq (f := cast_tuple H)); last exact/bij_inj/cast_tuple_bij.
+by congr (nat_of_bool (_ == _))%:R; apply/val_inj.
+Qed.
+
 Definition mordp m n (f : morlin m n) : 'dpM_(m,n) :=
   [ffun vi => f _ (dpbasis vi)].
 

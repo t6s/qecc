@@ -1,4 +1,4 @@
-Require Import Recdef Wf_nat.
+From Stdlib Require Import Recdef Wf_nat.
 From mathcomp Require Import all_ssreflect all_algebra complex.
 Require Import qexamples_common.
 
@@ -149,52 +149,39 @@ case=> [_|[_|n IH]] /=.
   by congr dpbasis; eq_lens.
 - rewrite cnot_tree_equation /= focus_dpbasis.
   rewrite (_ : cnot Co _ = dpbasis C [tuple b | _ < 2]); last first.
-    rewrite dpmor_dpbasis !(ffunE,tnth_mktuple,tnth_map,tnth_nth ord0)/= addr0.
+    rewrite dpmor_dpbasis !(ffunE,tnth_mktuple,tnth_map,tnth_nth 0)/= addr0.
     by congr dpbasis; eq_lens.
-  rewrite dpmerge_dpbasis merge_extractC.
+  rewrite dpmerge_dpbasis merge_extractC dpcast_dpbasis.
   pose mp3 := uphalf n.+3 + half n.+3.
-  rewrite (_ : dpcast (esym _) _ =
-    dpbasis C [tuple if i \in [:: lshift (half n.+3) 0; rshift (uphalf n.+3) 0]
-                     then b else 0 | i < mp3]); last first.
-    apply/ffunP => /= v.
-    rewrite !ffunE.
-    rewrite -(inj_eq (f:=cast_tuple (esym(esym(add_uphalf_half n.+3)))));
-      last exact/bij_inj/cast_tuple_bij.
-    congr (nat_of_bool (_ == _))%:R.
+  rewrite (_ : cast_tuple _ _ =
+               [tuple if i \in [:: lshift (half n.+3) 0; rshift (uphalf n.+3) 0]
+                      then b else 0 | i < mp3]); last first.
     apply/eq_from_tnth => j.
-    rewrite tnth_injectE [in RHS](tnth_nth 0) /= (nth_map ord0); last first.
-      by rewrite size_enum_ord [X in (_ < X)%N](add_uphalf_half n.+3).
-    have jmp3 : (j < mp3)%N by rewrite [mp3]add_uphalf_half.
-    case: sumbool_of_bool => Hj.
-      by rewrite tnth_mktuple ifT // mem_lens_0_mid /= nth_enum_ord.
-    rewrite tnth_mktuple ifF.
-      by rewrite ifF // mem_lens_0_mid /= nth_enum_ord.
+    have jn3 : (j < n.+3)%N by rewrite -[n.+3]add_uphalf_half.
+    rewrite tnth_cast_tuple tnth_mktuple mem_lens_0_mid /= tnth_injectE.
+    case: sumbool_of_bool => Hj; first by rewrite tnth_mktuple ifT.
+    rewrite ifF // tnth_mktuple ifF //.
     by apply: contraFF Hj; rewrite inE => ->.
   rewrite focus_dpbasis.
   rewrite (_ : extract _ _ = [tuple if i == 0 then b else 0|i < _]); last first.
-    apply: eq_from_tnth => j.
-    rewrite tnth_extract !tnth_mktuple !inE eq_rlshift /=.
-    by rewrite (inj_eq (@rshift_inj _ _)).
+    apply: eq_from_tnth => j; rewrite tnth_extract.
+    by rewrite !tnth_mktuple !inE eq_rlshift /= (inj_eq (@rshift_inj _ _)).
   rewrite IH; last by rewrite uphalfE ltnS leq_half.
   rewrite dpmerge_dpbasis focus_dpbasis.
-  rewrite extract_merge_disjoint; last first.
-    by rewrite disjoint_sym lens_left_right_disjoint.
+  rewrite extract_merge_disjoint;
+    last by rewrite disjoint_sym lens_left_right_disjoint.
   rewrite (_ : extract _ _ = [tuple if i == 0 then b else 0|i < _]); last first.
-    apply: eq_from_tnth => j.
-    rewrite tnth_extract !tnth_mktuple !inE eq_lrshift orbF.
-    by rewrite (inj_eq (@lshift_inj _ _)).
+    apply: eq_from_tnth => j; rewrite tnth_extract.
+    by rewrite !tnth_mktuple !inE eq_lrshift orbF (inj_eq (@lshift_inj _ _)).
   rewrite IH; last by rewrite !ltnS leq_half.
   rewrite dpmerge_dpbasis.
   rewrite (_ : extract _ _ = [tuple b | _ < _]); last first.
-    apply: eq_from_tnth => j.
-    rewrite tnth_extract tnth_merge => *; last by rewrite !tnth_mktuple.
-    by rewrite mem_lensE -[X in _ \in X]lensC_left mem_tnth.
-  apply/ffunP => v; rewrite !ffunE merge_cst.
-  rewrite -(inj_eq (f:=cast_tuple (esym(add_uphalf_half n.+3))));
-      last exact/bij_inj/cast_tuple_bij.
-  congr (nat_of_bool (_ == _))%:R.
-  apply/eq_from_tnth => j; rewrite !tnth_mktuple (tnth_nth 0) /=.
-  by rewrite (nth_map ord0) // size_enum_ord -(add_uphalf_half n.+3).
+    apply: eq_from_tnth => j; rewrite tnth_extract tnth_merge => *.
+      by rewrite mem_lensE -[X in _ \in X]lensC_left mem_tnth.
+    by rewrite !tnth_mktuple.
+  rewrite dpcast_dpbasis merge_cst; congr dpbasis.
+  apply/eq_from_tnth => j; rewrite !tnth_mktuple (tnth_nth 0) /= (nth_map 0) //.
+  by rewrite size_enum_ord [X in (_ < X)%N](add_uphalf_half n.+3).
 Qed.
 
 Lemma ghz_tree_ok n :
@@ -203,15 +190,11 @@ Proof.
 rewrite /ghz_tree /= focus_dpbasis.
 rewrite extract_cst -ghz_state0 /ghz_state !linearE /= !dpmerge_dpbasis.
 rewrite (_ : merge _ _ _ = [tuple if i == 0 then 0 else 0 | i < _]); last first.
-  apply: eq_from_tnth => i; rewrite !tnth_mktuple.
-  by case: sumbool_of_bool => Hi; rewrite !(tnth_extract,tnth_mktuple) if_same.
+  apply: eq_from_tnth => i; rewrite merge_extractC tnth_injectE.
+  by case: sumbool_of_bool => Hi; rewrite !tnth_mktuple if_same.
 rewrite (_ : merge _ _ _ = [tuple if i == 0 then 1 else 0 | i < _]); last first.
-  apply: eq_from_tnth => i.
-  case/boolP: (i \in lens_single ord0) => Hi.
-    rewrite tnth_merge !tnth_mktuple.
-    by move: Hi; rewrite !inE => /eqP ->; rewrite eqxx.
-  rewrite -mem_lensC in Hi.
-  rewrite tnth_mergeC !tnth_extract !tnth_mktuple.
-  by move: Hi; rewrite mem_lensC !inE => /negbTE ->.
+  apply: eq_from_tnth => i; rewrite merge_extractC tnth_injectE.
+  case: sumbool_of_bool => Hi; rewrite !tnth_mktuple /=;
+  by move: Hi; rewrite inE => ->.
 by rewrite !cnot_tree_ok !linearE.
 Qed.
