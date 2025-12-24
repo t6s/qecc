@@ -56,11 +56,9 @@ do 3 f_equal.
 apply eq_bigr => i _; apply/morP => {}T {}v.
 rewrite -focusM.
 rewrite (_ : lens_comp _ _ = lens_pair (succ_neq (rev_ord (lift 0 i)))) //.
-apply eq_lens_tnth => j.
-rewrite tnth_comp tnth_lensC_single.
-apply val_inj.
-rewrite [LHS]lift_max !(tnth_nth 0) /=.
-by case: j => -[|[]].
+apply: eq_lens_tnth => j; rewrite tnth_comp tnth_lensC_single.
+apply/val_inj; rewrite [LHS]lift_max -tnth_map -[RHS]tnth_map.
+by congr tnth; apply/val_inj.
 Qed.
 
 Lemma dpbasis_single (i:I) : dpbasis C [tuple i | _ < 1] = ¦ i ⟩.
@@ -149,7 +147,7 @@ case=> [_|[_|n IH]] /=.
   by congr dpbasis; eq_lens.
 - rewrite cnot_tree_equation /= focus_dpbasis.
   rewrite (_ : cnot Co _ = dpbasis C [tuple b | _ < 2]); last first.
-    rewrite dpmor_dpbasis !(ffunE,tnth_mktuple,tnth_map,tnth_nth 0)/= addr0.
+    rewrite dpmor_dpbasis !(ffunE,tnth_mktuple,tnth_map) /= addr0.
     by congr dpbasis; eq_lens.
   rewrite dpmerge_dpbasis merge_extractC dpcast_dpbasis.
   pose mp3 := uphalf n.+3 + half n.+3.
@@ -180,8 +178,7 @@ case=> [_|[_|n IH]] /=.
       by rewrite mem_lensE -[X in _ \in X]lensC_left mem_tnth.
     by rewrite !tnth_mktuple.
   rewrite dpcast_dpbasis merge_cst; congr dpbasis.
-  apply/eq_from_tnth => j; rewrite !tnth_mktuple (tnth_nth 0) /= (nth_map 0) //.
-  by rewrite size_enum_ord [X in (_ < X)%N](add_uphalf_half n.+3).
+  by apply/eq_from_tnth => j; rewrite tnth_cast_tuple !tnth_mktuple.
 Qed.
 
 Lemma ghz_tree_ok n :
