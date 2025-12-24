@@ -106,3 +106,23 @@ rewrite 2!cnotE addrAC subrr add0r.
 have -> : j + (j + (i + j)) = 3 * j + i by ring.
 by rewrite (@pchar_Zp 3) // !linE.
 Qed.
+
+(* Trisciani, et al., https://arxiv.org/abs/2507.09781v2, Figure 2 *)
+Lemma swap_cnot_cnot' :
+  swap =e
+  focus [lens 0] qnot12 \v  cnot \v
+  focus [lens 1; 0] cnot \v focus [lens 1; 0] cnot \v
+  cnot.
+Proof.
+apply/eq_mor_basis => -[[|i [|j []]] Ht] //=.
+simpl_tuple (Tuple Ht).
+rewrite swapE cnotE focus_dpbasis cnotE dpmerge_dpbasis focus_dpbasis.
+simpl_merge dI; simpl_extract.
+rewrite cnotE dpmerge_dpbasis.
+simpl_merge dI.
+rewrite cnotE focus_dpbasis qnot12E dpmerge_dpbasis.
+simpl_merge dI.
+have -> : i + j + (i + j + i) = 3 * i + (3 - 1) * j by ring.
+rewrite (@pchar_Zp 3)// mul0r !add0r mulNr mul1r opprK.
+by rewrite (addrC i) addKr.
+Qed.
