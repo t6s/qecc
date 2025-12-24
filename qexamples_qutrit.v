@@ -108,7 +108,7 @@ by rewrite (@pchar_Zp 3) // !linE.
 Qed.
 
 (* Trisciani, et al., https://arxiv.org/abs/2507.09781v2, Figure 2 *)
-Lemma swap_cnot_cnot' :
+Lemma swap_cnot_qnot_Trisciani :
   swap =e
   focus [lens 0] qnot12 \v  cnot \v
   focus [lens 1; 0] cnot \v focus [lens 1; 0] cnot \v
