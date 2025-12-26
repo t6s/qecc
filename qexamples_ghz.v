@@ -95,7 +95,6 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
 rewrite cnotE addr0 dpmerge_dpbasis.
 congr dpbasis.
 apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
-(* case: tnth_mergeP => Hi ->. *)
 case/boolP: (i \in lp) => Hi.
 - rewrite tnth_merge -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)).
   by congr tnth; eq_lens.
@@ -106,7 +105,7 @@ case/boolP: (i \in lp) => Hi.
   by move/eqP => Hi; apply/orP/or_intror/eqP/val_inj.
 Qed.
 
-(* Yet another solution using O(log n) gates *)
+(* Yet another solution using O(log n) nesting of gates *)
 Definition cast_endo m1 m2 (H : m1 = m2) : endo m1 -> endo m2 :=
   cast_mor H H.
 
