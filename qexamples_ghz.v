@@ -94,15 +94,11 @@ rewrite (_ : extract _ _ = [tuple 1; 0]); last first.
   by eq_lens; rewrite -!tnth_nth !tnth_mktuple neq_ltn ltnSn eqxx.
 rewrite cnotE addr0 dpmerge_dpbasis.
 congr dpbasis.
-apply eq_from_tnth => i; rewrite [RHS]tnth_mktuple.
-case/boolP: (i \in lp) => Hi.
-- rewrite tnth_merge -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)).
-  by congr tnth; eq_lens.
-- rewrite -mem_lensC in Hi.
-  rewrite tnth_mergeC tnth_extract tnth_mktuple.
-  rewrite tnth_lens_index ifT //.
-  move: Hi; rewrite mem_lensC !inE; apply contra.
-  by move/eqP => Hi; apply/orP/or_intror/eqP/val_inj.
+apply eq_from_tnth => i; rewrite merge_extractC tnth_injectE !tnth_mktuple.
+case: sumbool_of_bool => Hi.
+- by rewrite -[RHS](tnth_mktuple (fun=>1) (lens_index Hi)); congr tnth; eq_lens.
+- rewrite ifT //.
+  by apply: contraFN Hi => Hi; rewrite !inE orbC -(inj_eq val_inj) Hi.
 Qed.
 
 (* Yet another solution using O(log n) nesting of gates *)
