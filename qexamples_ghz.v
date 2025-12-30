@@ -102,6 +102,7 @@ case: sumbool_of_bool => Hi.
 Qed.
 
 (* Yet another solution using O(log n) nesting of gates *)
+(* https://www.ibm.com/quantum/blog/whole-device-entanglement *)
 Definition cast_endo m1 m2 (H : m1 = m2) : endo m1 -> endo m2 :=
   cast_mor H H.
 
@@ -112,7 +113,7 @@ Function cnot_tree n {wf lt n} : endo n.+1 :=
   match n as n return endo n.+1 with
   | 0 => idmor I C 1
   | 1 => cnot
-  | m.+2 => 
+  | m.+2 =>
       cast_endo (add_uphalf_half m.+3)
         (focus (lens_left _ _) (cnot_tree ((half m).+1)) \v
            focus (lens_right _ _) (cnot_tree (half m.+1)))
