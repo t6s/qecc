@@ -94,7 +94,8 @@ rewrite -!(addrAC _ (_ * t [tuple 0] * ((s [tuple 0])^*)%C)).
 rewrite -!mulrA -mulrDl addrC !addrA.
 rewrite -!(addrAC _ (_ * (t [tuple 1] * ((s [tuple 1])^*)%C))).
 rewrite -mulrDl -addrA !mulNr -opprD -addrA addrK.
-by rewrite -rmorphD -mulr2n -mulr_natl divrr ?nat_unit //= !mul1r addrC.
+rewrite -rmorphD -mulr2n -(mulr_natl (_ ^-1)) divrr ?nat_unit //=.
+by rewrite !mul1r addrC.
 Qed.
 
 (*

@@ -96,7 +96,7 @@ Proof. by rewrite dpunitaryE mxdpmatrixK. Qed.
 
 Section unitary_mor.
 (* One could probably replace tinner by any bilinear form *)
-Definition tinner n (s t : Co ^^ n) := \sum_i (s i)^* * (t i).
+Definition tinner n (s t : Co ^^ n) := \sum_i (s i)^*%C * (t i).
 Definition unitary_mor m n (f : mor m n) :=
   forall s t, tinner (f Co s) (f Co t) = tinner s t.
 (* Actually this only makes sense for n >= m, since the rank must be at
@@ -124,7 +124,7 @@ apply/(iffP idP).
   rewrite !ffunE; under eq_bigr do rewrite !ffunE.
   have := Uf (dpbasis C vj) (dpbasis C vi).
   rewrite /tinner.
-  under eq_bigr do rewrite !dpmorE !sum_dpbasisKo.
+  under [LHS]eq_bigr do rewrite !dpmorE !sum_dpbasisKo.
   move ->.
   under eq_bigr do rewrite !ffunE.
   by rewrite sum_muleqr [LHS]conjc_nat eq_sym.

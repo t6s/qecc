@@ -472,7 +472,7 @@ move => /(_ [ffun _ => 1%:R] [ffun _ => 1%:R]).
 rewrite fendo_mor_err /tinner /=.
 under eq_bigr do rewrite !ffunE.
 rewrite big1 ?mulr0 //.
-under eq_bigr do (rewrite !ffunE conjc_nat mulr1).
+under eq_bigr do rewrite !ffunE conjc_nat mulr1.
 rewrite big_const card_tuple /=.
 have := ltn_expl (m:=#|I|) n => /(_ cardI_gt1) Hn.
 rewrite iter_addr_0 => /esym /eqP; apply/negP.
