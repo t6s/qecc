@@ -1,3 +1,5 @@
+# A Rocq formalization of quantum circuits and error correcting codes
+
 ## Compilation
 
 ```shell
